@@ -18,11 +18,11 @@ def refresh():
         rows.append((manifest,summary,report))
     for output in [ROOT/'index.html',ROOT/'reports/index.html']:
         output.parent.mkdir(parents=True,exist_ok=True)
-        content='<h1>local-llm-benchmarks</h1><p>ローカルLLM測定の実行記録・スクリプト・結果。</p><table><thead><tr><th>Run</th><th>Benchmark</th><th>Status</th><th>Summary</th></tr></thead><tbody>'
+        content='<h1>local-llm-benchmarks</h1><p>ローカルLLM測定の実行記録・スクリプト・結果。</p><div class="table-scroll"><table><thead><tr><th>Run</th><th>Benchmark</th><th>Status</th><th>Summary</th></tr></thead><tbody>'
         for m,s,p in rows:
             score=(str(s['passed'])+'/'+str(s['attempted'])) if 'passed' in s else (str(s['conditions'])+' conditions / '+str(s['answers'])+' answers') if 'conditions' in s else '—'
             content+='<tr><td><a href="'+relative(p,output.parent)+'">'+html.escape(m['title'])+'</a><br><small>'+html.escape(m['run_id'])+'</small></td><td>'+html.escape(m['benchmark'])+'</td><td>'+html.escape(m['status'])+'</td><td>'+html.escape(score)+'</td></tr>'
-        content+='</tbody></table><p><a href="'+relative(ROOT/'README.md',output.parent)+'">README</a> · <a href="'+relative(ROOT/'docs/WORKFLOW.md',output.parent)+'">追加測定の手順</a></p>'
-        output.write_text('<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local LLM benchmark runs</title><style>body{font:16px/1.6 system-ui;max-width:1200px;margin:40px auto;padding:20px}table{border-collapse:collapse;width:100%}td,th{text-align:left;border-bottom:1px solid #ccc;padding:14px}small{color:#555}a{color:#176c65}</style>'+content+'</html>',encoding='utf-8')
+        content+='</tbody></table></div><p><a href="'+relative(ROOT/'README.md',output.parent)+'">README</a> · <a href="'+relative(ROOT/'docs/WORKFLOW.md',output.parent)+'">追加測定の手順</a></p>'
+        output.write_text('<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local LLM benchmark runs</title><style>body{font:16px/1.6 system-ui;max-width:1200px;margin:40px auto;padding:20px}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:580px}td,th{text-align:left;border-bottom:1px solid #ccc;padding:14px}small{color:#555}a{color:#176c65}</style>'+content+'</html>',encoding='utf-8')
     print(json.dumps({'catalog_runs':len(rows)}))
 if __name__=='__main__':refresh()
