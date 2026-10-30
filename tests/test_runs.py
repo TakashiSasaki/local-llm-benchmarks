@@ -1,9 +1,28 @@
 import argparse,importlib.util,io,json,pathlib,sys,tempfile,unittest,urllib.error
 from unittest.mock import patch
 ROOT=pathlib.Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'src'))
-from local_llm_benchmarks.study import create_run,resolve_run,load,validate_run
+from local_llm_benchmarks.study import create_run,resolve_run,load,validate_run,save,sha,snapshot_sources
 spec=importlib.util.spec_from_file_location('bfcl_driver',ROOT/'benchmarks/bfcl.py');driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
 class Runs(unittest.TestCase):
+    def test_hermes_sources_and_artifact_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=pathlib.Path(tmp)
+            fixture=root/'integrations/hermes/fixtures/test.json';save(fixture,{'amounts':[1,2]})
+            driver=root/'integrations/hermes/scripts/check.py';driver.parent.mkdir(parents=True);driver.write_text('pass\n',encoding='utf-8')
+            path=create_run('Hermes trial','file-tools',run_id='hermes-trial',root=root,experiment_type='harness-integration',harness='hermes')
+            snapshot_sources(path,root)
+            self.assertEqual(load(path/'source-manifest.json')['files']['integrations/hermes/fixtures/test.json'],sha(fixture))
+            self.assertTrue((path/'source/integrations/hermes/scripts/check.py').exists())
+            self.assertTrue((path/'workspace').is_dir());self.assertEqual(validate_run(path)['harness'],'hermes')
+            artifact=path/'workspace/output.json';save(artifact,{'total':3})
+            m=load(path/'manifest.json');m['evidence']=[{'path':artifact.relative_to(root).as_posix(),'sha256':sha(artifact)}];save(path/'manifest.json',m)
+            validate_run(path);save(artifact,{'total':999})
+            with self.assertRaises(AssertionError):validate_run(path)
+    def test_invalid_experiment_type_creates_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=pathlib.Path(tmp)
+            with self.assertRaises(ValueError):create_run('Bad','generic',root=root,experiment_type='unknown')
+            self.assertEqual(list(root.iterdir()),[])
     def test_run_paths_and_immutability(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=pathlib.Path(tmp);p=create_run('Test','generic',run_id='safe-run',root=root,kind='replay')

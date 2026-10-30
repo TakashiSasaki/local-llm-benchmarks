@@ -11,11 +11,14 @@ def candidates():
 def check():
     manifests=[p/'manifest.json' for p in (ROOT/'runs').iterdir() if p.is_dir() and (p/'manifest.json').exists()]
     for path in manifests:validate_run(path.parent)
+    for item in load(ROOT/'publication/hermes-export-manifest.json')['entries']:
+        assert hashlib.sha256((ROOT/item['path']).read_bytes()).hexdigest()==item['exported_sha256'],item['path']
     for location in [ROOT/'datasets/bfcl/6ea5797',ROOT/'datasets/humaneval/b9453e8',ROOT/'vendor/bfcl']:
         for rel,expected in load(location/'manifest.json')['files'].items():assert hashlib.sha256((location/rel).read_bytes()).hexdigest()==expected,str(location/rel)
     private_user=os.environ.get('USERNAME','');findings=[]
     patterns=[r'github_pat_[A-Za-z0-9_]{20,}',r'gh[pousr]_[A-Za-z0-9_]{20,}',r'hf_[A-Za-z0-9]{24,}',r'sk-(?:proj-)?[A-Za-z0-9_-]{25,}',r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----']
     for p in candidates():
+        assert p.name not in {'state.db','config.yaml'} and not p.name.startswith(('state.db-','codex-config-before-')),str(p)
         assert p.suffix.lower() not in {'.gguf','.safetensors','.exe','.dll','.pyd','.bin','.pt','.pth','.onnx','.pyc'},str(p)
         try:text=p.read_text(encoding='utf-8-sig')
         except (UnicodeDecodeError,OSError):continue

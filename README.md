@@ -4,7 +4,7 @@ RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC 
 
 **[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
 
-This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, historical runs and an offline dashboard. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
+This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, Hermes integration checks, historical runs and offline reports. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
 
 ## 最終結果
 
@@ -25,21 +25,28 @@ Qwen 35BのBFCLではOFF/ONとも72/80でしたが、ONの応答中央値は16.6
 
 ## 今後の測定
 
-Gitルートは `C:\LocalLLM\local-llm-benchmarks` です。編集する測定コードは `benchmarks/`、共通処理は `src/`、共有入力は `datasets/`、新しい実行結果は `runs/<run-id>/`、表示ページは `reports/` に置きます。作成・再開・コミット・プッシュの手順は[WORKFLOW.md](docs/WORKFLOW.md)にまとめています。過去の `artifacts/` は凍結した証拠として残します。
+Gitルートは `C:\LocalLLM\local-llm-benchmarks` です。モデル単体の測定コードは `benchmarks/`、Hermes等の接続・実ツール動作検証は `integrations/<harness>/`、共通処理は `src/`、共有入力は `datasets/`、すべての実行結果は `runs/<run-id>/`、表示ページは `reports/` に置きます。作成・再開・コミット・プッシュの手順は[WORKFLOW.md](docs/WORKFLOW.md)にまとめています。過去の `artifacts/` は凍結した証拠として残します。
+
+Hermesのネイティブ起動・接続、4B/35Bの実ツール往復、JSON/CSV/修正課題、64K容量と短いHermes会話、MCP接続を含む**過去6件の検証**も収録しています。MCPのアプリ側接続失敗や、初回課題の失敗も残しています。構成と手順は [Hermes検証](integrations/hermes/README.md) を参照してください。これらは当時のb11946等の記録で、最終b11960マトリックス全モデルのHermes対応を証明するものではありません。
 
 ## 収録内容
 
 ```text
 index.html                         継続的に追加する測定の一覧
-benchmarks/                        今後編集・追加する測定コード
+benchmarks/                        モデル単体の測定コード
+integrations/hermes/scripts/        Hermesの接続・実ツール検証コード
+integrations/hermes/fixtures/       Hermes用の合成テスト定義
+configs/hermes/                    公開できるHermesの試験条件
 src/                               共通処理
 scripts/                           実行管理・公開の補助
 datasets/                          共有のバージョン固定データ
 configs/                           公開する測定条件
-runs/<run-id>/                     新しい実験ごとの条件・生応答・集計・ソース
+runs/<run-id>/                     全実験共通: 条件・生応答・実ツール結果・生成物・集計・ソース
 reports/                           一覧と各実験の表示ページ
 artifacts/local-llm/scripts/        測定・補助・採点・監査・描画スクリプト
 artifacts/local-llm/runs/           新旧の測定結果、生応答、メモリ観測、ソースZIP
+artifacts/local-llm/hermes/runs/     過去のHermes/MCP検証の実行記録
+artifacts/local-llm/workspace/hermes/ テスト入力と実際の生成物
 artifacts/local-llm/hermes/benchmarks/
                                    旧Qwen比較、HumanEval、固定版BFCLデータ・採点器
 artifacts/local-llm/profiles/       実際の起動設定
@@ -60,10 +67,11 @@ Python 3.12以降の標準ライブラリだけで実行できます。ネット
 
 ```sh
 python -B tools/verify_publication.py
+python -B integrations/hermes/scripts/verify_saved_evidence.py
 python -B tools/make_checksums.py --check
 ```
 
-1つ目は公開コピーとZIP内ファイルのハッシュ、公式データのハッシュ、32条件の整合性を確認し、**BFCLの1,280回答を固定版公式AST採点器で再採点**します。HumanEvalは320件の保存済み採点記録を照合しますが、生成コードの再実行はしません。公開準備時の結果は [publication/validation.json](publication/validation.json) にあります。
+1つ目は公開コピーとZIP内ファイルのハッシュ、公式データのハッシュ、32条件の整合性を確認し、**BFCLの1,280回答を固定版公式AST採点器で再採点**します。HumanEvalは320件の保存済み採点記録を照合しますが、生成コードの再実行はしません。公開準備時の結果は [publication/validation.json](publication/validation.json) にあります。Hermes用の照合は、追加131ファイル・6実験・4件の基本ファイル往復の保存記録を確認します。[照合結果](publication/hermes-validation.json)も保存しています。
 
 測定一覧は `index.html`、最終比較は `reports/2026-10-30-matrix/index.html` をブラウザーで開くだけで動きます。HTTPで確認する場合はこのフォルダーで次を実行し、`http://127.0.0.1:8000/` を開きます。
 

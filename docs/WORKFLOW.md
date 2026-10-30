@@ -1,4 +1,4 @@
-# 追加測定からコミット・プッシュまで
+# 追加実験からコミット・プッシュまで
 
 ローカルGitルートは `C:\LocalLLM\local-llm-benchmarks` です。以下のコマンドはこのフォルダーで実行します。
 
@@ -6,7 +6,10 @@
 
 | 場所 | 用途 |
 | --- | --- |
-| `benchmarks/` | 今後編集・追加する測定スクリプト。最初の対応例は `bfcl.py` |
+| `benchmarks/` | モデル単体の測定スクリプト。最初の対応例は `bfcl.py` |
+| `integrations/<harness>/scripts/` | Hermes等の接続・実ツール動作の検証コード |
+| `integrations/<harness>/fixtures/` | 各エージェントの共有テスト定義・期待値 |
+| `configs/hermes/` | 公開できる接続条件・Hermes版・モデルとランタイムの識別 |
 | `src/local_llm_benchmarks/` | 実行管理・採点などの共通処理 |
 | `scripts/` | runの作成、一覧ページ生成、公開前チェック、Git操作 |
 | `tools/` | 過去の公開データ照合、チェックサム、任意のブラウザーQA |
@@ -32,12 +35,23 @@ runs/<run-id>/
   manifest.json           タイトル・試験名・状態・条件・時刻
   configs/                実際のサーバー情報・モード確認
   raw/                    各問題のrequest / response / 時間
-  logs/                   補助ログ
+  logs/                   stderr・メモリ・承認等の補助ログ
+  workspace/              合成入力・生成物（公開前に内容を確認）
   summaries/              問題別の採点
   summary.json            実験全体の集計
   source/                 実行時コードのスナップショット
   source-manifest.json    ソースのハッシュ、Gitコミットとdirty状態
 ```
+
+## Hermesの接続・実ツール動作を検証する
+
+```powershell
+python -B scripts/new_run.py --name "Hermes tool roundtrip" --benchmark hermes-file-roundtrip --type harness-integration --harness hermes --config configs/hermes/tool-roundtrip.example.json
+```
+
+`--type` は `benchmark`（既定）、`harness-integration`、`transport-integration`、`capacity` です。`--harness hermes` で使用エージェントを記録します。過去の6件は共通の `runs/` へ登録し、凍結した証拠を `manifest.json.evidence` からハッシュ付きで参照しています。コード・fixture・記録項目の詳しい説明は [Hermes検証](../integrations/hermes/README.md) にあります。
+
+モデルがツール呼び出しを出力しただけのBFCL採点、Hermesがツールを実行した結果、MCP通信の結果は別の試験です。収集の `status: complete` と試験結果の `outcome: passed/partial/failed` も区別します。失敗した結果を残し、新しい試験は別runで実行します。
 
 ## BFCLを測る
 
@@ -61,6 +75,7 @@ python -B benchmarks/bfcl.py --run <run-id> --model "served-model-alias" --think
 python -B scripts/refresh_reports.py
 python -B scripts/check_repository.py
 python -B tools/verify_publication.py
+python -B integrations/hermes/scripts/verify_saved_evidence.py
 python -B -m unittest discover -s tests -v
 ```
 

@@ -5,6 +5,8 @@ Push-Location -LiteralPath $studyRoot
 try {
     python -B tools/verify_publication.py
     if($LASTEXITCODE -ne 0){throw 'Archived evidence verification failed'}
+    python -B integrations/hermes/scripts/verify_saved_evidence.py
+    if($LASTEXITCODE -ne 0){throw 'Hermes evidence verification failed'}
     python -B scripts/check_repository.py
     if($LASTEXITCODE -ne 0){throw 'Run/data/privacy checks failed'}
     python -B -m unittest discover -s tests -v

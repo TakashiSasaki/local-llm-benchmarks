@@ -30,3 +30,7 @@
 4. 後でREADME等を変更したら `python -B tools/make_checksums.py` で公開ファイルのチェックサムを更新します。過去の原測定のハッシュを現在の値へ書き換える操作とは異なります。
 
 継続する実験の追加・検証・Gitへの反映は [WORKFLOW.md](WORKFLOW.md) を参照してください。
+
+## Hermesの追加記録
+
+Hermesとの接続・実ツール使用・MCP通信も実験範囲に含め、131ファイルを追加しました。`publication/hermes-export-manifest.json` に原本/公開コピーのハッシュを記録しています。Codex設定のバックアップ、config.yaml、全体のstate.dbは含めていません。過去6件の実験を共通の `runs/` に登録し、証拠ファイルへのハッシュ付き参照を保存しました。公開後の標準配置は `integrations/hermes/` と [WORKFLOW.md](WORKFLOW.md) を参照してください。

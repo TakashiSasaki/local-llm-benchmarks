@@ -41,7 +41,22 @@ const {chromium}=require('playwright');
   await page.screenshot({path:path.join(out,'dashboard-mobile.png'),fullPage:true});
   const mobileOverflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
   if(errors.length||desktopOverflow||mobileOverflow)throw Error(JSON.stringify({errors,desktopOverflow,mobileOverflow}));
-  const result={passed:true,browser:await browser.version(),playwright:require('playwright/package.json').version,models:8,conditions:32,all_model_suite_views_checked:16,local_link_checks:localLinks,js_errors:errors,desktop_overflow:desktopOverflow,mobile_overflow:mobileOverflow};
+  const runs=fs.readdirSync(path.join(root,'runs')).filter(n=>fs.existsSync(path.join(root,'runs',n,'manifest.json'))).map(n=>JSON.parse(fs.readFileSync(path.join(root,'runs',n,'manifest.json'),'utf8'))).filter(m=>m.kind!=='replay');
+  const pages=['index.html','reports/index.html',...runs.filter(m=>!m.report).map(m=>'reports/'+m.run_id+'/index.html')];
+  for(const file of pages){
+   await page.goto(pathToFileURL(path.join(root,file)).href);
+   if(['index.html','reports/index.html'].includes(file)&&await page.locator('tbody tr').count()!==runs.length)throw Error('Run catalog count');
+   for(const width of [1400,390]){
+    await page.setViewportSize({width,height:844});
+    if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error(file+' overflows at '+width);
+   }
+   for(const href of await page.locator('a[href]').evaluateAll(as=>as.map(a=>a.href))){if(href.startsWith('file:')){if(!fs.existsSync(fileURLToPath(href)))throw Error('Missing catalog/evidence link: '+href);localLinks++}}
+  }
+  await page.goto(pathToFileURL(path.join(root,'index.html')).href);
+  await page.setViewportSize({width:1400,height:1100});await page.screenshot({path:path.join(out,'catalog-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(out,'catalog-mobile.png'),fullPage:true});
+  if(errors.length)throw Error(JSON.stringify(errors));
+  const result={passed:true,browser:await browser.version(),playwright:require('playwright/package.json').version,models:8,conditions:32,all_model_suite_views_checked:16,catalog_runs:runs.length,catalog_and_integration_pages:pages.length,local_link_checks:localLinks,js_errors:errors,desktop_overflow:desktopOverflow,mobile_overflow:mobileOverflow};
   fs.writeFileSync(path.join(out,'ui-validation.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

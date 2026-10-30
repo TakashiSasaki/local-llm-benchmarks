@@ -48,3 +48,7 @@ run内部の `original_hashes` 等は**匿名化前の原本**を指します。
 - `tools/verify_publication.py`: 公開コピー用の照合。
 
 モデル提供のチャットテンプレート本文は公開コピーから除外しました。そのSHA256は置換したフィールドまたは除外記録に残っています。同じGGUFを別途取得すれば元のテンプレートを確認できます。
+
+## Hermesの接続・実ツール試験
+
+`python -B integrations/hermes/scripts/verify_saved_evidence.py` で、追加分のハッシュと4件の基本ファイル往復、6実験への参照、保存されたMCP成功/失敗を照合できます。詳細は [Hermes検証](../integrations/hermes/README.md) を参照してください。過去のHermes試験はb11946等の当時の構成であり、b11960の全モデルの対応試験とは別です。近64Kの生API入力試験と、短いHermes会話も別々に記録しています。
