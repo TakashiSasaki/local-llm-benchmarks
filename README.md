@@ -6,7 +6,24 @@ RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC 
 
 This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, Hermes integration checks, historical runs and offline reports. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
 
+[Empero 3bit / 4bit × MTPの比較](docs/EMPERO_MTP.md) · [得点・速度の集計表](reports/20261031-empero-mtp-load-none/summary.md) · [表示ページ](reports/20261031-empero-mtp-load-none/index.html)には、量子化・MTP・思考設定を分けた追加測定をまとめています。先の10構成比較とはCPU配置が異なるため、今回新しく取得した対照同士で速度を比較します。
+
 [外部利用者のBFCL測定との比較（2026-10-31）](docs/EXTERNAL_BENCHMARKS_20261031.md)には、Empero版・Qwen3.6の公表値と、問題数・採点・思考設定の違いをまとめています。外部値はローカルのマトリックスとは別に扱います。
+
+## Empero 3bit / 4bitとMTP（2026-10-31）
+
+同じ64K・CPU MoE 34層で、量子化ごとにMTP OFF/ONを比較しました。速度は思考OFF・固定256トークンの9試行の中央値です。
+
+| 量子化 | MTP | 生成速度 tok/s | BFCL 思考OFF /80 | 思考ON /80 |
+| --- | --- | ---: | ---: | ---: |
+| IQ3_M | OFF | 33.73 | 70 | 72 |
+| IQ3_M | ON | 39.07 | 72 | 73 |
+| Q4_K_M | OFF | 38.20 | 71 | 72 |
+| Q4_K_M | ON | 46.47 | 71 | 71 |
+
+固定長生成はMTPで3bit約16%、4bit約22%速くなりました。ただし4bit・MTP ON・思考ONのBFCL1問は64,000出力トークンで打ち切られ、最終回答が空でした。そのためBFCL ONの80問合計は約656秒から1,583秒へ増えました。**採点上は呼び出し0件で正解ですが、回答は未完了です。** 4bitは初回のRAM保護停止を受け、OFF/ONを両方 `--load-mode none` に揃えて再測定しています。[全条件・HumanEval・問題別変化](docs/EMPERO_MTP.md)を参照してください。
+
+以前のCPU MoE 30層での3bit速度も別に測り、40.48→43.74 tok/s（約8%向上）でした。HumanEval思考ONの4bit主採点はMTP OFF19/20・ON17/20、既知の`type()`制限を補う別採点では20/20・19/20です。主比較800回答、補足速度18試行と補助採点を完了しています。
 
 ## Empero Qwen3.8 Distillの追加測定（2026-10-31）
 
@@ -95,6 +112,7 @@ python -B tools/verify_publication.py
 python -B integrations/hermes/scripts/verify_saved_evidence.py
 python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k
 python -B tools/verify_quantization_study.py --study 20261031-empero-qwen38-iq3m-64k
+python -B tools/verify_mtp_study.py
 python -B tools/make_checksums.py --check
 ```
 

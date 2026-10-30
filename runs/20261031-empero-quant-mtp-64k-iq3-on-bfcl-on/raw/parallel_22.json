@@ -1,0 +1,134 @@
+{
+  "id": "parallel_22",
+  "request": {
+    "model": "mtp-study-iq3-m-on",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the status and scheduled trial date for case number XY1234 in Los Angeles County Court, and case number GH5678 in Orange County Court?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_info_get_case_status",
+          "description": "Retrieves the status and trial dates for court cases from specified county courts.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "case_number": {
+                "type": "string",
+                "description": "The specific court case number."
+              },
+              "court": {
+                "type": "string",
+                "description": "The county court where the case is filed."
+              },
+              "details": {
+                "type": "string",
+                "enum": [
+                  "status",
+                  "trial_date"
+                ],
+                "description": "Specific details required about the court case. Defaults to 'status'."
+              }
+            },
+            "required": [
+              "case_number",
+              "court"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user is asking for the status and scheduled trial date for two court cases:\n1. Case number XY1234 in Los Angeles County Court\n2. Case number GH5678 in Orange County Court\n\nI need to use the court_info_get_case_status function for each case. The function requires:\n- case_number (required)\n- court (required)\n- details (optional, defaults to \"status\", can be \"status\" or \"trial_date\")\n\nSince the user wants both status and trial date, I'll need to make two calls for each case - one for status and one for trial_date. Or I could make one call per case and see what it returns. Let me check the function description again - it says \"Retrieves the status and trial dates for court cases\" but the details parameter allows specifying \"status\" or \"trial_date\". \n\nI think the best approach is to make two calls for each case - one for status and one for trial_date. Let me do that.\n\nActually, looking more carefully, the function description says \"Retrieves the status and trial dates for court cases from specified county courts\" but the details parameter is optional and defaults to \"status\". This suggests that maybe calling without details or with \"status\" might return both, but to be safe and get exactly what the user wants, I'll make separate calls for status and trial_date for each case.\n\nLet me make 4 calls total:\n1. XY1234, Los Angeles County Court, status\n2. XY1234, Los Angeles County Court, trial_date\n3. GH5678, Orange County Court, status\n4. GH5678, Orange County Court, trial_date",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"status\"}"
+              },
+              "id": "9SxtgmeID8bkKk9aRCNLpkLo7D1KwcRt"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"trial_date\"}"
+              },
+              "id": "1rkyclRYnIEVo7zNbKhrm1s6h5ZQurY9"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"status\"}"
+              },
+              "id": "8vmRznKw7Kav6nCX5gktl3OSxaaXUaNz"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"trial_date\"}"
+              },
+              "id": "FrQSp6spWXXqlFtaUJFkw2F4rffWrr4i"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793388623,
+    "model": "mtp-study-iq3-m-on",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 612,
+      "prompt_tokens": 391,
+      "total_tokens": 1003,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-WEsIFoNvGSCSiOmSRXRJUW6YBfIx0YaF",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 391,
+      "prompt_ms": 1601.273,
+      "prompt_per_token_ms": 4.0953273657289,
+      "prompt_per_second": 244.18072371169688,
+      "predicted_n": 612,
+      "predicted_ms": 13212.667,
+      "predicted_per_token_ms": 21.624659574468083,
+      "predicted_per_second": 46.24350254191679,
+      "draft_n": 504,
+      "draft_n_accepted": 443
+    }
+  },
+  "seconds": 14.817352100013522,
+  "estimated_prompt_tokens": 391
+}
