@@ -6,6 +6,8 @@ RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC 
 
 This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, Hermes integration checks, historical runs and offline reports. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
 
+[外部利用者のBFCL測定との比較（2026-10-31）](docs/EXTERNAL_BENCHMARKS_20261031.md)には、Empero版・Qwen3.6の公表値と、問題数・採点・思考設定の違いをまとめています。外部値はローカルのマトリックスとは別に扱います。
+
 ## Empero Qwen3.8 Distillの追加測定（2026-10-31）
 
 コミュニティの `empero-ai/Qwen3.8-35B-A3B-Distill` IQ3_Mを、同じ64K設定・問題・主採点基準で追加測定しました。比較は**10構成・40条件・2,000回答**です。
