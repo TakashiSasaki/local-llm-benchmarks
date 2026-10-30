@@ -85,6 +85,8 @@ python -B -m unittest discover -s tests -v
 
 ## コミット・プッシュ
 
+IQ3_Mの追加測定では `scripts/download_pinned_model.py` で固定リビジョンのモデルをリポジトリ外へ取得し、`scripts/run_quantization_study.py` で4条件とHermesの別runを保存しました。`benchmarks/humaneval.py` と `integrations/hermes/scripts/tool_roundtrip.py` が追加されています。保存済み結果の照合は `python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k`、追加比較ページの再生成は `scripts/report_quantization_study.py --study 20261030-qwen36-iq3m-64k` です。[具体的な条件](IQ3_M.md)も参照してください。新しく実測する場合は新しいrun IDを使います。採点器の補助ポリシーは `kind: replay` の別runに保存し、生成済みの主結果を書き換えません。
+
 差分を確認した後、次のコマンドで照合・テスト・レポート更新・チェックサム更新をしてコミットできます。
 
 ```powershell

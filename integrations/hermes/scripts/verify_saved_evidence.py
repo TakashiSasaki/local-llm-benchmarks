@@ -6,7 +6,7 @@ from local_llm_benchmarks.study import ROOT,load,save,sha,validate_run
 def verify():
     export=load(ROOT/'publication/hermes-export-manifest.json')
     for item in export['entries']:assert sha(ROOT/item['path'])==item['exported_sha256'],item['path']
-    folders=[p for p in (ROOT/'runs').iterdir() if p.is_dir() and (p/'manifest.json').exists() and load(p/'manifest.json').get('harness')=='hermes']
+    folders=[p for p in (ROOT/'runs').iterdir() if p.is_dir() and (p/'manifest.json').exists() and load(p/'manifest.json').get('harness')=='hermes' and load(p/'manifest.json')['kind']=='imported']
     for folder in folders:validate_run(folder)
     art=ROOT/'artifacts/local-llm';h=art/'hermes';w=art/'workspace/hermes'
     native=load(h/'runs/verification.json');inp=load(w/'validation-input.json');out=load(w/'validation-output.json')

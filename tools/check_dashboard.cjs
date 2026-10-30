@@ -55,8 +55,25 @@ const {chromium}=require('playwright');
   await page.goto(pathToFileURL(path.join(root,'index.html')).href);
   await page.setViewportSize({width:1400,height:1100});await page.screenshot({path:path.join(out,'catalog-desktop.png'),fullPage:true});
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(out,'catalog-mobile.png'),fullPage:true});
+  let addedMatrices=0;
+  for(const m of runs.filter(m=>m.report&&m.report!=='reports/2026-10-30-matrix/index.html')){
+   await page.goto(pathToFileURL(path.join(root,m.report)).href);
+   if(!await page.locator('#benchmark-data').count())continue;
+   const data=JSON.parse(await page.locator('#benchmark-data').textContent());addedMatrices++;
+   if(await page.locator('#matrix tr').count()!==data.models.length)throw Error('Expanded matrix rows');
+   if(await page.locator('#condition-count').textContent()!==`${data.conditions_complete} / ${data.conditions_expected}`)throw Error('Expanded condition count');
+   for(const model of data.models){for(const suite of ['he','bfcl']){
+    await page.locator('#model-select').selectOption(model.key);await page.locator('#suite-select').selectOption(suite);await page.locator('#differences').uncheck();
+    if(await page.locator('#cases tr').count()!==(suite==='he'?20:80))throw Error('Expanded case rows');
+    for(const href of await page.locator('a[href]').evaluateAll(as=>as.map(a=>a.href))){if(href.startsWith('file:')){if(!fs.existsSync(fileURLToPath(href)))throw Error('Expanded evidence link: '+href);localLinks++}}
+   }}
+   await page.locator('#model-select').selectOption('qwen-large-iq3m');
+   await page.setViewportSize({width:1400,height:1100});await page.screenshot({path:path.join(out,'quantization-desktop.png'),fullPage:true});
+   await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(out,'quantization-mobile.png'),fullPage:true});
+   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Expanded mobile overflow');
+  }
   if(errors.length)throw Error(JSON.stringify(errors));
-  const result={passed:true,browser:await browser.version(),playwright:require('playwright/package.json').version,models:8,conditions:32,all_model_suite_views_checked:16,catalog_runs:runs.length,catalog_and_integration_pages:pages.length,local_link_checks:localLinks,js_errors:errors,desktop_overflow:desktopOverflow,mobile_overflow:mobileOverflow};
+  const result={passed:true,browser:await browser.version(),playwright:require('playwright/package.json').version,models:8,conditions:32,added_comparison_matrices:addedMatrices,all_model_suite_views_checked:16,catalog_runs:runs.length,catalog_and_integration_pages:pages.length,local_link_checks:localLinks,js_errors:errors,desktop_overflow:desktopOverflow,mobile_overflow:mobileOverflow};
   fs.writeFileSync(path.join(out,'ui-validation.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

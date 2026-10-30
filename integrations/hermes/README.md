@@ -51,3 +51,7 @@ python -B integrations/hermes/scripts/verify_saved_evidence.py
 ```
 
 131追加ファイルのハッシュ、6つのrunと証拠への参照、4つの基本ファイル往復の生成物、実ツール結果、MCPの成功/失敗の記録を照合します。過去の採点を一律に成功へ書き換えたり、生成されたPythonを再実行したりはしません。全体の公開手順は [WORKFLOW.md](../../docs/WORKFLOW.md) を参照してください。
+
+## 新規のIQ3_M実測
+
+`tool_roundtrip.py` は既存のローカルサーバーと手元のinstallation情報を使い、新しいrunへ実ツールのログ・対象セッションの結果・生成物を保存するドライバーです。IQ3_Mで約66秒のread/terminal/write往復を検証しました。[今回の記録](../../reports/20261030-qwen36-iq3m-64k-hermes/index.html)と[比較条件](../../docs/IQ3_M.md)を参照してください。

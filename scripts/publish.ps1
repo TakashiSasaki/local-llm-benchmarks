@@ -7,6 +7,8 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Archived evidence verification failed'}
     python -B integrations/hermes/scripts/verify_saved_evidence.py
     if($LASTEXITCODE -ne 0){throw 'Hermes evidence verification failed'}
+    python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k
+    if($LASTEXITCODE -ne 0){throw 'IQ3_M study verification failed'}
     python -B scripts/check_repository.py
     if($LASTEXITCODE -ne 0){throw 'Run/data/privacy checks failed'}
     python -B -m unittest discover -s tests -v

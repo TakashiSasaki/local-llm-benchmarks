@@ -2,11 +2,22 @@
 
 RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC で行ったローカルLLM比較の測定記録です。2026-10-30の最終比較では、8構成 × HumanEval / BFCL × 思考OFF / ON の **32条件・1,600回答**をまとめています。
 
-**[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
+**[IQ3_M追加後の9構成比較](reports/20261030-qwen36-iq3m-64k/index.html)** · **[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
 
 This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, Hermes integration checks, historical runs and offline reports. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
 
-## 最終結果
+## IQ3_Mの追加測定（2026-10-31）
+
+Qwen3.6-35B-A3BのBartowski IQ3_Mを、同じ64K設定で新規200回答とHermes実ツール往復に追加しました。比較は**9構成・36条件・1,800回答**になりました。
+
+| 量子化 | HumanEval OFF /20 | ON /20 | BFCL OFF /80 | ON /80 |
+| --- | ---: | ---: | ---: | ---: |
+| UD-Q3_K_M（既存） | 17 | 20 | 72 | 72 |
+| IQ3_M（追加） | 19 | 19 | 74 | 72 |
+
+IQ3_Mは打ち切り0件。BFCL ONの合計は約23分（既存84.5分）でした。Hermesの実read_file・terminal・write_file検証も成功しています。HumanEval ONの1件は採点器が `type()` を許可しないため失敗し、同じ補助採点ポリシーでは20/20です。主集計は変更せず、[条件・速度・補助採点と比較の限界](docs/IQ3_M.md)を記録しています。
+
+## 2026-10-30の8構成比較
 
 | モデル / 量子化 | HumanEval OFF /20 | ON /20 | BFCL OFF /80 | ON /80 |
 | --- | ---: | ---: | ---: | ---: |
@@ -68,6 +79,7 @@ Python 3.12以降の標準ライブラリだけで実行できます。ネット
 ```sh
 python -B tools/verify_publication.py
 python -B integrations/hermes/scripts/verify_saved_evidence.py
+python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k
 python -B tools/make_checksums.py --check
 ```
 

@@ -7,3 +7,5 @@ Add new measurement programs here. Shared logic belongs in `src/local_llm_benchm
 Older Windows/Hermes-specific runners remain available under `artifacts/local-llm/scripts/` and `artifacts/local-llm/hermes/benchmarks/` as frozen measurement evidence. They are not the default editing location for future experiments.
 
 Actual Hermes tool roundtrips and MCP transport checks belong in `integrations/hermes/`; they use the same `runs/<run-id>/` result layout with an explicit experiment type and harness. BFCL scores do not by themselves establish agent compatibility.
+
+`humaneval.py` preserves the original fixed 20 problems, prompting, sampling, code extraction and Windows job-limited worker. The runner Python version is recorded; the IQ3_M study uses the same Python 3.14.9 as the original measurements. `scripts/run_quantization_study.py` records a separate owned server, memory samples, four conditions and a separate Hermes run. See `docs/IQ3_M.md`.
