@@ -2,9 +2,21 @@
 
 RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC で行ったローカルLLM比較の測定記録です。2026-10-30の最終比較では、8構成 × HumanEval / BFCL × 思考OFF / ON の **32条件・1,600回答**をまとめています。
 
-**[IQ3_M追加後の9構成比較](reports/20261030-qwen36-iq3m-64k/index.html)** · **[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
+**[最新の10構成比較](reports/20261031-empero-qwen38-iq3m-64k/index.html)** · **[IQ3_M追加後の9構成比較](reports/20261030-qwen36-iq3m-64k/index.html)** · **[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
 
 This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, Hermes integration checks, historical runs and offline reports. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
+
+## Empero Qwen3.8 Distillの追加測定（2026-10-31）
+
+コミュニティの `empero-ai/Qwen3.8-35B-A3B-Distill` IQ3_Mを、同じ64K設定・問題・主採点基準で追加測定しました。比較は**10構成・40条件・2,000回答**です。
+
+| モデル・量子化 | HumanEval OFF /20 | ON /20 | BFCL OFF /80 | ON /80 |
+| --- | ---: | ---: | ---: | ---: |
+| Qwen3.6 UD-Q3_K_M | 17 | 20 | 72 | 72 |
+| Qwen3.6 IQ3_M | 19 | 19 | 74 | 72 |
+| Empero Qwen3.8 Distill IQ3_M | 18 | 20 | 72 | 72 |
+
+Empero版は全200回答で打ち切り0件、Hermes実ツール往復も成功（約51秒）。ONの合計はHumanEval約5.5分、BFCL約10.1分で、Qwen3.6 IQ3_Mの約21.4分・23.0分より短い結果でした。今回の補助採点でも18/20・20/20で変わりません。[測定条件・時間・生成量・比較の範囲](docs/EMPERO_QWEN38.md)を参照してください。
 
 ## IQ3_Mの追加測定（2026-10-31）
 
@@ -80,6 +92,7 @@ Python 3.12以降の標準ライブラリだけで実行できます。ネット
 python -B tools/verify_publication.py
 python -B integrations/hermes/scripts/verify_saved_evidence.py
 python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k
+python -B tools/verify_quantization_study.py --study 20261031-empero-qwen38-iq3m-64k
 python -B tools/make_checksums.py --check
 ```
 

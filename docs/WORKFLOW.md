@@ -101,3 +101,7 @@ powershell -File scripts/publish.ps1 -Message "Add benchmark results for ..." -P
 ```
 
 モデルやランタイムは追加せず、ソース・入力データ・条件・結果・必要なログをコミットします。秘密情報や個人パスのチェックはパターン検査なので、公開する差分自体も確認してください。
+
+## 別のモデルを追加する例
+
+Empero Qwen3.8 Distillの記録は [EMPERO_QWEN38.md](EMPERO_QWEN38.md) にあります。`run_quantization_study.py` は `--model-manifest`、`--profile`、`--reference` でモデル・実行条件・比較元を指定し、実際のOFF/ONモード確認をしてから測定します。新しい実測は必ず新しい `--id` を使います。追加比較ページは `report_model_study.py --study <run-id>` で作り、以前の比較ページを残します。

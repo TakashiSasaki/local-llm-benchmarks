@@ -8,7 +8,8 @@ if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--study',required=True);a=p.parse_args()
     source=ROOT/'artifacts/local-llm/runs/bench64k-output-20261030-141002/grader-sensitivity'
     baseline=load(source/'results.json');worker=source/'grade_worker.py';assert sha(worker)==baseline['secondary_worker_sha256']
-    audit=create_run('IQ3_M HumanEval grader policy sensitivity','humaneval-policy-audit',config={'source_study':a.study,'policy':'Existing secondary policy adds type and operator.mul/add; primary scores are unchanged'},run_id=a.study+'-he-policy-audit',kind='replay')
+    modelmeta=load(ROOT/'runs'/a.study/'manifest.json')['config']['model']
+    audit=create_run(modelmeta['model']+' '+modelmeta['quantization']+' HumanEval grader policy sensitivity','humaneval-policy-audit',config={'source_study':a.study,'model':modelmeta,'policy':'Existing secondary policy adds type and operator.mul/add; primary scores are unchanged'},run_id=a.study+'-he-policy-audit',kind='replay')
     snapshot_sources(audit);shutil.copyfile(worker,audit/'grade_worker.py')
     bench=ROOT/'artifacts/local-llm/hermes/benchmarks';source_code=(bench/'compare_models.py').read_text(encoding='utf-8')
     scope={'ctypes':ctypes,'w':w,'subprocess':subprocess,'sys':sys,'json':json,'BENCH':audit}
@@ -23,6 +24,7 @@ if __name__=='__main__':
             secondary={'passed':True,'status':'original_pass_retained'} if e['passed'] else scope['grade'](e['code'],problems[e['task_id']]) if e['code'] else {'passed':False,'status':'no_final_code'}
             checked.append({'task_id':e['task_id'],'original_passed':e['passed'],'secondary':secondary})
         result['iq3_m'][mode]={'original_passed':sum(e['passed'] for e in entries),'secondary_passed':sum(e['secondary']['passed'] for e in checked),'rescued_ids':[e['task_id'] for e in checked if not e['original_passed'] and e['secondary']['passed']],'cases':checked}
-    save(audit/'summaries/results.json',result);save(audit/'summary.json',{'outcome':'complete','headline':'Secondary HumanEval grader audit; saved outputs, no new inference','iq3_m':{k:{f:v[f] for f in ['original_passed','secondary_passed','rescued_ids']} for k,v in result['iq3_m'].items()},'ud_q3_k_m':{k:{f:v[f] for f in ['original_passed','secondary_passed','rescued_ids']} for k,v in result['ud_q3_k_m'].items()}})
+    result['model']=modelmeta
+    save(audit/'summaries/results.json',result);save(audit/'summary.json',{'outcome':'complete','model':modelmeta['model'],'headline':'Secondary HumanEval grader audit; saved outputs, no new inference','iq3_m':{k:{f:v[f] for f in ['original_passed','secondary_passed','rescued_ids']} for k,v in result['iq3_m'].items()},'ud_q3_k_m':{k:{f:v[f] for f in ['original_passed','secondary_passed','rescued_ids']} for k,v in result['ud_q3_k_m'].items()}})
     manifest=load(audit/'manifest.json');manifest.update(status='complete',completed_at=now());save(audit/'manifest.json',manifest)
     print(json.dumps(load(audit/'summary.json')))

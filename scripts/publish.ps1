@@ -9,6 +9,8 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Hermes evidence verification failed'}
     python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k
     if($LASTEXITCODE -ne 0){throw 'IQ3_M study verification failed'}
+    python -B tools/verify_quantization_study.py --study 20261031-empero-qwen38-iq3m-64k
+    if($LASTEXITCODE -ne 0){throw 'Empero distill study verification failed'}
     python -B scripts/check_repository.py
     if($LASTEXITCODE -ne 0){throw 'Run/data/privacy checks failed'}
     python -B -m unittest discover -s tests -v
