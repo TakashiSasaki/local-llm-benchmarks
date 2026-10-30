@@ -1,0 +1,121 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to find details of court cases based on the parameters provided. The user specified:\n- Case numbers: '67813', '71249'\n- Location: New York District court (so city and court: \"New York\" and \"District court\"? The parameter is \"location\" which is described as \"The city and court where the lawsuit is filed.\" So likely \"New York District court\" or \"New York\" and \"District court\". I'll interpret as \"New York\" for city and \"District\" for court? But the parameter is a single string \"city and court\". I'll use \"New York District court\" or maybe \"New York\" and \"District\"? Let's see the function signature: `court_case_find` requires `location` and `case_number`. It also has optional `case_type` with default \"Civil\". However, the user wants both 'Civil' and 'Criminal' cases. The function's `case_type` parameter is a string with enum [\"Civil\", \"Criminal\"] and default \"Civil\". But it seems we can only specify one case_type at a time? The description says \"parameters like case number and case type\". The function might allow only one case_type per call. But the user wants both types. We might need to make two separate calls? Or perhaps the function can handle an array? Looking at the schema: `case_type` is a string, not an array. So we need to call it twice? However, the required parameters are `location` and `case_number`. Wait, `case_number` is an array of strings. So we can provide both case numbers in one call. But `case_type` is optional and defaults to \"Civil\". To get both Civil and Criminal, we might need to call the function twice with different case_type values. But the user's query explicitly asks for both types. Let's check the function definition again:\n\n```\n{\n  \"name\": \"court_case_find\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"location\": { \"type\": \"string\", ... },\n      \"case_number\": { \"type\": \"array\", items: string },\n      \"case_type\": { \"type\": \"string\", enum: [\"Civil\", \"Criminal\"], default: \"Civil\" }\n    },\n    \"required\": [\"location\", \"case_number\"]\n  }\n}\n```\n\nSo `case_type` is optional and defaults to \"Civil\". If we want both, we need to either omit it (which gives Civil only) or call twice. Since the user asked for both, I'll make two calls: one with case_type \"Civil\" and one with \"Criminal\". But wait, the function might accept an array for case_type? No, it's defined as string. So I'll do two separate tool calls.\n\nThus, I need to construct two calls:\n1. For Civil: location=\"New York District court\"? Actually, \"New York District court\" might be the full name. I'll use \"New York\" as city and \"District\" as court? The parameter description: \"The city and court where the lawsuit is filed.\" So maybe \"New York District Court\" or \"New York District Court\". I'll assume \"New York District Court\" or \"New York\" and \"District Court\". To be safe, I'll use \"New York\" for city and \"District\" for court? But the example might be \"New York City\" and \"District Court\". Let's think: The user said \"New York District court\". I'll use exactly that: \"New York District court\". However, typical format might be \"New York\" and \"District Court\". I'll go with \"New York District Court\" as a single string. But the parameter is one string. I'll use \"New York District Court\". \n\nLet's parse: The user wrote: \"filed in the New York District court\". So location = \"New York District court\". I'll use that.\n\n2. For Criminal: same location, case_number array ['67813', '71249'], case_type \"Criminal\".\n\nBut note: The function requires `location` and `case_number`. It does not require `case_type` but it has a default. So for Civil, we can just not specify case_type or specify \"Civil\". To be explicit, I'll specify.\n\nThus, I'll make two tool calls.\n\nLet's write them.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "mHgVAtP4IygQEZKrPI6apML7mkuacb0b"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Criminal\"}"
+              },
+              "id": "is9C7BljHpVQSzSrUMj9tHIIqKozBC1f"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362264,
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1013,
+      "prompt_tokens": 197,
+      "total_tokens": 1210,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-77aoFY8jo35iDizzNNJQbVFZhAIdTX30",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 197,
+      "prompt_ms": 40.46,
+      "prompt_per_token_ms": 0.2053807106598985,
+      "prompt_per_second": 4869.0064260998515,
+      "predicted_n": 1013,
+      "predicted_ms": 8779.296,
+      "predicted_per_token_ms": 8.675193675889329,
+      "predicted_per_second": 115.27120169999964
+    },
+    "_benchmark_estimated_prompt_tokens": 197,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 8.838103999994928,
+  "rendered_prompt_sha256": "ee4d131cf1f5da0b16dedda5bd34f9074d966e9f7a68599ebe3bafab192c2844"
+}

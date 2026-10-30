@@ -1,0 +1,350 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HumanEval 思考ON/OFF比較</title><style>body{font:16px/1.6 system-ui,sans-serif;max-width:1300px;margin:40px auto;padding:0 24px;background:#f5f7fa;color:#18212b}table{border-collapse:collapse;width:100%;background:white;margin:20px 0}th,td{border-bottom:1px solid #dce2e8;padding:10px;text-align:left}th{background:#e6edf5}.scroll{overflow:auto}details{padding:12px;background:white;border-radius:6px;margin:8px 0}pre{white-space:pre-wrap;background:#17212b;color:#eaf0f8;padding:16px;overflow:auto}.pass{color:#147347}.fail{color:#a52d33}</style><h1>HumanEval：思考ON/OFFの比較</h1><p>前回と同じ20問。今回は思考ONとOFFの両方を4096出力トークン上限で測定しました。各条件1回の抜粋試験で、公式フル版スコアではありません。</p><div class="scroll"><table><tr><th>構成</th><th>思考</th><th>正解</th><th>応答中央値 秒</th><th>20問合計 秒</th><th>総出力token（API値）</th><th>出力上限</th><th>最終コード前に枠切れ</th><th>思考内容の返却を確認</th></tr><tr><td>Qwen3.5-4B Q4_K_M</td><td>OFF</td><td>14/20</td><td>2.09</td><td>62.77</td><td>4476</td><td>0</td><td>0</td><td>0/20</td></tr><tr><td>Qwen3.5-4B Q4_K_M</td><td>ON</td><td>6/20</td><td>56.79</td><td>1012.42</td><td>73037</td><td>13</td><td>12</td><td>20/20</td></tr><tr><td>Qwen3.6-35B-A3B UD-Q3_K_M</td><td>OFF</td><td>17/20</td><td>5.55</td><td>133.15</td><td>4453</td><td>0</td><td>0</td><td>0/20</td></tr><tr><td>Qwen3.6-35B-A3B UD-Q3_K_M</td><td>ON</td><td>19/20</td><td>53.77</td><td>1119.06</td><td>42852</td><td>1</td><td>1</td><td>20/20</td></tr></table></div><p>この4096トークン上限では、35Bは思考ONで17問から19問へ改善しました。4Bは14問から6問へ低下し、ONの12問は最終コード前に出力枠を使い切りました。4Bの思考能力そのものが低いと断定できる試験ではなく、より大きい出力枠や思考枠の制御は未検証です。</p><p>採点器の制限による不合格も別に数えています。4B OFFのHumanEval/129はsys、35B OFFのHumanEval/8はoperatorのimportで拒否されました。後者は通常のsum/product実装なので、17→19問という差には採点器の許可リストによる影響も含まれます。採点器は条件間で変更していません。問題別のguard_rejected・syntax_error・failed・budget_exhausted_before_final_codeを区別して参照してください。</p><h2>条件・読み方</h2><ul><li>データ・問題・プロンプト・採点器は前回と同じ。temperature 0.6、top_p 0.95、top_k 20、presence_penalty 0、seed 42。両モデルの公式カードにある精密コーディング向け推奨値に統一し、同一モデル内では思考切り替え以外の生成条件を統一。OFF→ONとON→OFFを問題ごとに交互に実行。</li><li>モデル順は4B→35B。各モデルの64K設定は維持していますが、64K長文を埋める試験ではありません。</li><li>思考ON/OFFは各モデルの事前確認で、reasoning_contentが実際に返る／返らないことを照合。サーバー起動時だけLLAMA_ARG_THINK=deepseekを指定し、思考内容と最終コードを分離しました。保存済みの通常プロファイル・既定モデルは変更していません。</li><li>思考に使う分も総出力上限を消費します。最終回答がない場合に思考途中のコードを答えとして採点することはしていません。</li><li>APIが思考トークン数を提供しない場合は不明とし、文字数から推測していません。「思考内容の返却」はその文字列が非空だった件数です。</li><li>前回のOFFはtemperature 0・1024上限でした。今回とはサンプリングと上限が違うため、ONの効果比較は今回のOFF・4096・temperature 0.6を基準にします。前回の結果は変更していません。</li><li>公式テストを使う既存の制限付きPython採点器で、20問の公式解答が通ることを事前に確認。Windows Jobの256MiB上限、1プロセス、6秒制限、構文・import等の制限があります。</li><li>モデル世代・量子化・CPU/GPU配置が異なるため、モデルサイズだけの効果ではありません。小規模・各1回なので一般的な優劣や再現性は未確定です。</li></ul><h2>途中の試験と条件変更</h2><p>最初にtemperature 0で実施した予備試験は、4Bの思考ONで8問中6問が最終コード前に出力上限へ到達したため中断しました。両モデルの公式モデルカードを確認し、精密コーディング向け推奨サンプリングに統一して全20問・両モードを最初から再測定しました。予備試験の部分結果は最終スコアに混ぜていません。予備試験の記録はthinking-comparison-20261029-173548に保存しています。</p><h2>過去のOFF・1024上限（参考のみ）</h2><table><tr><th>構成</th><th>正解</th><th>中央値 秒</th></tr><tr><td>Qwen3.5-4B Q4_K_M</td><td>16/20</td><td>2.28</td></tr><tr><td>Qwen3.6-35B-A3B UD-Q3_K_M</td><td>17/20</td><td>5.66</td></tr></table><h2>メモリの観測</h2><table><tr><th>構成</th><th>最小空きRAM GiB</th><th>最大システムGPU MiB</th></tr><tr><td>Qwen3.5-4B Q4_K_M</td><td>17.11</td><td>5003</td></tr><tr><td>Qwen3.6-35B-A3B UD-Q3_K_M</td><td>4.876</td><td>7349</td></tr></table><p>定期採取値で、モデル単体の割り当て量や厳密なピークではありません。</p><h2>問題別の結果</h2><div class="scroll"><table><tr><th>問題</th><th>4B OFF</th><th>4B ON</th><th>35B OFF</th><th>35B ON</th></tr><tr><td>HumanEval/6</td><td class="pass">合格 / 2.844秒</td><td class="pass">合格 / 55.039秒</td><td class="pass">合格 / 7.101秒</td><td class="pass">合格 / 69.408秒</td></tr><tr><td>HumanEval/7</td><td class="pass">合格 / 1.537秒</td><td class="fail">不合格 / 56.779秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 1.787秒</td><td class="pass">合格 / 9.84秒</td></tr><tr><td>HumanEval/8</td><td class="pass">合格 / 2.198秒</td><td class="fail">不合格 / 56.833秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="fail">不合格 / 5.36秒 / guard_rejected</td><td class="pass">合格 / 37.738秒</td></tr><tr><td>HumanEval/22</td><td class="pass">合格 / 0.85秒</td><td class="fail">不合格 / 56.828秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 4.017秒</td><td class="pass">合格 / 45.092秒</td></tr><tr><td>HumanEval/23</td><td class="pass">合格 / 0.721秒</td><td class="pass">合格 / 45.776秒</td><td class="pass">合格 / 2.03秒</td><td class="pass">合格 / 18.961秒</td></tr><tr><td>HumanEval/26</td><td class="fail">不合格 / 1.948秒 / failed</td><td class="pass">合格 / 34.58秒</td><td class="pass">合格 / 3.039秒</td><td class="pass">合格 / 43.197秒</td></tr><tr><td>HumanEval/28</td><td class="pass">合格 / 0.962秒</td><td class="fail">不合格 / 56.76秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 2.363秒</td><td class="pass">合格 / 8.313秒</td></tr><tr><td>HumanEval/35</td><td class="pass">合格 / 1.322秒</td><td class="pass">合格 / 55.863秒</td><td class="pass">合格 / 4.553秒</td><td class="pass">合格 / 26.782秒</td></tr><tr><td>HumanEval/55</td><td class="pass">合格 / 1.983秒</td><td class="fail">不合格 / 56.758秒 / 上限到達 / syntax_error</td><td class="pass">合格 / 3.94秒</td><td class="pass">合格 / 28.449秒</td></tr><tr><td>HumanEval/57</td><td class="pass">合格 / 1.473秒</td><td class="pass">合格 / 12.311秒</td><td class="pass">合格 / 5.749秒</td><td class="pass">合格 / 58.257秒</td></tr><tr><td>HumanEval/59</td><td class="fail">不合格 / 1.534秒 / failed</td><td class="fail">不合格 / 28.679秒 / failed</td><td class="pass">合格 / 6.223秒</td><td class="pass">合格 / 60.613秒</td></tr><tr><td>HumanEval/62</td><td class="fail">不合格 / 2.239秒 / failed</td><td class="fail">不合格 / 57.054秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="fail">不合格 / 4.694秒 / failed</td><td class="pass">合格 / 49.289秒</td></tr><tr><td>HumanEval/70</td><td class="pass">合格 / 1.402秒</td><td class="fail">不合格 / 56.807秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 7.499秒</td><td class="pass">合格 / 77.814秒</td></tr><tr><td>HumanEval/108</td><td class="fail">不合格 / 3.302秒 / failed</td><td class="fail">不合格 / 56.858秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 8.631秒</td><td class="pass">合格 / 90.67秒</td></tr><tr><td>HumanEval/129</td><td class="fail">不合格 / 23.829秒 / guard_rejected</td><td class="fail">不合格 / 57.03秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 33.199秒</td><td class="fail">不合格 / 107.177秒 / 上限到達 / budget_exhausted_before_final_code</td></tr><tr><td>HumanEval/139</td><td class="pass">合格 / 2.312秒</td><td class="fail">不合格 / 56.822秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 4.539秒</td><td class="pass">合格 / 33.478秒</td></tr><tr><td>HumanEval/143</td><td class="pass">合格 / 3.867秒</td><td class="pass">合格 / 41.141秒</td><td class="pass">合格 / 8.284秒</td><td class="pass">合格 / 61.958秒</td></tr><tr><td>HumanEval/151</td><td class="pass">合格 / 2.589秒</td><td class="fail">不合格 / 56.816秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 7.254秒</td><td class="pass">合格 / 92.31秒</td></tr><tr><td>HumanEval/154</td><td class="pass">合格 / 2.939秒</td><td class="fail">不合格 / 56.882秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="pass">合格 / 6.555秒</td><td class="pass">合格 / 101.348秒</td></tr><tr><td>HumanEval/163</td><td class="fail">不合格 / 2.924秒 / failed</td><td class="fail">不合格 / 56.801秒 / 上限到達 / budget_exhausted_before_final_code</td><td class="fail">不合格 / 6.336秒 / failed</td><td class="pass">合格 / 98.369秒</td></tr></table></div><h2>失敗した最終コード</h2><details><summary>Qwen3.5-4B Q4_K_M OFF HumanEval/26</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: &#x27;}</p><pre>from typing import List
+from typing import List
+
+
+def remove_duplicates(numbers: List[int]) -&gt; List[int]:
+    &quot;&quot;&quot; From a list of integers, remove all elements that occur more than once.
+    Keep order of elements left the same as in the input.
+    &gt;&gt;&gt; remove_duplicates([1, 2, 3, 2, 4])
+    [1, 3, 4]
+    &quot;&quot;&quot;
+    seen = set()
+    result = []
+    for num in numbers:
+        if num not in seen:
+            seen.add(num)
+            result.append(num)
+        else:
+            seen.discard(num)
+    return result</pre></details><details><summary>Qwen3.5-4B Q4_K_M OFF HumanEval/59</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: &#x27;}</p><pre>
+def largest_prime_factor(n: int):
+    &quot;&quot;&quot;Return the largest prime factor of n. Assume n &gt; 1 and is not a prime.
+    &gt;&gt;&gt; largest_prime_factor(13195)
+    29
+    &gt;&gt;&gt; largest_prime_factor(2048)
+    2
+    &quot;&quot;&quot;
+    i = 2
+    while i * i &lt;= n:
+        while n % i == 0:
+            n //= i
+        i += 1
+    return n</pre></details><details><summary>Qwen3.5-4B Q4_K_M OFF HumanEval/62</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: &#x27;}</p><pre>
+def derivative(xs: list):
+    &quot;&quot;&quot; xs represent coefficients of a polynomial.
+    xs[0] + xs[1] * x + xs[2] * x^2 + ....
+     Return derivative of this polynomial in the same form.
+    &gt;&gt;&gt; derivative([3, 1, 2, 4, 5])
+    [1, 4, 12, 20]
+    &gt;&gt;&gt; derivative([1, 2, 3])
+    [2, 6]
+    &quot;&quot;&quot;
+    if not xs:
+        return []
+    
+    result = []
+    for i in range(len(xs) - 1):
+        result.append(i * xs[i + 1])
+    
+    return result</pre></details><details><summary>Qwen3.5-4B Q4_K_M OFF HumanEval/108</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: &#x27;}</p><pre>
+def count_nums(arr):
+    &quot;&quot;&quot;
+    Write a function count_nums which takes an array of integers and returns
+    the number of elements which has a sum of digits &gt; 0.
+    If a number is negative, then its first signed digit will be negative:
+    e.g. -123 has signed digits -1, 2, and 3.
+    &gt;&gt;&gt; count_nums([]) == 0
+    &gt;&gt;&gt; count_nums([-1, 11, -11]) == 1
+    &gt;&gt;&gt; count_nums([1, 1, 2]) == 3
+    &quot;&quot;&quot;
+    def sum_signed_digits(n):
+        if n == 0:
+            return 0
+        sign = 1
+        if n &lt; 0:
+            sign = -1
+            n = -n
+        total = 0
+        while n &gt; 0:
+            digit = n % 10
+            total += sign * digit
+            n //= 10
+        return total
+
+    return sum(1 for num in arr if sum_signed_digits(num) &gt; 0)</pre></details><details><summary>Qwen3.5-4B Q4_K_M OFF HumanEval/129</summary><p>guard_rejected</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;guard_rejected&#x27;, &#x27;detail&#x27;: &#x27;Unsupported import&#x27;}</p><pre>
+import sys
+from collections import deque
+
+def minPath(grid, k):
+    n = len(grid)
+    if k == 1:
+        min_val = min(min(row) for row in grid)
+        return [min_val]
+    
+    # Directions for moving between cells
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    
+    # Find the minimum value in the grid and its position
+    min_val = min(min(row) for row in grid)
+    start_pos = None
+    for r in range(n):
+        for c in range(n):
+            if grid[r][c] == min_val:
+                start_pos = (r, c)
+                break
+        if start_pos:
+            break
+    
+    # BFS to find the lexicographically smallest path of length k
+    # We&#x27;ll use a queue where each element is (current_value, path_so_far, current_pos)
+    
+    # Initial state
+    initial_path = [min_val]
+    current_pos = start_pos
+    
+    # To ensure lexicographical order, we process paths in order
+    # However, since k can be large, we need a more efficient approach
+    # We&#x27;ll use BFS but prioritize by the next value in the path
+    
+    # Queue stores (next_value_to_add, current_path, current_pos)
+    # But since we want to minimize the path lexicographically, 
+    # we can use a priority queue based on the path so far
+    
+    # Actually, let&#x27;s think differently:
+    # We want to find the path that is lexicographically smallest
+    # We can do this by always choosing the smallest possible next value
+    
+    # BFS approach:
+    # Level 0: [ (min_val, (r, c)) ]
+    # Level 1: For each state, try all neighbors, add their values, keep the smallest
+    # But we need to keep the path intact for comparison
+    
+    # Since k is up to 10^5, we need to be efficient
+    # We can use a greedy approach: at each step, choose the smallest neighbor value
+    
+    # However, we need to track the entire path for the answer
+    
+    # Let&#x27;s use a priority queue approach
+    # State: (path_so_far, current_pos)
+    # We process states in order of the path (lexicographically smallest first)
+    
+    # But storing full paths in a priority queue for k=10^5 is too memory intensive
+    
+    # Alternative: Use BFS layer by layer, but only keep the best path to each cell
+    # At each step, for each cell, we want to know the lexicographically smallest path ending there
+    
+    # Actually, we can do this iteratively:
+    # Start with the minimum value cell
+    # For step 1 to k-1:
+    #   For each cell, compute the best path ending there from the previous step
+    #   But we need to track the full path
+    
+    # Let&#x27;s use a different approach:
+    # We&#x27;ll maintain for each cell the lexicographically smallest path that ends at that cell
+    # at the current step
+    
+    # Step 0: All cells with value = min_val have path = [min_val]
+    # Step 1: For each cell, if it has a neighbor with value v, the path would be [min_val, v]
+    #          We want the smallest such path
+    
+    # We can use BFS with state = (value, path_length, current_pos)
+    # But we need to compare paths lexicographically
+    
+    # Since we want the lexicographically smallest path, we can use a priority queue
+    # ordered by the path tuple
+    
+    # However, for large k, we need to be careful about memory
+    
+    # Let&#x27;s try a different approach:
+    # We know the first element is the minimum value
+    # Then we want to choose the next element as small as possible
+    # Then the next, etc.
+    
+    # We can simulate this by:
+    # 1. Start at the minimum value cell
+    # 2. At each step, try all neighbors and pick the one with the smallest value
+    # 3. But wait, we can revisit cells, so we don&#x27;t need to track visited
+    
+    # Actually, the problem is simpler:
+    # We want to find a path of length k that is lexicographically smallest
+    # We can build it step by step:
+    # - Start with the minimum value in the grid
+    # - At each step, from the current cell, move to a neighbor with the smallest value
+    
+    # But is this correct? Let&#x27;s think:
+    # If we have a path [1, 2, 3] and another [1, 2, 1], the second is lexicographically smaller
+    # So we should always try to pick the smallest possible next value
+    
+    # Algorithm:
+    # 1. Find the minimum value cell in the grid (this is our start)
+    # 2. For i from 1 to k-1:
+    #      From the current cell, look at all neighbors
+    #      Pick the neighbor with the smallest value
+    #      Update current cell to that neighbor
+    #      Add the value to the path
+    
+    # But wait, what if there are multiple neighbors with the same smallest value?
+    # Does it matter which one we pick?
+    # Actually, for lexicographical comparison, we only care about the values in the path
+    # So if multiple neighbors have the same smallest value, any of them will give the same next value
+    
+    # Let&#x27;s verify with the example:
+    # grid = [[1,2,3], [4,5,6], [7,8,9]], k = 3
+    # Start: 1 at (0,0)
+    # Step 1: neighbors of (0,0) are 2 and 4, min is 2 -&gt; path [1, 2], current (0,1)
+    # Step 2: neighbors of (0,1) are 1, 3, 5, min is 1 -&gt; path [1, 2, 1], current (0,0)
+    # This matches the expected output!
+    
+    # Another example:
+    # grid = [[5,9,3], [4,1,6], [7,8,2]], k = 1
+    # Start: 1 at (1,1)
+    # Path: [1]
+    # Matches expected output!
+    
+    # So the algorithm is:
+    # 1. Find the minimum value cell
+    # 2. Build the path by always moving to a neighbor with the smallest value
+    
+    # But wait, there&#x27;s a catch: we need to make sure we can actually reach the smallest value
+    # Since the graph is connected (grid with 4-connectivity), we can always move to any neighbor
+    
+    # Let&#x27;s implement this:
+    
+    path = []
+    r, c = start_pos
+    
+    path.append(grid[r][c])
+    
+    for _ in range(k - 1):
+        # Find the minimum value among neighbors
+        min_neighbor_val = float(&#x27;inf&#x27;)
+        best_neighbors = []
+        
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+            if 0 &lt;= nr &lt; n and 0 &lt;= nc &lt; n:
+                val = grid[nr][nc]
+                if val &lt; min_neighbor_val:
+                    min_neighbor_val = val
+                    best_neighbors = [(nr, nc)]
+                elif val == min_neighbor_val:
+                    best_neighbors.append((nr, nc))
+        
+        # Move to the best neighbor
+        r, c = best_neighbors[0]  # Any of the best neighbors will do
+        path.append(grid[r][c])
+    
+    return path</pre></details><details><summary>Qwen3.5-4B Q4_K_M OFF HumanEval/163</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: Test 1&#x27;}</p><pre>
+def generate_integers(a, b):
+    &quot;&quot;&quot;
+    Given two positive integers a and b, return the even digits between a
+    and b, in ascending order.
+
+    For example:
+    generate_integers(2, 8) =&gt; [2, 4, 6, 8]
+    generate_integers(8, 2) =&gt; [2, 4, 6, 8]
+    generate_integers(10, 14) =&gt; []
+    &quot;&quot;&quot;
+    if not (isinstance(a, int) and isinstance(b, int) and a &gt; 0 and b &gt; 0):
+        raise ValueError(&quot;a and b must be positive integers.&quot;)
+    
+    start = min(a, b)
+    end = max(a, b)
+    
+    result = []
+    for num in range(start, end + 1):
+        if num % 2 == 0:
+            result.append(num)
+    
+    return result</pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/7</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/8</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/22</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/28</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/55</summary><p>syntax_error</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;guard_rejected&#x27;, &#x27;detail&#x27;: &quot;expected an indented block after &#x27;for&#x27; statement on line 14 (&lt;unknown&gt;, line 14)&quot;}</p><pre>
+def fib(n: int):
+    &quot;&quot;&quot;Return n-th Fibonacci number.
+    &gt;&gt;&gt; fib(10)
+    55
+    &gt;&gt;&gt; fib(1)
+    1
+    &gt;&gt;&gt; fib(8)
+    21
+    &quot;&quot;&quot;
+    if n &lt; 0:
+        raise ValueError(&quot;n must be non-negative&quot;)
+    a, b = 0, 1
+    for _ in range(n):</pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/59</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: &#x27;}</p><pre>
+def largest_prime_factor(n: int):
+    &quot;&quot;&quot;Return the largest prime factor of n. Assume n &gt; 1 and is not a prime.
+    &gt;&gt;&gt; largest_prime_factor(13195)
+    29
+    &gt;&gt;&gt; largest_prime_factor(2048)
+    2
+    &quot;&quot;&quot;
+    # Handle factor 2
+    while n % 2 == 0:
+        n //= 2
+    
+    # Check odd factors from 3 onwards
+    factor = 3
+    while factor * factor &lt;= n:
+        while n % factor == 0:
+            n //= factor
+        factor += 2
+    
+    # If n is still greater than 1, it&#x27;s a prime factor
+    return n if n &gt; 1 else 2
+</pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/62</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/70</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/108</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/129</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/139</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/151</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/154</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.5-4B Q4_K_M ON HumanEval/163</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><details><summary>Qwen3.6-35B-A3B UD-Q3_K_M OFF HumanEval/8</summary><p>guard_rejected</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;guard_rejected&#x27;, &#x27;detail&#x27;: &#x27;Unsupported import&#x27;}</p><pre>from typing import List, Tuple
+import math
+from functools import reduce
+from operator import mul, add
+
+
+def sum_product(numbers: List[int]) -&gt; Tuple[int, int]:
+    &quot;&quot;&quot; For a given list of integers, return a tuple consisting of a sum and a product of all the integers in a list.
+    Empty sum should be equal to 0 and empty product should be equal to 1.
+    &gt;&gt;&gt; sum_product([])
+    (0, 1)
+    &gt;&gt;&gt; sum_product([1, 2, 3, 4])
+    (10, 24)
+    &quot;&quot;&quot;
+    if not numbers:
+        return (0, 1)
+    
+    total_sum = sum(numbers)
+    total_product = reduce(mul, numbers, 1)
+    
+    return (total_sum, total_product)</pre></details><details><summary>Qwen3.6-35B-A3B UD-Q3_K_M OFF HumanEval/62</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: &#x27;}</p><pre>
+def derivative(xs: list):
+    &quot;&quot;&quot; xs represent coefficients of a polynomial.
+    xs[0] + xs[1] * x + xs[2] * x^2 + ....
+     Return derivative of this polynomial in the same form.
+    &gt;&gt;&gt; derivative([3, 1, 2, 4, 5])
+    [1, 4, 12, 20]
+    &gt;&gt;&gt; derivative([1, 2, 3])
+    [2, 6]
+    &quot;&quot;&quot;
+    if len(xs) &lt;= 1:
+        return [0]
+    
+    return [xs[i] * i for i in range(1, len(xs))]</pre></details><details><summary>Qwen3.6-35B-A3B UD-Q3_K_M OFF HumanEval/163</summary><p>failed</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;failed&#x27;, &#x27;detail&#x27;: &#x27;AssertionError: Test 1&#x27;}</p><pre>
+def generate_integers(a, b):
+    &quot;&quot;&quot;
+    Given two positive integers a and b, return the even digits between a
+    and b, in ascending order.
+
+    For example:
+    generate_integers(2, 8) =&gt; [2, 4, 6, 8]
+    generate_integers(8, 2) =&gt; [2, 4, 6, 8]
+    generate_integers(10, 14) =&gt; []
+    &quot;&quot;&quot;
+    # Determine the range
+    if a &lt;= b:
+        start, end = a, b
+    else:
+        start, end = b, a
+    
+    # Collect even digits in the range [start, end]
+    even_digits = []
+    for num in range(start, end + 1):
+        if num % 2 == 0:
+            even_digits.append(num)
+    
+    return sorted(even_digits)
+</pre></details><details><summary>Qwen3.6-35B-A3B UD-Q3_K_M ON HumanEval/129</summary><p>budget_exhausted_before_final_code</p><p>{&#x27;passed&#x27;: False, &#x27;status&#x27;: &#x27;no_final_code&#x27;}</p><pre></pre></details><h2>推奨サンプリングの一次資料</h2><p><a href="https://huggingface.co/Qwen/Qwen3.5-4B">Qwen3.5-4B</a> / <a href="https://huggingface.co/Qwen/Qwen3.6-35B-A3B">Qwen3.6-35B-A3B</a>。両カードの精密コーディング用の共通値を使用。ON/OFFそれぞれを別々に最適化した比較ではありません。</p><h2>再現情報</h2><p>HumanEval commit: b9453e8f1865df0a0057a1383767caa400acfbcf<br>dataset SHA256: b796127e635a67f93fb35c04f4cb03cf06f38c8072ee7cee8833d7bee06979ef</p><p>選択seed 42。詳細設定・応答・生成統計・メモリ記録は <a href="results.json">results.json</a> と同じフォルダーに保存。思考本文はこのページには表示していません。</p></html>

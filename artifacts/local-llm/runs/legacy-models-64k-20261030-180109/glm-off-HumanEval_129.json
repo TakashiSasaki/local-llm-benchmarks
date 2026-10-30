@@ -1,0 +1,66 @@
+{
+  "request": {
+    "model": "legacy64k-glm-combined-180109",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests."
+      },
+      {
+        "role": "user",
+        "content": "\ndef minPath(grid, k):\n    \"\"\"\n    Given a grid with N rows and N columns (N >= 2) and a positive integer k, \n    each cell of the grid contains a value. Every integer in the range [1, N * N]\n    inclusive appears exactly once on the cells of the grid.\n\n    You have to find the minimum path of length k in the grid. You can start\n    from any cell, and in each step you can move to any of the neighbor cells,\n    in other words, you can go to cells which share an edge with you current\n    cell.\n    Please note that a path of length k means visiting exactly k cells (not\n    necessarily distinct).\n    You CANNOT go off the grid.\n    A path A (of length k) is considered less than a path B (of length k) if\n    after making the ordered lists of the values on the cells that A and B go\n    through (let's call them lst_A and lst_B), lst_A is lexicographically less\n    than lst_B, in other words, there exist an integer index i (1 <= i <= k)\n    such that lst_A[i] < lst_B[i] and for any j (1 <= j < i) we have\n    lst_A[j] = lst_B[j].\n    It is guaranteed that the answer is unique.\n    Return an ordered list of the values on the cells that the minimum path go through.\n\n    Examples:\n\n        Input: grid = [ [1,2,3], [4,5,6], [7,8,9]], k = 3\n        Output: [1, 2, 1]\n\n        Input: grid = [ [5,9,3], [4,1,6], [7,8,2]], k = 1\n        Output: [1]\n    \"\"\"\n"
+      }
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0,
+    "presence_penalty": 0,
+    "repeat_penalty": 1,
+    "seed": 42,
+    "max_tokens": 64000,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "cache_prompt": false
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom collections import deque\n\ndef minPath(grid, k):\n    n = len(grid)\n    visited = [[False for _ in range(n)] for _ in range(n)]\n    queue = deque()\n    \n    # Initialize the queue with all starting cells and their path values\n    # Each element is: (path_value_list, current_row, current_col)\n    for r in range(n):\n        for c in range(n):\n            # Convert the value to a string to allow lexicographical comparison\n            # of the lists of values.\n            queue.append((str(grid[r][c]), r, c))\n            visited[r][c] = True\n\n    # Directions: up, down, left, right\n    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]\n\n    while queue:\n        path_str, r, c = queue.popleft()\n\n        if len(path_str) == k:\n            return [int(x) for x in path_str]\n\n        for dr, dc in directions:\n            nr, nc = r + dr, c + dc\n            if 0 <= nr < n and 0 <= nc < n and not visited[nr][nc]:\n                new_path = path_str + str(grid[nr][nc])\n                visited[nr][nc] = True\n                queue.append((new_path, nr, nc))\n    \n    return []\n```"
+        }
+      }
+    ],
+    "created": 1793353577,
+    "model": "legacy64k-glm-combined-180109",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 297,
+      "prompt_tokens": 427,
+      "total_tokens": 724,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-3hKApaaNL4jt71gazOQ4yD28F8QrCFFd",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 427,
+      "prompt_ms": 4576.6,
+      "prompt_per_token_ms": 10.718032786885248,
+      "prompt_per_second": 93.30070357907617,
+      "predicted_n": 297,
+      "predicted_ms": 14226.737,
+      "predicted_per_token_ms": 48.06330067567567,
+      "predicted_per_second": 20.805895266075417
+    },
+    "_benchmark_estimated_prompt_tokens": 427,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 18.80788350000512
+}

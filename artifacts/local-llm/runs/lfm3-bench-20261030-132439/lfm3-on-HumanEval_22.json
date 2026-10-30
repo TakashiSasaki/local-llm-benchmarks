@@ -1,0 +1,64 @@
+{
+  "request": {
+    "model": "benchmark-lfm3-1.7b-qad-q4-64k",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests."
+      },
+      {
+        "role": "user",
+        "content": "from typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n"
+      }
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0,
+    "presence_penalty": 0,
+    "repeat_penalty": 1,
+    "seed": 42,
+    "max_tokens": 4096,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    },
+    "cache_prompt": false
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    return [value for value in values if isinstance(value, int)]\n```",
+          "reasoning_content": "We need to implement the function `filter_integers(values: List[Any]) -> List[int]`. The function should filter the given list and return only the elements that are integers. The examples: \n- Input: `['a', 3.14, 5]` -> Output `[5]`. So we keep only elements that are instances of `int`. Note that 3.14 is a float, 'a' is string, 5 is int. So we keep 5.\n- Input: `[1, 2, 3, 'abc', {}, []]` -> Output `[1, 2, 3]`. So we keep only elements that are integers. The list contains integers 1,2,3, and other non-integers: 'abc' (string), {} (dict), [] (list). So we filter by `isinstance(x, int)`. But note: In Python, `bool` is subclass of int. Usually, we might want to exclude booleans? The problem statement says \"only for integers\". Typically, `isinstance(True, int)` returns True because bool is subclass of int. Should we treat bool as int? The examples don't include booleans. Usually, in such tasks, they consider `int` type only, not subclass. But we can check `type(x) is int` or `isinstance(x, int) and not isinstance(x, bool)`. But typical approach: just use `isinstance(x, int)`. However, if they want to filter only actual integers, we might want to exclude booleans. Let's see: In the second example, there is no boolean. So we need to decide. Let's look at the first: `'a', 3.14, 5`. 5 is int. So fine.\n\nWe can implement: return `[x for x in values if isinstance(x, int) and not isinstance(x, bool)]`? But that might be overkill. Let's read the docstring: \"Filter given list of any python values only for integers\". Usually, that means keep elements that are integers. Booleans are technically integers (True=1, False=0). But often they'd want to keep them. Hard to know. I'll go with simple `isinstance(x, int)`. But we can also note that in many such filter tasks, they treat bool as int. I'll check typical Python: `isinstance(True, int)` is True. If they wanted to exclude bools they'd mention. So I'll just use `isinstance(x, int)`.\n\nThus implement:\n\n```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    return [value for value in values if isinstance(value, int)]\n```\n\nBut wait: The return type is List[int]. However, if we keep only elements that are int, they are already ints, so fine.\n\nLet's test with given examples:\n\nExample 1: `filter_integers(['a', 3.14, 5])` -> iterate: 'a' -> not int; 3.14 -> not int; 5 -> int -> keep -> returns [5]. Works.\n\nExample 2: `[1, 2, 3, 'abc', {}, []]` -> iterate: 1 -> int keep; 2 -> keep; 3 -> keep; 'abc' -> not; {} -> not; [] -> not. So returns [1,2,3]. Works.\n\nThus implement.\n\nWe need to include only the function and imports. The signature: `def filter_integers(values: List[Any]) -> List[int]:`. We'll import List and Any from typing.\n\nThus final code:\n\n```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    return [value for value in values if isinstance(value, int)]\n```\n\nMake sure to have no extra text.\n\nProceed."
+        }
+      }
+    ],
+    "created": 1793334332,
+    "model": "benchmark-lfm3-1.7b-qad-q4-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1004,
+      "prompt_tokens": 134,
+      "total_tokens": 1138,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-ShamG1cxzsWuAAZPzsYrjRidZB38xZS2",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 134,
+      "prompt_ms": 29.712,
+      "prompt_per_token_ms": 0.2217313432835821,
+      "prompt_per_second": 4509.962304792676,
+      "predicted_n": 1004,
+      "predicted_ms": 5460.343,
+      "predicted_per_token_ms": 5.444010967098704,
+      "predicted_per_second": 183.68809431934955
+    }
+  }
+}

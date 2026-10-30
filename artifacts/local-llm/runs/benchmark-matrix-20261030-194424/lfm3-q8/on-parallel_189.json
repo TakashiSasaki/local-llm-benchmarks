@@ -1,0 +1,128 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Can you find me parks in New York, USA that have a Tennis Court and a Picnic Area, then find parks in Los Angeles, USA that have a Playground and Running Track, and finally find parks in Chicago, USA that have a Tennis Court and a Playground?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "parks_find_nearby",
+          "description": "Locate nearby parks based on specific criteria like tennis court availability.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and state, e.g. London, UK"
+              },
+              "amenities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Tennis Court",
+                    "Picnic Area",
+                    "Playground",
+                    "Running Track"
+                  ]
+                },
+                "description": "Preferred amenities in park.",
+                "default": [
+                  "Playground"
+                ]
+              }
+            },
+            "required": [
+              "location"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to find parks in three different locations with specific amenities. The tool `parks_find_nearby` requires `location` and optionally `amenities`. The `amenities` parameter is an array with enum values: \"Tennis Court\", \"Picnic Area\", \"Playground\", \"Running Track\". Default is [\"Playground\"] but we need to specify the user's requirements.\n\nFor New York, USA: amenities = [\"Tennis Court\", \"Picnic Area\"]\nFor Los Angeles, USA: amenities = [\"Playground\", \"Running Track\"]\nFor Chicago, USA: amenities = [\"Tennis Court\", \"Playground\"]\n\nWe need to make three separate calls to the tool. Let's structure them.\n\nFirst call: location: \"New York, USA\", amenities: [\"Tennis Court\", \"Picnic Area\"]\nSecond call: location: \"Los Angeles, USA\", amenities: [\"Playground\", \"Running Track\"]\nThird call: location: \"Chicago, USA\", amenities: [\"Tennis Court\", \"Playground\"]\n\nWe'll invoke the tool three times.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "parks_find_nearby",
+                "arguments": "{\"location\":\"New York, USA\",\"amenities\":[\"Tennis Court\", \"Picnic Area\"]}"
+              },
+              "id": "LzBClg2DkhFsUk4ydjmKbJt8POwHQjUb"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "parks_find_nearby",
+                "arguments": "{\"location\":\"Los Angeles, USA\",\"amenities\":[\"Playground\", \"Running Track\"]}"
+              },
+              "id": "P6oRmjwANszvO7s0AKEHhEZ5znpIhJWF"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "parks_find_nearby",
+                "arguments": "{\"location\":\"Chicago, USA\",\"amenities\":[\"Tennis Court\", \"Playground\"]}"
+              },
+              "id": "Rkbz0m5XzpK35Xmj2Nqa2VnZ53DmftpK"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362304,
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 344,
+      "prompt_tokens": 204,
+      "total_tokens": 548,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-xgmUR9980OpM2QdyjPc6YtEv486ChvI3",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 204,
+      "prompt_ms": 41.18,
+      "prompt_per_token_ms": 0.20186274509803923,
+      "prompt_per_second": 4953.861097620204,
+      "predicted_n": 344,
+      "predicted_ms": 2970.144,
+      "predicted_per_token_ms": 8.65931195335277,
+      "predicted_per_second": 115.48261633106004
+    },
+    "_benchmark_estimated_prompt_tokens": 204,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 3.026066999998875,
+  "rendered_prompt_sha256": "f228a1d89223c7cea9266701ef00c0d15db5ecbdc62fe1036a4d7e0d96d55924"
+}

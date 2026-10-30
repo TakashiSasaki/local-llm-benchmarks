@@ -1,0 +1,113 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-vl-2b-q4-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user wants to find details of lawsuits with case numbers '67813' and '71249' filed in the New York District court for both 'Civil' and 'Criminal' cases. The tool court_case_find requires location, case_number (array), and case_type (enum Civil or Criminal, default Civil). The user mentions both Civil and Criminal cases, so we need to make two separate calls: one for Civil and one for Criminal, each with the same location and case numbers.\n\nFirst, let's parse the request: \"Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases.\" This implies we need to find details for both case types. So we should call the function twice: once with case_type \"Civil\", once with case_type \"Criminal\". The location is \"New York District court\". However, the location parameter expects \"city and court\". The user says \"New York District court\". That might be \"New York District Court\" or \"New York District\". I'll use \"New York District\" as location.\n\nLet's call the function for Civil first.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "AFCaNsYa7Oz8pnTxxCTpgC8CZCpOa9OE"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362433,
+    "model": "benchmark64k-lfm3-vl-2b-q4-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 288,
+      "prompt_tokens": 197,
+      "total_tokens": 485,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-dbOG8RJhAWrBorBE4ReuENZGuymn1OLY",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 197,
+      "prompt_ms": 34.734,
+      "prompt_per_token_ms": 0.17631472081218275,
+      "prompt_per_second": 5671.676167444003,
+      "predicted_n": 288,
+      "predicted_ms": 1576.562,
+      "predicted_per_token_ms": 5.493247386759582,
+      "predicted_per_second": 182.0416831053901
+    },
+    "_benchmark_estimated_prompt_tokens": 197,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 1.6289495999808423,
+  "rendered_prompt_sha256": "ee4d131cf1f5da0b16dedda5bd34f9074d966e9f7a68599ebe3bafab192c2844"
+}

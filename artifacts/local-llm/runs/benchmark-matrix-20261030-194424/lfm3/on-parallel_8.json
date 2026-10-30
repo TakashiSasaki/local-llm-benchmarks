@@ -1,0 +1,130 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Fetch the population of New York City, NY,  and Los Angeles, CA from US Census Database, and also get the population data for Alaska state and USA"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "database_us_census_get_population",
+          "description": "Fetch population data from US Census database.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string",
+                "description": "Name of the city, state, or country."
+              },
+              "type": {
+                "type": "string",
+                "description": "Specify whether the area is city/state/country."
+              },
+              "year": {
+                "type": "integer",
+                "description": "Year of the data",
+                "default": 2000
+              }
+            },
+            "required": [
+              "area",
+              "type"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to fetch population data for:\n1. New York City, NY\n2. Los Angeles, CA\n3. Alaska state\n4. USA\n\nThe tool `database_us_census_get_population` requires parameters: `area` and `type`. The `type` parameter specifies whether the area is city/state/country. The `year` parameter is optional with default 2000.\n\nFor each request, I need to call the function with appropriate `area` and `type`.\n\nLet's parse the requirements:\n\n- For New York City, NY: area = \"New York City, NY\" or maybe \"New York City\" and type = \"city\"? The tool description says: \"area: Name of the city, state, or country.\" and \"type: Specify whether the area is city/state/country.\" So for city, we might set type to \"city\". But the tool's parameters don't explicitly define the values for type. I need to infer. Typically, for US Census, area could be \"city\", \"state\", \"country\". So for New York City, NY, area is \"New York City, NY\" and type is \"city\"? Or maybe type is \"city, state\" etc. Let's look at the function signature again: `database_us_census_get_population` has parameters: properties: area (string), type (string), year (integer, default 2000). Required: area and type.\n\nThus I need to provide both. For New York City, NY: area = \"New York City, NY\", type = \"city\"? But maybe type should be \"city\" for city, \"state\" for state, \"country\" for country. I'll assume that.\n\nSimilarly, Los Angeles, CA: area = \"Los Angeles, CA\", type = \"city\".\n\nAlaska state: area = \"Alaska\", type = \"state\".\n\nUSA: area = \"USA\" or \"United States\", type = \"country\". I'll use \"USA\" or \"United States\"? The tool might expect \"USA\" or \"United States\". I'll try \"United States\" or \"USA\". Since the parameter description says \"Name of the city, state, or country.\" I'll use \"United States\" for country. But let's see if there's a standard. I'll go with \"USA\" as it's common abbreviation. However, to be safe, I can check the tool's behavior? Not possible. I'll make reasonable guesses.\n\nAlso, the year parameter: default is 2000. The user didn't specify a year, so we can use default.\n\nThus I need to make four calls.\n\nLet's structure the calls:\n\n1. For New York City, NY: name: database_us_census_get_population, arguments: {\"area\": \"New York City, NY\", \"type\": \"city\"}\n2. For Los Angeles, CA: name: database_us_census_get_population, arguments: {\"area\": \"Los Angeles, CA\", \"type\": \"city\"}\n3. For Alaska state: name: database_us_census_get_population, arguments: {\"area\": \"Alaska\", \"type\": \"state\"}\n4. For USA: name: database_us_census_get_population, arguments: {\"area\": \"United States\", \"type\": \"country\"} or \"USA\"? I'll try \"United States\" first. But maybe \"USA\" is expected. I'll use \"United States\" as it's more formal. However, the tool might have specific values. Since I don't have that info, I'll go with \"USA\" as the user wrote \"USA\". The user said \"USA\". So I'll use \"USA\" for area.\n\nLet's execute these calls. I'll do them in one block.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"New York City, NY\",\"type\":\"city\"}"
+              },
+              "id": "MaLucmextPwfQi01yfTvQHbtVvtnvTy5"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"Los Angeles, CA\",\"type\":\"city\"}"
+              },
+              "id": "fYpG2X9Xeic36qFwuDhk36pKxymiSHnK"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"Alaska\",\"type\":\"state\"}"
+              },
+              "id": "wr3iHXzatWtytUbjhM2n8dxy8VXjhH7m"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"USA\",\"type\":\"country\"}"
+              },
+              "id": "E3ZdPGvbJhThA6znbWgtq9iwIGNckFl7"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362018,
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 919,
+      "prompt_tokens": 170,
+      "total_tokens": 1089,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-7LZVejDRjYUueJKzPIDAPmmqSw3WfFQ5",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 170,
+      "prompt_ms": 35.511,
+      "prompt_per_token_ms": 0.20888823529411765,
+      "prompt_per_second": 4787.24902142998,
+      "predicted_n": 919,
+      "predicted_ms": 5063.49,
+      "predicted_per_token_ms": 5.51578431372549,
+      "predicted_per_second": 181.2978795257816
+    },
+    "_benchmark_estimated_prompt_tokens": 170,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 5.116483899997547,
+  "rendered_prompt_sha256": "a016ba3faea8afd7d8367ed862f2708946451af7d7ba50f361883b6228cbe44d"
+}

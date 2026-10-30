@@ -1,0 +1,130 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Fetch the population of New York City, NY,  and Los Angeles, CA from US Census Database, and also get the population data for Alaska state and USA"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "database_us_census_get_population",
+          "description": "Fetch population data from US Census database.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string",
+                "description": "Name of the city, state, or country."
+              },
+              "type": {
+                "type": "string",
+                "description": "Specify whether the area is city/state/country."
+              },
+              "year": {
+                "type": "integer",
+                "description": "Year of the data",
+                "default": 2000
+              }
+            },
+            "required": [
+              "area",
+              "type"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to fetch population data for:\n1. New York City, NY\n2. Los Angeles, CA\n3. Alaska state\n4. USA\n\nThe tool `database_us_census_get_population` requires parameters: `area` and `type`. The `type` parameter specifies whether the area is city/state/country. The `year` is optional with default 2000.\n\nFrom the description:\n- For city/state/country, we need to specify `area` and `type`. \n- For \"New York City, NY\", area is \"New York City, NY\" and type is likely \"city\" or \"state\"? The tool's `type` parameter description says \"Specify whether the area is city/state/country.\" So we need to know the exact values for `type`. The tool doesn't specify enum values. Common sense: for US Census, type might be \"city\", \"state\", \"country\". But we need to infer from the function signature. The function parameters: `area` (string), `type` (string), `year` (int, default 2000). Required: `area` and `type`.\n\nWe need to make four calls:\n- area: \"New York City, NY\", type: \"city\"? Or \"city, state\"? Possibly \"city\" for city, \"state\" for state, \"country\" for country. But the description says \"Name of the city, state, or country.\" and \"Specify whether the area is city/state/country.\" So `type` likely indicates the category. I'll assume \"city\" for city, \"state\" for state, \"country\" for country.\n\nThus:\n1. New York City, NY -> area: \"New York City, NY\", type: \"city\"\n2. Los Angeles, CA -> area: \"Los Angeles, CA\", type: \"city\"\n3. Alaska state -> area: \"Alaska\", type: \"state\"\n4. USA -> area: \"USA\" or \"United States\", type: \"country\"? Probably \"USA\" or \"United States\". I'll use \"USA\" as given.\n\nBut let's check typical US Census data: They might use \"New York City\" as city, \"New York\" as state, \"USA\" as country. However, the user said \"New York City, NY\" and \"Los Angeles, CA\" which include state abbreviations. For Alaska state, just \"Alaska\". For USA, \"USA\" or \"United States\". I'll try to be consistent.\n\nI'll make four separate calls. The tool can be invoked multiple times. Let's structure the calls.\n\nFirst call: New York City, NY, type city.\nSecond: Los Angeles, CA, type city.\nThird: Alaska, type state.\nFourth: USA, type country.\n\nBut note: The tool's `type` parameter might require specific strings. Without documentation, I'll guess based on common usage. Alternatively, maybe `type` is \"population\" or something else? The description: \"Specify whether the area is city/state/country.\" So likely values are \"city\", \"state\", \"country\". I'll proceed.\n\nLet's write the calls.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"New York City, NY\",\"type\":\"city\"}"
+              },
+              "id": "QFQtr069fIc8Ii8g4Dk2TddsY9kFwrj6"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"Los Angeles, CA\",\"type\":\"city\"}"
+              },
+              "id": "6Lwyc7GPWlYGQLiSpwbkRGUlHiqxWYAm"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"Alaska\",\"type\":\"state\"}"
+              },
+              "id": "7AOH6rnxriwpkYMLLjaiqAAz03jcofBo"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"USA\",\"type\":\"country\"}"
+              },
+              "id": "gLMtvMbWdsjZdtgirnRXBzR6AWIADY8E"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362244,
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 797,
+      "prompt_tokens": 170,
+      "total_tokens": 967,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-TYZ1Lzf4Kd1uhxu8QOPlMvI4ldGvYcek",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 170,
+      "prompt_ms": 40.213,
+      "prompt_per_token_ms": 0.23654705882352942,
+      "prompt_per_second": 4227.4886230820875,
+      "predicted_n": 797,
+      "predicted_ms": 6898.143,
+      "predicted_per_token_ms": 8.66600879396985,
+      "predicted_per_second": 115.39337470968636
+    },
+    "_benchmark_estimated_prompt_tokens": 170,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 6.955509199993685,
+  "rendered_prompt_sha256": "a016ba3faea8afd7d8367ed862f2708946451af7d7ba50f361883b6228cbe44d"
+}

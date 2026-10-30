@@ -1,0 +1,67 @@
+{
+  "request": {
+    "model": "legacy64k-lfm-on-180109",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests."
+      },
+      {
+        "role": "user",
+        "content": "from typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n"
+      }
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0,
+    "presence_penalty": 0,
+    "repeat_penalty": 1,
+    "seed": 42,
+    "max_tokens": 64000,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    },
+    "cache_prompt": false
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "from typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\"Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    result: List[int] = []\n    for v in values:\n        # Exclude booleans since bool is a subclass of int\n        if isinstance(v, int) and not isinstance(v, bool):\n            result.append(v)\n    return result",
+          "reasoning_content": "We need to implement filter_integers(values: List[Any]) -> List[int] that filters the list of any python values, returning only those that are integers (presumably int type, not bool? In Python bool is subclass of int, but probably they want to exclude booleans? The prompt says \"only for integers\". Usually filter_integers would include int and not bool. But typical test cases: [1, 2, 3, 'abc', {}, []] -> [1,2,3]. No booleans. Also example: ['a', 3.14, 5] -> [5]. So they include float 3.14 excluded. So it's type checking: isinstance(x, int) and not isinstance(x, bool). Actually bool is subclass of int. If we include bool, then filter_integers([True, False, 1, 2]) would return [True, False, 1, 2]? That's weird. Many similar tasks treat bools as not integers. Let's check typical similar tasks: \"filter integers from a list\" often uses isinstance(x, int) and type(x) is int, i.e., excludes bool. But sometimes they accept bool. Since not specified, we can decide to exclude bool.\n\nImplementation: iterate over values, if isinstance(v, int) and not isinstance(v, bool) (or type(v) is int) then add to result.\n\nReturn list of ints.\n\nEdge Cases: The input list may contain nested lists? Not needed.\n\nComplexity: O(n).\n\nImplementation straightforward.\n\nWe need to output only function code with imports.\n\nImports: from typing import List, Any.\n\nDefine function filter_integers(values: List[Any]) -> List[int]: docstring as given.\n\nWe'll implement:\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\"Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    result: List[int] = []\n    for v in values:\n        # exclude booleans\n        if isinstance(v, int) and not isinstance(v, bool):\n            result.append(v)\n    return result\n\nThat's it.\n\nBut they might want to use list comprehension: return [v for v in values if isinstance(v, int) and not isinstance(v, bool)].\n\nBetter to keep readability.\n\nPotential test: filter_integers([True, 1, 2]) returns [1,2].\n\nNow produce final code block.\n\nWe must not include any explanations.\n\nThus final answer:\n\n```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\"Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    result: List[int] = []\n    for v in values:\n        # bool is a subclass of int, so explicitly exclude it\n        if isinstance(v, int) and not isinstance(v, bool):\n            result.append(v)\n    return result\n```\n\nBut maybe they want to keep docstring exactly as given. Ensure that docstring matches. The docstring includes triple quotes. Keep.\n\nPotential nuance: The provided docstring includes examples with >>>. Should we keep them? The function signature includes docstring. It's fine.\n\nThus final answer.\n\nBut the user request: \"Implement this function.\" They ask: \"from typing import List, Any\". So we need to import List and Any.\n\nThus final code.\n\nWe'll output the module.\n\nCheck if any other imports needed: none.\n\nEdge Cases: If values contain ints and other ints like numpy ints? Not needed.\n\nThus final.\n\nPotential improvements: Use list comprehension.\n\nImplementation:\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    return [v for v in values if isinstance(v, int) and not isinstance(v, bool)]\n\nBut we need to annotate result.\n\nBetter to include docstring.\n\nNow produce final.\n\nWe must not include any markdown? The system says \"Return only a complete Python module with the specified signature and required imports.\" The user didn't ask for markdown. Typically we output code block. But it's ambiguous. The prompt says \"Return only a complete Python module with the specified signature and required imports.\" Usually we output code fences. But they didn't ask to avoid markdown. However the instruction: \"Return only a complete Python module with the specified signature and required imports.\" Usually we provide code block. But safe to include triple backticks with python. However earlier system messages said \"Output the requested JSON only.\" That's a different scenario. Here they want code. The user says \"Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests.\"\n\nThus they specifically said \"Do not include explanations, markdown, or tests.\" So we must not include markdown fences. So just plain code lines. So we should output plain text containing the import lines and function definition, without any markdown formatting.\n\nThus output:\n\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\"Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    result: List[int] = []\n    for v in values:\n        if isinstance(v, int) and not isinstance(v, bool):\n            result.append(v)\n    return result\n\nNo markdown fences.\n\nThus final answer.\n\nDouble-check: Should we import List and Any? Yes.\n\nPotential style: from typing import List, Any. Good.\n\nDocstring includes examples.\n\nWe need to ensure that the function returns List[int] but returns list of ints.\n\nAll good.\n\nThus final.\n\nPotential issues: The code uses `result: List[int] = []` which is fine.\n\nAlternatively using list comprehension: return [v for v in values if isinstance(v, int) and not isinstance(v, bool)].\n\nBut fine.\n\nNow produce final answer.\n\nMake sure no extra spaces or lines? Not important.\n\nThus final output:\n\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\"Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    result: List[int] = []\n    for v in values:\n        if isinstance(v, int) and not isinstance(v, bool):\n            result.append(v)\n    return result\n\nWe'll provide that.\n\nCheck that no stray markdown. Good.\n\nThus final.\n"
+        }
+      }
+    ],
+    "created": 1793351765,
+    "model": "legacy64k-lfm-on-180109",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1689,
+      "prompt_tokens": 134,
+      "total_tokens": 1823,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-qZJm6SekvKJbvpXIub4vTG7UEjeDqmPn",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 134,
+      "prompt_ms": 709.178,
+      "prompt_per_token_ms": 5.292373134328358,
+      "prompt_per_second": 188.95115189698495,
+      "predicted_n": 1689,
+      "predicted_ms": 36541.447,
+      "predicted_per_token_ms": 21.64777665876777,
+      "predicted_per_second": 46.19412033683285
+    },
+    "_benchmark_estimated_prompt_tokens": 133,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 37.269512999992
+}

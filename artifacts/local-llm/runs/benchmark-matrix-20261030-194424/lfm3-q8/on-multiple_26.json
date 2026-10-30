@@ -1,0 +1,164 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find out the rewards for playing Fortnite on Playstation platform with different missions and trophies"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "game_scores_get",
+          "description": "Retrieve scores and rankings based on player’s performance in a certain game.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "game": {
+                "type": "string",
+                "description": "The name of the game."
+              },
+              "platform": {
+                "type": "string",
+                "description": "The gaming platform e.g. Xbox, Playstation, PC"
+              },
+              "level": {
+                "type": "integer",
+                "description": "The level of the game for which you want to retrieve the scores."
+              },
+              "player": {
+                "type": "string",
+                "description": "The name of the player for whom you want to retrieve scores. Default ''",
+                "optional": true
+              }
+            },
+            "required": [
+              "game",
+              "platform",
+              "level"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "game_rewards_get",
+          "description": "Retrieve information about different types of rewards that you can receive when playing a certain game.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "game": {
+                "type": "string",
+                "description": "The name of the game."
+              },
+              "platform": {
+                "type": "string",
+                "description": "The gaming platform e.g. Xbox, Playstation, PC"
+              },
+              "mission": {
+                "type": "string",
+                "description": "The mission for which you want to know the rewards. Default to ''",
+                "optional": true
+              },
+              "trophy": {
+                "type": "string",
+                "description": "The trophy level for which you want to know the rewards. Default to ''",
+                "optional": true
+              }
+            },
+            "required": [
+              "game",
+              "platform"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "game_missions_list",
+          "description": "List all missions for a certain game.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "game": {
+                "type": "string",
+                "description": "The name of the game."
+              }
+            },
+            "required": [
+              "game"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to find out the rewards for playing Fortnite on Playstation platform with different missions and trophies. The user mentions \"different missions and trophies\". Looking at the available tools, there's `game_rewards_get` which retrieves information about different types of rewards for a certain game. Its parameters include `game`, `platform`, `mission`, and `trophy`. The required parameters are `game` and `platform`. The `mission` and `trophy` are optional.\n\nThe user specifically asks for \"different missions and trophies\". This suggests we might need to get rewards for various missions and trophies. However, the `game_rewards_get` function seems to take a single `mission` or `trophy` parameter. It doesn't have a parameter to list all missions or all trophies. But maybe we can call it without specifying mission and trophy to get general rewards? Or perhaps we need to call it multiple times? Let's examine the function signature again.\n\n`game_rewards_get` parameters:\n- `game` (required)\n- `platform` (required)\n- `mission` (optional)\n- `trophy` (optional)\n\nThe description: \"Retrieve information about different types of rewards that you can receive when playing a certain game.\" It doesn't explicitly say it can list all missions/trophies. But the user wants \"different missions and trophies\". Possibly we need to get rewards for each mission and trophy? That might require multiple calls. However, without a way to list all missions or trophies, maybe the function returns all available rewards including for different missions/trophies? The parameters `mission` and `trophy` are optional, so if we don't provide them, maybe it returns all rewards for the game on that platform.\n\nGiven the ambiguity, I think the best approach is to call `game_rewards_get` with `game=\"Fortnite\"`, `platform=\"Playstation\"`, and omit `mission` and `trophy` to get the general rewards information. But the user specifically mentions \"different missions and trophies\". Maybe we need to specify `mission` and `trophy` as empty strings? The default is empty string. The parameter description says \"Default to ''\". So we can just not include them.\n\nAlternatively, there is `game_missions_list` which lists all missions for a certain game. That could be used to get the list of missions. But the user asks for rewards for playing Fortnite on Playstation with different missions and trophies. So we might need to combine information: first get missions, then for each mission get rewards? Or maybe the `game_rewards_get` can handle multiple missions/trophies if we don't specify? I'm not sure.\n\nLet's look at the tools again:\n\n1. `game_scores_get` - for scores and rankings.\n2. `game_rewards_get` - for rewards.\n3. `game_missions_list` - for listing missions.\n\nGiven the user's query: \"Find out the rewards for playing Fortnite on Playstation platform with different missions and trophies\". This could be interpreted as: get the rewards available for Fortnite on PlayStation, and specifically for different missions and trophies. So we might need to get rewards for each mission and trophy? But without knowing the missions and trophies, we can't specify. Perhaps the `game_rewards_get` function, when called without mission/trophy, returns all reward types across all missions and trophies? Or maybe it returns rewards for a specific mission/trophy if provided, else general.\n\nGiven the lack of clarity, I'll try to call `game_rewards_get` with just `game` and `platform`. That should give us the basic reward info. If the user wants \"different missions and trophies\", maybe the response will include that detail. Alternatively, we could also call `game_missions_list` to get the list of missions, but that doesn't directly give rewards.\n\nLet's proceed with `game_rewards_get` for Fortnite on PlayStation. I'll set `game=\"Fortnite\"`, `platform=\"Playstation\"`. I won't specify mission or trophy.\n\nThus, the tool call:",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "game_rewards_get",
+                "arguments": "{\"game\":\"Fortnite\",\"platform\":\"Playstation\"}"
+              },
+              "id": "8wH1Zq6iwoWx4UjvbWSho69eSGaJMUut"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362207,
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 887,
+      "prompt_tokens": 418,
+      "total_tokens": 1305,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-rgAN70fk75trFyCfHHyodQykKA6ubluT",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 418,
+      "prompt_ms": 57.413,
+      "prompt_per_token_ms": 0.1373516746411483,
+      "prompt_per_second": 7280.581053071605,
+      "predicted_n": 887,
+      "predicted_ms": 7724.565,
+      "predicted_per_token_ms": 8.71847065462754,
+      "predicted_per_second": 114.69901541381296
+    },
+    "_benchmark_estimated_prompt_tokens": 418,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 7.801784500014037,
+  "rendered_prompt_sha256": "c6f342d9c78ecefe9a059f5dbc3f14a7f3c2f111b80af67e3fcbf6b9750388aa"
+}

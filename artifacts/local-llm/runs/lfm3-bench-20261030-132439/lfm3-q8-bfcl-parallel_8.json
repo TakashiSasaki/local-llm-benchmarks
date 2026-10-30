@@ -1,0 +1,125 @@
+{
+  "request": {
+    "model": "benchmark-lfm3-1.7b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Fetch the population of New York City, NY,  and Los Angeles, CA from US Census Database, and also get the population data for Alaska state and USA"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "database_us_census_get_population",
+          "description": "Fetch population data from US Census database.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string",
+                "description": "Name of the city, state, or country."
+              },
+              "type": {
+                "type": "string",
+                "description": "Specify whether the area is city/state/country."
+              },
+              "year": {
+                "type": "integer",
+                "description": "Year of the data",
+                "default": 2000
+              }
+            },
+            "required": [
+              "area",
+              "type"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 1024,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "We need to fetch population data for:\n1. New York City, NY\n2. Los Angeles, CA\n3. Alaska state\n4. USA\n\nThe function `database_us_census_get_population` requires parameters `area` and `type`. The `type` parameter specifies whether the area is city/state/country. The `year` parameter is optional with default 2000.\n\nLet's break down each request:\n\n- For New York City, NY: `area` = \"New York City\", `type` = \"city\" or \"state\"? Actually, the description says \"area: Name of the city, state, or country.\" and `type: Specify whether the area is city/state/country.\" So for city, we might set `type` to \"city\". But the function doesn't specify exact values for `type`. We'll assume \"city\" for city, \"state\" for state, and \"country\" for country.\n\nSimilarly:\n- Los Angeles, CA: `area` = \"Los Angeles\", `type` = \"city\"\n- Alaska state: `area` = \"Alaska\", `type` = \"state\"\n- USA: `area` = \"USA\" or \"United States\", `type` = \"country\"\n\nWe also need to consider the year. The default is 2000, but the user didn't specify a year. We can either use default or ask? Since the function has a default, we can omit it.\n\nThus, we need to make four calls.\n\nLet's construct the calls:\n\n1. New York City, NY: \n   - area: \"New York City\"\n   - type: \"city\"\n   - year: not specified, so default 2000.\n\n2. Los Angeles, CA:\n   - area: \"Los Angeles\"\n   - type: \"city\"\n\n3. Alaska state:\n   - area: \"Alaska\"\n   - type: \"state\"\n\n4. USA:\n   - area: \"USA\" or \"United States\"? The user said \"USA\". We'll use \"USA\" as given. But maybe the database expects \"United States\". We'll try \"USA\" first? The function doesn't specify. We'll go with \"USA\" as per user input.\n\nWe'll make four separate tool calls.</think>",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"New York City\",\"type\":\"city\"}"
+              },
+              "id": "70ByLxCzDD1Umji1O6Tso9AfgnEs5gsP"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"Los Angeles\",\"type\":\"city\"}"
+              },
+              "id": "8zvFuIq9V0UF0092y3sxWRiDyFFcHoq6"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"Alaska\",\"type\":\"state\"}"
+              },
+              "id": "iPLivcLYsnaAApci4t4wlke0aDLQeDYv"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "database_us_census_get_population",
+                "arguments": "{\"area\":\"USA\",\"type\":\"country\"}"
+              },
+              "id": "CdQdNSC0HtAGpy5h4tI5udzcL1OIzFO0"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793335827,
+    "model": "benchmark-lfm3-1.7b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 601,
+      "prompt_tokens": 171,
+      "total_tokens": 772,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-LxYtetndvBMBWhHVN6fcVVoz1jmuJFUt",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 171,
+      "prompt_ms": 39.652,
+      "prompt_per_token_ms": 0.23188304093567252,
+      "prompt_per_second": 4312.518914556643,
+      "predicted_n": 601,
+      "predicted_ms": 5196.744,
+      "predicted_per_token_ms": 8.66124,
+      "predicted_per_second": 115.45690917235869
+    }
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "request": {
+    "model": "benchmark64k-qwen3.6-35b-a3b-hermes-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Can you find me parks in New York, USA that have a Tennis Court and a Picnic Area, then find parks in Los Angeles, USA that have a Playground and Running Track, and finally find parks in Chicago, USA that have a Tennis Court and a Playground?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "parks_find_nearby",
+          "description": "Locate nearby parks based on specific criteria like tennis court availability.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and state, e.g. London, UK"
+              },
+              "amenities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Tennis Court",
+                    "Picnic Area",
+                    "Playground",
+                    "Running Track"
+                  ]
+                },
+                "description": "Preferred amenities in park.",
+                "default": [
+                  "Playground"
+                ]
+              }
+            },
+            "required": [
+              "location"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - The user wants three separate park searches:\n     a. New York, USA: Tennis Court and Picnic Area\n     b. Los Angeles, USA: Playground and Running Track\n     c. Chicago, USA: Tennis Court and Playground\n   - I need to use the `parks_find_nearby` function for each request.\n\n2.  **Check Function Parameters:**\n   - `location` (required): string, e.g., \"London, UK\"\n   - `amenities` (optional): array of strings from enum [\"Tennis Court\", \"Picnic Area\", \"Playground\", \"Running Track\"], default [\"Playground\"]\n\n3.  **Map Requests to Function Calls:**\n   - Call 1: location=\"New York, USA\", amenities=[\"Tennis Court\", \"Picnic Area\"]\n   - Call 2: location=\"Los Angeles, USA\", amenities=[\"Playground\", \"Running Track\"]\n   - Call 3: location=\"Chicago, USA\", amenities=[\"Tennis Court\", \"Playground\"]\n\n4.  **Execute Function Calls:**\n   I will make three parallel calls to `parks_find_nearby`.\n\n   Let's verify the enum values match exactly: \"Tennis Court\", \"Picnic Area\", \"Playground\", \"Running Track\". All match.\n   Locations are formatted as \"City, USA\" which matches the expected format.\n\n   Proceed with calls.✅",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "parks_find_nearby",
+                "arguments": "{\"location\":\"New York, USA\",\"amenities\":[\"Tennis Court\", \"Picnic Area\"]}"
+              },
+              "id": "4mIF5XBEClVigBF7eRdOChVVhktayH4X"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "parks_find_nearby",
+                "arguments": "{\"location\":\"Los Angeles, USA\",\"amenities\":[\"Playground\", \"Running Track\"]}"
+              },
+              "id": "nMg1gr7vaTK2lEjPWnN9NVTzcGe4jzuf"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "parks_find_nearby",
+                "arguments": "{\"location\":\"Chicago, USA\",\"amenities\":[\"Tennis Court\", \"Playground\"]}"
+              },
+              "id": "FuFKW8aNH2dmxiOx9y3Ps7nhoNUKP06M"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793359600,
+    "model": "benchmark64k-qwen3.6-35b-a3b-hermes-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 477,
+      "prompt_tokens": 404,
+      "total_tokens": 881,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-hPx2YnWx4JIjABAc8HpB4hBc2jQDdrfs",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 404,
+      "prompt_ms": 1351.706,
+      "prompt_per_token_ms": 3.345806930693069,
+      "prompt_per_second": 298.88156152299393,
+      "predicted_n": 477,
+      "predicted_ms": 12261.296,
+      "predicted_per_token_ms": 25.759025210084033,
+      "predicted_per_second": 38.821344823581455
+    },
+    "_benchmark_estimated_prompt_tokens": 404,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 13.616766800012556,
+  "rendered_prompt_sha256": "e2d9b441e33bc21abfad7902746ca698487d133aa6b82b3040b29aa3b9dc429f"
+}

@@ -1,0 +1,133 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the status and scheduled trial date for case number XY1234 in Los Angeles County Court, and case number GH5678 in Orange County Court?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_info_get_case_status",
+          "description": "Retrieves the status and trial dates for court cases from specified county courts.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "case_number": {
+                "type": "string",
+                "description": "The specific court case number."
+              },
+              "court": {
+                "type": "string",
+                "description": "The county court where the case is filed."
+              },
+              "details": {
+                "type": "string",
+                "enum": [
+                  "status",
+                  "trial_date"
+                ],
+                "description": "Specific details required about the court case. Defaults to 'status'."
+              }
+            },
+            "required": [
+              "case_number",
+              "court"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to get the status and trial date for two different cases in two different counties. The tool `court_info_get_case_status` requires parameters: `case_number` and `court`. It also has an optional parameter `details` which can be \"status\" or \"trial_date\". The user asks for both status and trial date for each case. However, the tool's `details` parameter is a single enum, not multiple. So we might need to call the tool twice for each case, once for status and once for trial date? Or perhaps we can call it with `details` set to something? Let's read the function signature again.\n\nThe function `court_info_get_case_status` has parameters: `case_number` (required), `court` (required), `details` (optional, enum [\"status\", \"trial_date\"], defaults to 'status'). So to get both status and trial date, we would need to make two separate calls per case? Or maybe the tool can return both if we don't specify details? The description says \"details: Specific details required about the court case. Defaults to 'status'.\" That implies if we don't provide details, it returns status. But we need both. So we need to call it twice for each case: once with details=\"status\" and once with details=\"trial_date\". However, the user asked for both status and trial date for each case. So we should get both.\n\nAlternatively, maybe the tool can handle multiple details? The parameter is a string, not an array. So likely separate calls.\n\nThus, for case XY1234 in Los Angeles County Court: need status and trial date.\nFor case GH5678 in Orange County Court: need status and trial date.\n\nWe can structure the calls as four separate calls? Or maybe we can call with details unspecified for one and then specify? But the function requires `case_number` and `court`. We can call with just those and get status by default, but we need trial date too. So better to make two calls per case.\n\nLet's plan:\n\nCall 1: court_info_get_case_status(case_number=\"XY1234\", court=\"Los Angeles County Court\", details=\"status\")\nCall 2: court_info_get_case_status(case_number=\"XY1234\", court=\"Los Angeles County Court\", details=\"trial_date\")\nCall 3: court_info_get_case_status(case_number=\"GH5678\", court=\"Orange County Court\", details=\"status\")\nCall 4: court_info_get_case_status(case_number=\"GH5678\", court=\"Orange County Court\", details=\"trial_date\")\n\nBut maybe the tool can accept \"details\" as \"status,trial_date\"? The enum doesn't allow that. So separate calls.\n\nHowever, we can also consider that maybe the tool returns both by default? The description says \"Retrieves the status and trial dates for court cases\". That might imply it returns both? But the parameters include `details` to specify which one. Hmm. Let's re-read: \"Retrieves the status and trial dates for court cases from specified county courts.\" That's the overall description. The parameters: `case_number`, `court`, `details`. The `details` is \"Specific details required about the court case. Defaults to 'status'.\" So it seems you can request either status or trial_date. So to get both, you need two calls.\n\nThus, I'll make four calls. But maybe we can optimize by calling with `details` omitted for one and then infer? No, we need both.\n\nLet's execute the calls. I'll write them in sequence.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"status\"}"
+              },
+              "id": "gKaEaYa8BMbegPvm04Pwx5RYRgnOl0dE"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"trial_date\"}"
+              },
+              "id": "jISC3t09gTHdmU1ROEqkVuMWjjbibsjb"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"status\"}"
+              },
+              "id": "SbkXI5OREkrvLLsZLyr3RgRENDQAMUFg"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"trial_date\"}"
+              },
+              "id": "2aqR861QAASPYf9XVYh2nXQdthQyGcM3"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362023,
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 910,
+      "prompt_tokens": 180,
+      "total_tokens": 1090,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-dTSNLpC0XCzG4waMIplLK8AxPa0rEErU",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 180,
+      "prompt_ms": 35.48,
+      "prompt_per_token_ms": 0.1971111111111111,
+      "prompt_per_second": 5073.280721533259,
+      "predicted_n": 910,
+      "predicted_ms": 5013.124,
+      "predicted_per_token_ms": 5.514987898789879,
+      "predicted_per_second": 181.3240606057221
+    },
+    "_benchmark_estimated_prompt_tokens": 180,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 5.066592600021977,
+  "rendered_prompt_sha256": "06d9a01f731a2c34575488e95f666e481bd5b85dbb529b96cdaca987c62204b7"
+}

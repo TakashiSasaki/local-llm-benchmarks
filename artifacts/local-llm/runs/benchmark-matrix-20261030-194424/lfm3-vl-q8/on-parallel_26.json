@@ -1,0 +1,113 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-vl-2b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user wants to find details of lawsuits with case numbers '67813' and '71249' filed in the New York District court for both 'Civil' and 'Criminal' cases. The tool court_case_find requires location, case_number (array), and case_type (enum Civil or Criminal, default Civil). The user mentions \"New York District court\" as location, and case numbers '67813' and '71249'. They want details for both case types: Civil and Criminal. So we need to make two separate calls: one for Civil case type, one for Criminal case type. Or perhaps we can call the tool twice with different case_type values. Let's parse: \"Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases.\" This could mean they want details for both case types. So we need to query for each case number and each case type. However, the tool requires location and case_number as required parameters. We can call it three times: for case_number '67813' with case_type 'Civil', then for case_number '67813' with case_type 'Criminal', and similarly for '71249'. But maybe we can combine? The tool only accepts one case_type per call. So we need to make multiple calls.\n\nLet's first call for case_number '67813', location 'New York District court', case_type 'Civil'. Then another call for case_number '67813', location 'New York District court', case_type 'Criminal'. Then for case_number '71249', location 'New York District court', case_type 'Civil', and case_type 'Criminal'.\n\nBut note: The location parameter expects \"city and court\". The user said \"New York District court\". That might be \"New York District Court\" or \"New York District\". I'll use \"New York District court\" as location.\n\nLet's start with first call: case_number ['67813'], location 'New York District court', case_type 'Civil'.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "9MHk426821rX9SPCYsp14FN1OsqvrPkO"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362628,
+    "model": "benchmark64k-lfm3-vl-2b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 468,
+      "prompt_tokens": 197,
+      "total_tokens": 665,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-5q9PYNoSOrdOnbSbgqjRzXMp1q1iTqjN",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 197,
+      "prompt_ms": 40.546,
+      "prompt_per_token_ms": 0.20581725888324873,
+      "prompt_per_second": 4858.679031223795,
+      "predicted_n": 468,
+      "predicted_ms": 4046.861,
+      "predicted_per_token_ms": 8.665655246252676,
+      "predicted_per_second": 115.3980826126719
+    },
+    "_benchmark_estimated_prompt_tokens": 197,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 4.102003000007244,
+  "rendered_prompt_sha256": "ee4d131cf1f5da0b16dedda5bd34f9074d966e9f7a68599ebe3bafab192c2844"
+}

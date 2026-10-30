@@ -1,0 +1,121 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to find details of court cases based on the parameters provided. The user asks for lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases.\n\nLooking at the available tool `court_case_find`, its parameters are:\n- `location` (required): string, city and court where lawsuit is filed.\n- `case_number` (required): array of strings, unique case numbers.\n- `case_type` (optional, default \"Civil\"): string, enum [\"Civil\", \"Criminal\"].\n\nThe user specified:\n- Case numbers: '67813', '71249' -> so `case_number` should be an array `[\"67813\", \"71249\"]`.\n- Location: \"New York District court\" -> likely \"New York\" or \"New York District\"? The parameter description says \"city and court\". So probably \"New York\" and \"District Court\" or \"New York District Court\". I'll interpret as \"New York District Court\" or \"New York\". The user said \"New York District court\". I'll use \"New York District Court\" or maybe just \"New York\". Since the tool requires `location`, I need to provide a string. I'll go with \"New York\" as city and maybe \"District Court\" is part of it? The user explicitly said \"New York District court\". I'll use \"New York District Court\" as location.\n\n- Case types: 'Civil' and 'Criminal'. The tool's `case_type` parameter is a single string with enum values, not an array. The function signature shows `case_type` is a property but not in the required list. However, the user wants both 'Civil' and 'Criminal'. The tool's `case_type` has a default of \"Civil\" and is a string. It doesn't support multiple values. This is a problem. The tool might only allow one case type per call. To get both, we might need to make two separate calls or perhaps the tool can handle an array? Looking at the schema: `case_type` is type \"string\", not array. So we cannot pass both in one call. \n\nWe need to decide: Should we call the tool twice? Or maybe the tool's `case_type` parameter can be omitted to get default (Civil) but we need Criminal too. The user asked for both types. So we should probably invoke the tool twice: once with case_type \"Civil\" and once with \"Criminal\". But the tool requires `location` and `case_number`. For the second call, we would need to provide case numbers again? The user gave two case numbers. So we need to handle both case numbers and both case types.\n\nLet's parse the user's request: \"Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases.\"\n\nInterpretation: For each case number, we need to find details for both Civil and Criminal? Or maybe they want to find details for case numbers 67813 and 71249, and for each, both types? The phrasing \"for type 'Civil' and 'Criminal' cases\" suggests they want both types. Since the tool can only handle one case_type at a time, we need to make two calls per case number? That would be four calls. But maybe we can just call the tool with case_number array and location, and omit case_type to get default Civil? But default is Civil, so we'd miss Criminal.\n\nAlternatively, maybe the tool's `case_type` parameter can be an array? The schema says type \"string\". So no.\n\nGiven the constraints, I think the best approach is to make two separate calls: one with case_type \"Civil\" and one with \"Criminal\", but each call needs location and case_number. However, we have two case numbers. We could combine them into one call per case_type? The tool's `case_number` is an array, so we can pass both case numbers in one array. So for Civil, we can pass case_number: [\"67813\", \"71249\"] and case_type: \"Civil\". For Criminal, we can pass case_number: [\"67813\", \"71249\"] and case_type: \"Criminal\". That would be two calls.\n\nThus, I'll structure the tool calls accordingly.\n\nLet's define:\nCall 1: name \"court_case_find\", arguments: {\"location\": \"New York District Court\", \"case_number\": [\"67813\", \"71249\"], \"case_type\": \"Civil\"}\nCall 2: name \"court_case_find\", arguments: {\"location\": \"New York District Court\", \"case_number\": [\"67813\", \"71249\"], \"case_type\": \"Criminal\"}\n\nBut need to confirm location string. The user said \"New York District court\". I'll use \"New York District Court\" as location. Possibly \"New York\" is enough, but I'll stick to user's phrasing.\n\nLet's execute.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District Court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "Wqb7oMBYurSnIdi8pBaUw0OLNrW4PZGM"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District Court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Criminal\"}"
+              },
+              "id": "8ojPjMaQR8VNMhSjrhuCW6SDo2ytk58F"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362031,
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1147,
+      "prompt_tokens": 197,
+      "total_tokens": 1344,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-wjw5BYJN8sROAuILU2UyZwIg8CGUc2lp",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 197,
+      "prompt_ms": 35.776,
+      "prompt_per_token_ms": 0.1816040609137056,
+      "prompt_per_second": 5506.484794275491,
+      "predicted_n": 1147,
+      "predicted_ms": 6343.104,
+      "predicted_per_token_ms": 5.534994764397906,
+      "predicted_per_second": 180.668644247359
+    },
+    "_benchmark_estimated_prompt_tokens": 197,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 6.395967499993276,
+  "rendered_prompt_sha256": "ee4d131cf1f5da0b16dedda5bd34f9074d966e9f7a68599ebe3bafab192c2844"
+}

@@ -1,0 +1,157 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find a 3 bedroom villa for sale within $300,000 to $400,000 budget in San Diego."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "property_valuation_get",
+          "description": "Get estimated value of a property based on location, specifications and age",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City and state where the property is located, e.g. San Diego, CA."
+              },
+              "propertyType": {
+                "type": "string",
+                "description": "Type of property such as villa, condo, apartment, etc."
+              },
+              "bedrooms": {
+                "type": "integer",
+                "description": "Number of bedrooms required in the property."
+              },
+              "age": {
+                "type": "integer",
+                "description": "Age of the property in years."
+              }
+            },
+            "required": [
+              "location",
+              "propertyType",
+              "bedrooms",
+              "age"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "realestate_find_properties",
+          "description": "Find properties based on location, budget, and specifications",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City and state where the property is located, e.g. San Diego, CA."
+              },
+              "propertyType": {
+                "type": "string",
+                "description": "Type of property such as villa, condo, apartment, etc."
+              },
+              "bedrooms": {
+                "type": "integer",
+                "description": "Number of bedrooms required in the property."
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "description": "Minimum budget limit. This is a float type value.",
+                    "format": "float"
+                  },
+                  "max": {
+                    "type": "number",
+                    "description": "Maximum budget limit. This is a float type value.",
+                    "format": "float"
+                  }
+                },
+                "description": "Budget range for the property."
+              }
+            },
+            "required": [
+              "location",
+              "propertyType",
+              "bedrooms",
+              "budget"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to find a 3 bedroom villa for sale in San Diego within the budget of $300,000 to $400,000. The user specified:\n- Property type: villa\n- Bedrooms: 3\n- Location: San Diego\n- Budget: min $300,000, max $400,000\n\nLooking at the available tools:\n1. `property_valuation_get` - gets estimated value based on location, specs, age. Requires location, propertyType, bedrooms, age. We don't have age here.\n2. `realestate_find_properties` - finds properties based on location, budget, and specifications. Requires location, propertyType, bedrooms, budget (which includes min and max). This seems to match our needs.\n\nThe `realestate_find_properties` function parameters:\n- location: string (e.g., \"San Diego, CA\")\n- propertyType: string (e.g., \"villa\")\n- bedrooms: integer\n- budget: object with min and max floats\n\nWe need to map the user's input to these parameters:\n- location: \"San Diego\" (should we include state? The example says \"San Diego, CA\". The user said \"San Diego\". I'll assume \"San Diego, CA\" is appropriate.)\n- propertyType: \"villa\"\n- bedrooms: 3\n- budget: { min: 300000, max: 400000 }\n\nThus, I'll call `realestate_find_properties` with these parameters.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "realestate_find_properties",
+                "arguments": "{\"location\":\"San Diego, CA\",\"propertyType\":\"villa\",\"bedrooms\":3,\"budget\":{\"min\": 300000, \"max\": 400000}}"
+              },
+              "id": "gp0cIFz5MhTY95s20vP37W41NlepxO2R"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362192,
+    "model": "benchmark64k-lfm3-1.7b-q8-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 381,
+      "prompt_tokens": 421,
+      "total_tokens": 802,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-eOMOPDutnJnpz21TljuV2IVVj0YJY07M",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 421,
+      "prompt_ms": 56.436,
+      "prompt_per_token_ms": 0.1340522565320665,
+      "prompt_per_second": 7459.777447019633,
+      "predicted_n": 381,
+      "predicted_ms": 3301.386,
+      "predicted_per_token_ms": 8.687857894736842,
+      "predicted_per_second": 115.10317181935103
+    },
+    "_benchmark_estimated_prompt_tokens": 421,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 3.3763097999908496,
+  "rendered_prompt_sha256": "07a964380bc9557437d78528ac353f275744cb62fa23dff0754cd49e317445c8"
+}

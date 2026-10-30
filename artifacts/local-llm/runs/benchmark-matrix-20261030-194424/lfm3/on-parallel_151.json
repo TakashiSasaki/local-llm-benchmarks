@@ -1,0 +1,121 @@
+{
+  "request": {
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "messages": [
+      {
+        "role": "user",
+        "content": "\"Can you help me calculate the total area of three different triangles? The first triangle has a base of 15 meters and a height of 20 meters. The second triangle has a base of 25 feet and a height of 30 feet. And the third triangle has a base of 35 inches and a height of 40 inches. I would like the area of each triangle in their respective units.\""
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "geometry_area_triangle",
+          "description": "Calculate the area of a triangle.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "base": {
+                "type": "integer",
+                "description": "The length of the base of the triangle."
+              },
+              "height": {
+                "type": "integer",
+                "description": "The height of the triangle from the base."
+              },
+              "unit": {
+                "type": "string",
+                "description": "The measurement unit for the area. Defaults to square meters."
+              }
+            },
+            "required": [
+              "base",
+              "height"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "We need to calculate the area of three different triangles. The tool `geometry_area_triangle` can calculate the area of a triangle given base and height, and optionally a unit. However, the tool requires `base` and `height` parameters. The `unit` parameter is optional and defaults to square meters. But for each triangle, the units are different: first is meters, second is feet, third is inches. The tool's `unit` parameter description says \"The measurement unit for the area. Defaults to square meters.\" It doesn't specify that we can change units per call. We need to see if we can pass the unit for each call. The function signature: `geometry_area_triangle(base: int, height: int, unit: str = \"square meters\")`. So we can specify unit for each call.\n\nThus, we need to make three separate calls:\n\n1. For first triangle: base=15, height=20, unit=\"meters\"? But the default is square meters. However, the user wants area in respective units. For base and height in meters, area will be in square meters. So we can just use default or specify \"square meters\". But to be precise, we can specify \"meters\" or \"square meters\"? The parameter is \"unit\" for the area. The description: \"The measurement unit for the area. Defaults to square meters.\" So if we want area in square meters, we can just not specify or specify \"square meters\". For the second triangle, base=25 feet, height=30 feet. The area will be in square feet if we specify \"square feet\" or \"feet\"? The tool's unit parameter likely expects a string like \"square meters\", \"square feet\", etc. But we need to check. The default is \"square meters\". So for feet, we might need to set unit to \"square feet\". Similarly for inches, \"square inches\". However, the tool's parameter type is string, no enum. We'll assume we can pass appropriate strings.\n\nLet's make three calls:\n\nCall 1: base=15, height=20, unit=\"square meters\" (or maybe \"meters\"? The description says \"measurement unit for the area\". Typically area unit is square of length unit. So for base and height in meters, area is square meters. So we can just omit unit or set to \"square meters\". I'll set to \"square meters\" to be explicit.\n\nCall 2: base=25, height=30, unit=\"square feet\".\n\nCall 3: base=35, height=40, unit=\"square inches\".\n\nBut note: The tool's parameters: `base` and `height` are integers. For feet and inches, they are integers as well. So that's fine.\n\nLet's implement.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "geometry_area_triangle",
+                "arguments": "{\"base\":15,\"height\":20,\"unit\":\"square meters\"}"
+              },
+              "id": "qzumvyuGaj0sbITpPJ6l8NoBBYbiF2Wa"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "geometry_area_triangle",
+                "arguments": "{\"base\":25,\"height\":30,\"unit\":\"square feet\"}"
+              },
+              "id": "8c4hZqcMerSnLyGT8nHgMa62doQZg64B"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "geometry_area_triangle",
+                "arguments": "{\"base\":35,\"height\":40,\"unit\":\"square inches\"}"
+              },
+              "id": "wgHh2mhfmgcV467aeNHLlQcxmhmBgA5M"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793362048,
+    "model": "benchmark64k-lfm3-1.7b-qad-q4-64k",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 676,
+      "prompt_tokens": 211,
+      "total_tokens": 887,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-yJGO0NKxNnZYGEDWCFcjKCmGUdBmnL0M",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 211,
+      "prompt_ms": 35.931,
+      "prompt_per_token_ms": 0.17028909952606633,
+      "prompt_per_second": 5872.366480198159,
+      "predicted_n": 676,
+      "predicted_ms": 3722.456,
+      "predicted_per_token_ms": 5.5147496296296294,
+      "predicted_per_second": 181.33189485651408
+    },
+    "_benchmark_estimated_prompt_tokens": 211,
+    "_benchmark_requested_output_tokens": 64000
+  },
+  "seconds": 3.775806699995883,
+  "rendered_prompt_sha256": "21c172da8a5d027e02cc0a46ceddfd9fba40810c40308689cd21491413749dee"
+}
