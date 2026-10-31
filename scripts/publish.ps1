@@ -13,6 +13,8 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Empero distill study verification failed'}
     python -B tools/verify_mtp_study.py
     if($LASTEXITCODE -ne 0){throw 'Quantization/MTP study verification failed'}
+    python -B tools/verify_mtp_study.py --prefix 20261031-qwen36-q4-mtp-64k
+    if($LASTEXITCODE -ne 0){throw 'Qwen3.6 Q4 MTP pair verification failed'}
     python -B scripts/check_repository.py
     if($LASTEXITCODE -ne 0){throw 'Run/data/privacy checks failed'}
     python -B -m unittest discover -s tests -v

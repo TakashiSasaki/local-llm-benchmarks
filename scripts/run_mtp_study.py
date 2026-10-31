@@ -1,5 +1,5 @@
 """Owned Windows server for a quantization/MTP cell; immutable child runs."""
-import argparse, hashlib, importlib.util, json, os, pathlib, socket, subprocess, sys, threading, time, urllib.request
+import argparse, hashlib, importlib.util, json, os, pathlib, re, socket, subprocess, sys, threading, time, urllib.request
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,create_run,load,save,sha,snapshot_sources,now
 from local_llm_benchmarks import memory_windows as memory
@@ -8,15 +8,15 @@ def module(name,path):
     s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m
 
 def run(a):
-    metadata=load(ROOT/a.model_manifest); profile=load(ROOT/'configs/qwen38-35b-distill-iq3m-64k.json')
+    metadata=load(ROOT/a.model_manifest); profile=load(ROOT/a.profile)
     model=pathlib.Path(r'C:\LocalLLM\models')/metadata['filename']; binary=pathlib.Path(profile['runtime_executable'])
-    alias='mtp-study-'+metadata['quantization'].lower().replace('_','-')+'-'+a.mtp
+    alias='mtp-study-'+re.sub('[^a-z0-9]+','-',metadata['model'].lower()).strip('-')+'-'+metadata['quantization'].lower().replace('_','-')+'-'+a.mtp
     args=list(profile['server_args']); args[args.index('--n-cpu-moe')+1]=str(a.cpu_moe)
     if a.load_mode:args+=['--load-mode',a.load_mode]
     args += ['--spec-type','draft-mtp' if a.mtp=='on' else 'none']
     if a.mtp=='on': args += ['--spec-draft-n-max','3','--spec-draft-p-min','0','--spec-draft-ngl','all','--spec-draft-n-ubatch','128','--spec-draft-type-k','f16','--spec-draft-type-v','f16']
     profile.update(profile_id=alias,model=str(model),model_hash=metadata['sha256'],server_args=args,status='Isolated matched placement quantization/MTP experiment',mtp=a.mtp)
-    title='Empero '+metadata['quantization']+' MTP '+a.mtp+(' preflight' if a.pilot else ' speed only 64K' if a.speed_only else ' 64K')
+    title=metadata['model']+' '+metadata['quantization']+' MTP '+a.mtp+(' preflight' if a.pilot else ' speed only 64K' if a.speed_only else ' 64K')
     parent=create_run(title,'mtp-preflight' if a.pilot else 'mtp-speed-only' if a.speed_only else 'quantization-mtp',config={'model':metadata,'profile':profile,'pilot':a.pilot,'speed_only':a.speed_only,'historical_comparison':'Fresh placement at '+str(a.cpu_moe)+' CPU MoE layers; historical runs used 30. Only fresh matched controls establish the paired timing comparison.'},run_id=a.id,experiment_type='capacity' if a.pilot else 'benchmark')
     snapshot_sources(parent); manifest=load(parent/'manifest.json'); manifest.update(status='running',started_at=now()); save(parent/'manifest.json',manifest)
     server=None; mon=None; stop=threading.Event(); guard_hits=[]; children=[]
@@ -86,4 +86,4 @@ def run(a):
     print(json.dumps({'event':'cell_complete','run':parent.name}),flush=True)
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--id',required=True);p.add_argument('--model-manifest',required=True);p.add_argument('--mtp',choices=['off','on'],required=True);p.add_argument('--cpu-moe',type=int,default=34);p.add_argument('--load-mode',choices=['none','mmap']);p.add_argument('--pilot',action='store_true');p.add_argument('--speed-only',action='store_true');p.add_argument('--benchmark-python',type=pathlib.Path,default=sys.executable);run(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--id',required=True);p.add_argument('--model-manifest',required=True);p.add_argument('--profile',default='configs/qwen38-35b-distill-iq3m-64k.json');p.add_argument('--mtp',choices=['off','on'],required=True);p.add_argument('--cpu-moe',type=int,default=34);p.add_argument('--load-mode',choices=['none','mmap']);p.add_argument('--pilot',action='store_true');p.add_argument('--speed-only',action='store_true');p.add_argument('--benchmark-python',type=pathlib.Path,default=sys.executable);run(p.parse_args())

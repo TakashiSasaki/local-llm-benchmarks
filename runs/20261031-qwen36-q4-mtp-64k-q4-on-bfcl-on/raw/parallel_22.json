@@ -1,0 +1,134 @@
+{
+  "id": "parallel_22",
+  "request": {
+    "model": "mtp-study-qwen3-6-35b-a3b-q4-k-m-on",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the status and scheduled trial date for case number XY1234 in Los Angeles County Court, and case number GH5678 in Orange County Court?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_info_get_case_status",
+          "description": "Retrieves the status and trial dates for court cases from specified county courts.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "case_number": {
+                "type": "string",
+                "description": "The specific court case number."
+              },
+              "court": {
+                "type": "string",
+                "description": "The county court where the case is filed."
+              },
+              "details": {
+                "type": "string",
+                "enum": [
+                  "status",
+                  "trial_date"
+                ],
+                "description": "Specific details required about the court case. Defaults to 'status'."
+              }
+            },
+            "required": [
+              "case_number",
+              "court"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user is asking for the status and trial date for two different court cases:\n1. Case number XY1234 in Los Angeles County Court\n2. Case number GH5678 in Orange County Court\n\nI need to use the `court_info_get_case_status` function for each case.\nThe function takes `case_number`, `court`, and `details` (optional, defaults to 'status').\nSince the user wants both status and trial date, I might need to make two calls per case, or I can just call it once per case and see if it returns both, or call it twice per case (once for status, once for trial_date). The prompt says \"details\" defaults to 'status', and enum is [\"status\", \"trial_date\"]. I will call it for both details for each case to be safe, or just call it once and see. Actually, I'll make two calls per case to get exactly what's requested.\n\nWait, the function description says: \"Retrieves the status and trial dates for court cases from specified county courts.\" It might return both in one call. But the `details` parameter is an enum with \"status\" or \"trial_date\". I will call it for \"status\" and \"trial_date\" for each case.\n\nLet's make the calls:\n1. case_number: \"XY1234\", court: \"Los Angeles County Court\", details: \"status\"\n2. case_number: \"XY1234\", court: \"Los Angeles County Court\", details: \"trial_date\"\n3. case_number: \"GH5678\", court: \"Orange County Court\", details: \"status\"\n4. case_number: \"GH5678\", court: \"Orange County Court\", details: \"trial_date\"\n\nActually, I can just call it once per case with details=\"status\" and details=\"trial_date\".\nLet's do it.\nWait, I'll just make 4 calls.\nOr maybe the function returns both if I don't specify details? The prompt says defaults to 'status'. I'll specify both.\nLet's proceed. \nActually, I can just call it 4 times.\nWait, the tool definition says `details` is optional. I will call it for each case twice.\nLet's generate the tool calls. \nCase 1: XY1234, Los Angeles County Court, status\nCase 2: XY1234, Los Angeles County Court, trial_date\nCase 3: GH5678, Orange County Court, status\nCase 4: GH5678, Orange County Court, trial_date\nI will execute them. \nWait, sometimes it's better to just call it once per case and let the API handle it, but the enum restricts it. I'll stick to 4 calls.\nActually, I'll just make the calls.\nLet's do it. \nWait, the prompt says \"Los Angeles County Court\" and \"Orange County Court\". I will use exactly those strings.\nProceeding. \nTool calls:\ncourt_info_get_case_status(case_number=\"XY1234\", court=\"Los Angeles County Court\", details=\"status\")\ncourt_info_get_case_status(case_number=\"XY1234\", court=\"Los Angeles County Court\", details=\"trial_date\")\ncourt_info_get_case_status(case_number=\"GH5678\", court=\"Orange County Court\", details=\"status\")\ncourt_info_get_case_status(case_number=\"GH5678\", court=\"Orange County Court\", details=\"trial_date\")\nAll good. \nI will generate the response now. \nWait, let's verify the function signature:\n`court_info_get_case_status(case_number, court, details)`\nRequired: case_number, court.\nOptional: details.\nI will call it. \nProceeding. \n[Self-Correction/Refinement during thought]\nActually, I can just call it once per case without `details` to get status, but the user explicitly asks for both. I'll call it twice per case. It's safer.\nLet's generate. \nWait, the tool might return both if I don't specify details, but the enum says it's either status or trial_date. I'll stick to 4 calls.\nDone. \nOutput matches tool calls. \nProceeds. \n[Output Generation] -> calls the tool. \n(Note: I'll format the tool calls correctly)\n```json\n[\n  {\"name\": \"court_info_get_case_status\", \"arguments\": {\"case_number\": \"XY1234\", \"court\": \"Los Angeles County Court\", \"details\": \"status\"}},\n  {\"name\": \"court_info_get_case_status\", \"arguments\": {\"case_number\": \"XY1234\", \"court\": \"Los Angeles County Court\", \"details\": \"trial_date\"}},\n  {\"name\": \"court_info_get_case_status\", \"arguments\": {\"case_number\": \"GH5678\", \"court\": \"Orange County Court\", \"details\": \"status\"}},\n  {\"name\": \"court_info_get_case_status\", \"arguments\": {\"case_number\": \"GH5678\", \"court\": \"Orange County Court\", \"details\": \"trial_date\"}}\n]\n```\nWait, the prompt says \"Los Angeles County Court\" and \"Orange County Court\". I will use exactly that.\nReady. \nProceeds. \n(Self-Correction/Verification during thought)\nActually, I can just call it once per case with `details` omitted, but the prompt says defaults to 'status'. I'll just call it twice per case to be explicit. It's fine.\nLet's generate. \n[Output] -> Tool calls. \nDone. \n[Final Check]\nThe function takes `case_number`, `court`, `details`.\nI will pass exactly as requested.\nAll good. \nProceeds. \n[Output Generation] (simulated)\nI will call the tool now. \n(Note: I'm an AI, I just output the tool calls)\nDone. \n[Proceeds]",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"status\"}"
+              },
+              "id": "33jfQycYrpY9nmirs8wgds385MDmpwtm"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"trial_date\"}"
+              },
+              "id": "DkhitaEIejh6yz25CSLsmxT6xu1gtZMq"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"status\"}"
+              },
+              "id": "AnU5q59NlUBLc3cl94NVwciRXvyPfaAz"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"trial_date\"}"
+              },
+              "id": "cgjmncNvpvMneR14gUc70I0c81lWhu8T"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793403395,
+    "model": "mtp-study-qwen3-6-35b-a3b-q4-k-m-on",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1538,
+      "prompt_tokens": 391,
+      "total_tokens": 1929,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-ZhDCtpWDtfDkze6zTUnCAE3kqCrqKlb9",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 391,
+      "prompt_ms": 1848.151,
+      "prompt_per_token_ms": 4.726728900255755,
+      "prompt_per_second": 211.56279979287407,
+      "predicted_n": 1538,
+      "predicted_ms": 28219.447,
+      "predicted_per_token_ms": 18.36008262849707,
+      "predicted_per_second": 54.46598581467596,
+      "draft_n": 1332,
+      "draft_n_accepted": 1093
+    }
+  },
+  "seconds": 30.07143409998389,
+  "estimated_prompt_tokens": 391
+}

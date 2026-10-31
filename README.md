@@ -8,7 +8,20 @@ This repository preserves a local Windows/CUDA benchmark study: scripts, pinned 
 
 [Empero 3bit / 4bit × MTPの比較](docs/EMPERO_MTP.md) · [得点・速度の集計表](reports/20261031-empero-mtp-load-none/summary.md) · [表示ページ](reports/20261031-empero-mtp-load-none/index.html)には、量子化・MTP・思考設定を分けた追加測定をまとめています。先の10構成比較とはCPU配置が異なるため、今回新しく取得した対照同士で速度を比較します。
 
+[Qwen3.6 Q4_K_M × MTPの追加比較](docs/QWEN36_Q4_MTP.md) · [集計表](reports/20261031-qwen36-q4-mtp-64k/summary.md) · [表示ページ](reports/20261031-qwen36-q4-mtp-64k/index.html)も同じ64K・CPU MoE34層で測定しました。新規400回答と先行Emperoの参照結果を区別して保存しています。
+
 [外部利用者のBFCL測定との比較（2026-10-31）](docs/EXTERNAL_BENCHMARKS_20261031.md)には、Empero版・Qwen3.6の公表値と、問題数・採点・思考設定の違いをまとめています。外部値はローカルのマトリックスとは別に扱います。
+
+## Qwen3.6 Q4_K_MとMTP（2026-10-31）
+
+BartowskiのQ4_K_Mを、以前のIQ3_Mと同じ配布revisionから取得し、64K・CPU MoE34層・load-mode noneで新規400回答を測定しました。
+
+| MTP | BFCL 思考OFF /80 | ON /80 | HumanEval 思考OFF /20 | ON /20 | 固定長生成 tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| OFF | 75 | 73 | 18 | 19 | 36.64 |
+| ON | 74 | 73 | 18 | 19 | 47.38 |
+
+固定長生成はMTPで約29%速くなり、BFCL合計も思考OFF約23%・ON約26%短縮しました。400回答で打ち切りと、最終回答・ツール呼び出しが両方空の応答は0件です。HumanEval ONは既知の`type()`制限で両方19/20、別の補助採点では両方20/20でした。[時間・メモリ・問題別変化・比較条件](docs/QWEN36_Q4_MTP.md)を記録しています。以前のIQ3_MはCPU MoE30層なので、今回のMTPの速度対照には流用していません。
 
 ## Empero 3bit / 4bitとMTP（2026-10-31）
 
@@ -113,6 +126,7 @@ python -B integrations/hermes/scripts/verify_saved_evidence.py
 python -B tools/verify_quantization_study.py --study 20261030-qwen36-iq3m-64k
 python -B tools/verify_quantization_study.py --study 20261031-empero-qwen38-iq3m-64k
 python -B tools/verify_mtp_study.py
+python -B tools/verify_mtp_study.py --prefix 20261031-qwen36-q4-mtp-64k
 python -B tools/make_checksums.py --check
 ```
 
