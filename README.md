@@ -1,8 +1,10 @@
 # Local LLM benchmarks on an 8 GB laptop GPU
 
+[Mage Q4/Q3・MTP非対応・GPU配置の結果](reports/20261031-mage-text-64k/index.html)（能力試験は途中終了、Q3のBFCL160件は完了） · [Q5とMTPの追加比較](docs/Q5_MTP.md)（新規1,200回答＋既存400回答参照）。失敗・未実施条件も保存しています。
+
 RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC で行ったローカルLLM比較の測定記録です。2026-10-30の最終比較では、8構成 × HumanEval / BFCL × 思考OFF / ON の **32条件・1,600回答**をまとめています。
 
-**[最新の10構成比較](reports/20261031-empero-qwen38-iq3m-64k/index.html)** · **[IQ3_M追加後の9構成比較](reports/20261030-qwen36-iq3m-64k/index.html)** · **[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
+**[10構成比較](reports/20261031-empero-qwen38-iq3m-64k/index.html)** · **[IQ3_M追加後の9構成比較](reports/20261030-qwen36-iq3m-64k/index.html)** · **[測定一覧](index.html)** · **[2026-10-30の比較ダッシュボード](reports/2026-10-30-matrix/index.html)** · [集計CSV](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/conditions.csv) · [出力打ち切り一覧](artifacts/local-llm/runs/benchmark-matrix-20261030-194424/truncations.csv)
 
 This repository preserves a local Windows/CUDA benchmark study: scripts, pinned test data, raw model responses, graders, measurements, Hermes integration checks, historical runs and offline reports. Model weights and inference runtime binaries are deliberately not included. These are small, fixed subsets, not full official leaderboard scores.
 
@@ -83,6 +85,8 @@ Qwen 35BのBFCLではOFF/ONとも72/80でしたが、ONの応答中央値は16.6
 [将来試したいモデル](docs/FUTURE_MODELS.md)には、より強力なマシンを入手したら試す候補と、現在の環境で見送った理由を記録しています。
 
 [小型abliteratedモデルの調査](docs/ABLITERATION_RESEARCH.md)には、このPC向けの候補、一般能力への影響に関する一次資料、通常版との比較計画をまとめています。追加モデルの実測結果とは区別しています。
+
+[Mage-VL-Cowork Q4_K_Mのテキスト測定](docs/MAGE_VL_COWORK.md)は、画像入力を使わず、既存のHumanEval/BFCLと同じ64Kプロトコルで行う別試験です。公式の32K運用設定・GUI実行評価とは区別し、実際の収集状態はrunに記録します。
 
 Gitルートは `C:\LocalLLM\local-llm-benchmarks` です。モデル単体の測定コードは `benchmarks/`、Hermes等の接続・実ツール動作検証は `integrations/<harness>/`、共通処理は `src/`、共有入力は `datasets/`、すべての実行結果は `runs/<run-id>/`、表示ページは `reports/` に置きます。作成・再開・コミット・プッシュの手順は[WORKFLOW.md](docs/WORKFLOW.md)にまとめています。過去の `artifacts/` は凍結した証拠として残します。
 

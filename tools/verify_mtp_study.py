@@ -3,30 +3,41 @@ import argparse, collections, gzip, hashlib, importlib.util, json, pathlib, rand
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,load,validate_run,save,sha
 from local_llm_benchmarks.bfcl import components
+from local_llm_benchmarks.output_errors import is_output_parser_error
 
 def verify(prefix):
     dataset=ROOT/'datasets/mtp-speed/v1';dm=load(dataset/'manifest.json');assert hashlib.sha256((dataset/'prompts.json').read_bytes()).hexdigest()==dm['files']['prompts.json']
     prompts={p['id']:p['prompt'] for p in load(dataset/'prompts.json')}
-    cases,convert,grade=components();count=0;cells=[]
+    cases,convert,grade=components();count=0;parser_error_count=0;cells=[]
     root=ROOT/'runs'/prefix;root_manifest=validate_run(root);assert root_manifest['status']=='complete'
     definition=root_manifest['config'];cell_runs=definition.get('cell_runs',{})
     pair_only=definition.get('study_type')=='mtp-pair'
-    expected_cells=2 if pair_only else 4
+    grid=definition.get('study_type')=='mtp-grid'
+    groups=definition['groups'] if grid else [{'key':q,'cpu_moe_layers':34,'states':['off','on']} for q in (['q4'] if pair_only else ['q4','iq3'])]
+    expected_cells=sum(len(g.get('states',['off','on'])) for g in groups)
+    if grid:assert definition['expected_cells']==expected_cells and len(cell_runs)==expected_cells
     expected_answers=expected_cells*200
     rows=[json.loads(s) for s in gzip.decompress((ROOT/'datasets/humaneval/b9453e8/HumanEval.jsonl.gz').read_bytes()).decode().splitlines()]
     problems=[rows[i] for i in sorted(random.Random(42).sample(range(len(rows)),20))]
     spec=importlib.util.spec_from_file_location('humaneval_evidence_check',ROOT/'benchmarks/humaneval.py');he=importlib.util.module_from_spec(spec);spec.loader.exec_module(he);unused,unwrap=he.grader()
-    template_hashes=[]
-    for quant in (['q4'] if pair_only else ['q4','iq3']):
-        for mtp in ['off','on']:
+    template_hashes=[];repositories=set()
+    for group in groups:
+        quant=group['key'];group_templates=[]
+        for mtp in group.get('states',['off','on']):
             parent=ROOT/'runs'/cell_runs.get(quant+'-'+mtp,prefix+'-'+quant+'-'+mtp);m=validate_run(parent);assert m['status']=='complete'
             cfg=m['config'];profile=cfg['profile'];args=profile['server_args']
-            assert args[args.index('--n-cpu-moe')+1]=='34'
+            assert args[args.index('--n-cpu-moe')+1]==str(group['cpu_moe_layers'])
+            if grid:
+                meta=load(ROOT/group['model_manifest'])
+                repositories.add((meta['repo'],meta['revision']))
+                assert cfg['model']['sha256']==meta['sha256'] and cfg['model']['quantization']==meta['quantization']
+                assert args[args.index('--load-mode')+1]==group.get('load_mode','none')
+                if 'common_cpu_moe_layers' in definition:assert group['cpu_moe_layers']==definition['common_cpu_moe_layers']
             assert args[args.index('--spec-type')+1]==('draft-mtp' if mtp=='on' else 'none')
             if mtp=='on':
                 for key,value in {'--spec-draft-n-max':'3','--spec-draft-p-min':'0','--spec-draft-ngl':'all','--spec-draft-n-ubatch':'128','--spec-draft-type-k':'f16','--spec-draft-type-v':'f16'}.items():assert args[args.index(key)+1]==value
             props=load(parent/'configs/server-props.json');assert props['default_generation_settings']['n_ctx']==65536 and props['total_slots']==1
-            assert props['build_info']=='b11960-8642541b2';template_hashes.append(props['chat_template'])
+            assert props['build_info']=='b11960-8642541b2';template_hashes.append(props['chat_template']);group_templates.append(props['chat_template'])
             for key,value in {'-ctk':'f16','-ctv':'f16','-np':'1','-c':'65536','-t':'8'}.items():assert args[args.index(key)+1]==value
             if quant=='q4' and definition.get('q4_load_mode'):assert args[args.index('--load-mode')+1]==definition['q4_load_mode']
             verified=load(parent/'configs/model-file-verification.json')
@@ -51,7 +62,7 @@ def verify(prefix):
                     assert cm['runtime_build']==props['build_info']
                     entries=load(child/('summaries/bfcl-cases.json' if suite=='bfcl' else 'summaries/cases.json'));assert len(entries)==(80 if suite=='bfcl' else 20)
                     if suite=='humaneval':assert all(c['passed'] for c in load(child/'configs/canonical-controls.json'))
-                    actual_caps=0;native_drafts=0;observed_reasoning=0
+                    actual_caps=0;native_drafts=0;observed_reasoning=0;parser_errors=0
                     for i,e in enumerate(entries):
                         cid=e.get('id') or e['task_id'];r=load(child/'raw'/(cid.replace('/','_')+'.json'));req=r['request'];resp=r['response']
                         assert req['chat_template_kwargs']['enable_thinking']==(thinking=='on') and req['model']==profile['profile_id']
@@ -59,6 +70,16 @@ def verify(prefix):
                         assert all(req[key]==value for key,value in expected_sampling.items())
                         if suite=='humaneval':assert req['presence_penalty']==0
                         assert req['max_tokens']==min(64000,65536-r['estimated_prompt_tokens']-32)
+                        if suite=='bfcl':assert cid==cases[i]['problem']['id'] and req['tools']==convert(cases[i]) and req['messages']==cases[i]['problem']['question'][0] and req['temperature']==0
+                        else:assert cid==problems[i]['task_id'] and req['messages'][1]['content']==problems[i]['prompt'] and req['temperature']==0.6
+                        if is_output_parser_error(r):
+                            assert '--continue-on-output-parser-error' in profile.get('benchmark_extra_args',[]) and cm['execution']['output_parser_error_policy']
+                            assert e['passed'] is False and e['usage'] is None and e['reasoning_observed'] is None and e['finish_reason'] is None
+                            assert e['server_output_parser_error'] is True and e['api_error']==resp['error'] and e['seconds']==r['seconds']
+                            assert 'choices' not in resp and 'usage' not in resp
+                            if suite=='bfcl':assert e['grade']['valid'] is False and e['grade']['error_type']=='server_output_parser_error' and e['decoded']==[]
+                            else:assert e['status']=='server_output_parser_error' and e['code']==''
+                            parser_errors+=1;parser_error_count+=1;continue
                         assert resp['usage']['total_tokens']<=65536 and resp['usage']==e['usage']
                         assert e['seconds']==r['seconds']
                         observed=bool((resp['choices'][0]['message'].get('reasoning_content') or '').strip())
@@ -76,10 +97,11 @@ def verify(prefix):
                     s=load(child/'summary.json');assert s['passed']==sum(e['passed'] for e in entries) and s['attempted']==len(entries)
                     assert s['output_cap_hits']==actual_caps and (native_drafts>0)==(mtp=='on')
                     assert s['reasoning_observed_cases']==observed_reasoning
+                    assert s.get('server_output_parser_errors',0)==parser_errors and s.get('unavailable_response_stats_cases',0)==parser_errors
                     if suite=='humaneval':assert s['grading_python'].startswith('3.14.9 ')
-                    scores[suite+'_'+thinking]={'passed':s['passed'],'attempted':s['attempted'],'caps':s['output_cap_hits']}
+                    scores[suite+'_'+thinking]={'passed':s['passed'],'attempted':s['attempted'],'caps':s['output_cap_hits'],'parser_errors':parser_errors}
             audit=ROOT/'runs'/(parent.name+'-he-policy-audit')
-            if pair_only:assert audit.exists(),'Completed pair must include its declared secondary audits'
+            if pair_only or grid:assert audit.exists(),'Completed study must include its declared secondary audits'
             if audit.exists():
                 am=validate_run(audit);assert am['kind']=='replay' and am['status']=='complete' and am['config']['model']['sha256']==cfg['model']['sha256']
                 ar=load(audit/'summaries/results.json')
@@ -89,17 +111,26 @@ def verify(prefix):
                     v=ar['iq3_m'][mode];assert v['original_passed']==scores['humaneval_'+mode]['passed'] and v['secondary_passed']==sum(c['secondary']['passed'] for c in v['cases'])
                     assert [c['task_id'] for c in v['cases']]==[p['task_id'] for p in problems]
             cells.append({'run':parent.name,'scores':scores,'draft_tokens':drafted,'accepted_draft_tokens':accepted})
-    assert len(set(template_hashes))==1
+        assert len(set(group_templates))==1
+    if not grid or len(repositories)==1:assert len(set(template_hashes))==1
     report=load(ROOT/'reports'/prefix/'matrix-data.json');assert len(report['cells'])==expected_cells and all(c['status']=='complete' for c in report['cells'])
     for c in report['cells']:
         checked=next(row for row in cells if row['run']==c['run'])
         for key,s in checked['scores'].items():
             assert c['metrics'][key]['passed']==s['passed'] and c['metrics'][key]['attempted']==s['attempted'] and c['metrics'][key]['output_cap_hits']==s['caps']
+            assert c['metrics'][key].get('server_output_parser_errors',0)==s['parser_errors']
         assert c['speed']['draft_tokens']==checked['draft_tokens'] and c['speed']['accepted_draft_tokens']==checked['accepted_draft_tokens']
     assert sum(s['attempted'] for c in cells for s in c['scores'].values())==expected_answers
     assert len(report['truncations'])==sum(s['caps'] for c in cells for s in c['scores'].values())
     summary=load(root/'summary.json');assert summary['conditions']==expected_cells*4 and summary['answers']==expected_answers
     assert summary['new_answers']+summary['referenced_answers']==expected_answers
+    if grid:
+        refs={name for g in groups for name in g.get('reference_runs',{}).values()}
+        assert summary['referenced_answers']==len(refs)*200 and summary['new_answers']==(expected_cells-len(refs))*200
+        assert report['unavailable']==definition.get('unavailable',[])==summary['unavailable']
+        assert summary['outcome']==('partial' if report['unavailable'] else 'passed')
+        for c in report['cells']:
+            assert c['fresh_inference']==(c['run'] not in refs)
     if pair_only:
         reference=load(ROOT/'runs'/definition['reference_matrix']/'manifest.json')
         assert reference['status']=='complete'
@@ -127,7 +158,7 @@ def verify(prefix):
         assert load(speed/'summary.json')['median_decode_tokens_per_second']==statistics.median(r['response']['timings']['predicted_per_second'] for r in rows)
         deployment.append({'run':parent.name,'status':'complete','speed_cases_checked':len(rows)})
     assert len(deployment) in (0,2)
-    return {'passed':True,'cells':cells,'bfcl_raw_outputs_regraded':count,'humaneval_saved_records_checked':expected_cells*40,'fixed_length_cases':expected_cells*9,'deployment_speed':deployment,'model_inference_performed':False,'generated_code_executed':False}
+    return {'passed':True,'cells':cells,'bfcl_raw_outputs_regraded':count,'server_output_parser_errors_verified':parser_error_count,'humaneval_saved_records_checked':expected_cells*40,'fixed_length_cases':expected_cells*9,'deployment_speed':deployment,'model_inference_performed':False,'generated_code_executed':False}
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--prefix',default='20261031-empero-mtp-load-none');p.add_argument('--report',type=pathlib.Path);a=p.parse_args();result=verify(a.prefix)

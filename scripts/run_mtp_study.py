@@ -17,7 +17,7 @@ def run(a):
     if a.mtp=='on': args += ['--spec-draft-n-max','3','--spec-draft-p-min','0','--spec-draft-ngl','all','--spec-draft-n-ubatch','128','--spec-draft-type-k','f16','--spec-draft-type-v','f16']
     profile.update(profile_id=alias,model=str(model),model_hash=metadata['sha256'],server_args=args,status='Isolated matched placement quantization/MTP experiment',mtp=a.mtp)
     title=metadata['model']+' '+metadata['quantization']+' MTP '+a.mtp+(' preflight' if a.pilot else ' speed only 64K' if a.speed_only else ' 64K')
-    parent=create_run(title,'mtp-preflight' if a.pilot else 'mtp-speed-only' if a.speed_only else 'quantization-mtp',config={'model':metadata,'profile':profile,'pilot':a.pilot,'speed_only':a.speed_only,'historical_comparison':'Fresh placement at '+str(a.cpu_moe)+' CPU MoE layers; historical runs used 30. Only fresh matched controls establish the paired timing comparison.'},run_id=a.id,experiment_type='capacity' if a.pilot else 'benchmark')
+    parent=create_run(title,'mtp-preflight' if a.pilot else 'mtp-speed-only' if a.speed_only else 'quantization-mtp',config={'model':metadata,'profile':profile,'pilot':a.pilot,'speed_only':a.speed_only,'historical_comparison':'Fresh placement at '+str(a.cpu_moe)+' CPU MoE layers. Prior runs have several placements; compare their recorded CPU count and load-mode. Matched controls are required to attribute paired timing differences.'},run_id=a.id,experiment_type='capacity' if a.pilot else 'benchmark')
     snapshot_sources(parent); manifest=load(parent/'manifest.json'); manifest.update(status='running',started_at=now()); save(parent/'manifest.json',manifest)
     server=None; mon=None; stop=threading.Event(); guard_hits=[]; children=[]
     try:
@@ -70,6 +70,7 @@ def run(a):
                 for thinking in ['off','on']:
                     child=create_run(title+' '+suite+' thinking '+thinking,suite,config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-'+suite+'-'+thinking); children.append(child.name)
                     command=[str(a.benchmark_python),'-B',str(ROOT/'benchmarks'/(suite+'.py')),'--run',child.name,'--model',alias,'--thinking',thinking]
+                    command+=profile.get('benchmark_extra_args',[])
                     print(json.dumps({'event':'condition_start','run':child.name}),flush=True)
                     with (parent/'logs'/(suite+'-'+thinking+'.log')).open('w',encoding='utf-8') as log:result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW,env=dict(os.environ,PYTHONUTF8='1',PYTHONIOENCODING='utf-8'))
                     if result.returncode:raise RuntimeError('Condition failed: '+child.name)

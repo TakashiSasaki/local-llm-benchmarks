@@ -2,11 +2,13 @@
 import argparse,csv,html,json,pathlib,statistics,sys
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run
+from local_llm_benchmarks.output_errors import is_output_parser_error
 
 def cell(name):
-    parent=resolve_run(name);c={'run':name,'status':'not-started','metrics':{},'truncations':[],'empty_responses':[],'timed_cases':[]}
+    parent=resolve_run(name);c={'run':name,'status':'not-started','metrics':{},'truncations':[],'empty_responses':[],'timed_cases':[],'output_parser_errors':[],'incomplete_conditions':[]}
     if not (parent/'manifest.json').exists():return c
     m=load(parent/'manifest.json');cfg=m['config'];c.update(status=m['status'],config=cfg,model=cfg['model']['model'],quantization=cfg['model']['quantization'],mtp=cfg['profile']['mtp'])
+    if m.get('error'):c['collection_error']=m['error']
     for filename,key in [('summaries/memory.json','memory'),('configs/cleanup.json','cleanup')]:
         if (parent/filename).exists():c[key]=load(parent/filename)
     if (parent/'summary.json').exists():c['collection_summary']=load(parent/'summary.json')
@@ -15,11 +17,20 @@ def cell(name):
     for suite in ['bfcl','humaneval']:
         for mode in ['off','on']:
             p=ROOT/'runs'/(name+'-'+suite+'-'+mode)
-            if not (p/'summary.json').exists():continue
+            if not (p/'summary.json').exists():
+                cm=load(p/'manifest.json') if (p/'manifest.json').exists() else {'status':'not-started'}
+                filename='bfcl-cases.json' if suite=='bfcl' else 'cases.json';entries=load(p/'summaries'/filename) if (p/'summaries'/filename).exists() else []
+                c['incomplete_conditions'].append({'run':name,'benchmark':suite,'thinking':mode,'status':cm['status'],'saved_records':len(entries),'correct_saved_records':sum(e['passed'] for e in entries),'server_output_parser_errors_saved':sum(bool(e.get('server_output_parser_error')) for e in entries),'expected':80 if suite=='bfcl' else 20,'error':cm.get('error'),'evidence':(p/'manifest.json').relative_to(ROOT).as_posix() if (p/'manifest.json').exists() else None})
+                continue
             s=load(p/'summary.json');raw=[(f,load(f)) for f in sorted((p/'raw').glob('*.json'))]
-            s.update(completion_tokens=sum(r['response']['usage']['completion_tokens'] for _,r in raw),draft_tokens=sum(r['response'].get('timings',{}).get('draft_n',0) for _,r in raw),accepted_draft_tokens=sum(r['response'].get('timings',{}).get('draft_n_accepted',0) for _,r in raw))
+            known=[r for _,r in raw if not is_output_parser_error(r)]
+            s.update(completion_tokens=sum(r['response']['usage']['completion_tokens'] for r in known),draft_tokens=sum(r['response'].get('timings',{}).get('draft_n',0) for r in known),accepted_draft_tokens=sum(r['response'].get('timings',{}).get('draft_n_accepted',0) for r in known))
+            if len(known)!=len(raw):s['statistics_note']='Token totals and output-cap counts cover only responses with returned generation statistics; parser-error cases have unknown statistics.'
             c['metrics'][suite+'_'+mode]=s
             for f,r in raw:
+                if is_output_parser_error(r):
+                    entry={'run':name,'quantization':c['quantization'],'mtp':c['mtp'],'benchmark':suite,'thinking':mode,'case_id':f.stem.replace('HumanEval_','HumanEval/'),'seconds':r['seconds'],'completion_tokens':None,'max_tokens':r['request']['max_tokens'],'finish_reason':None,'raw':f.relative_to(ROOT).as_posix(),'http_status':500,'api_error':r['response']['error']}
+                    c['output_parser_errors'].append(entry);c['timed_cases'].append(entry);continue
                 resp=r['response'];choice=resp['choices'][0];message=choice['message']
                 entry={'run':name,'quantization':c['quantization'],'mtp':c['mtp'],'benchmark':suite,'thinking':mode,'case_id':f.stem.replace('HumanEval_','HumanEval/'),'seconds':r['seconds'],'completion_tokens':resp['usage']['completion_tokens'],'max_tokens':r['request']['max_tokens'],'finish_reason':choice['finish_reason'],'raw':f.relative_to(ROOT).as_posix()}
                 c['timed_cases'].append(entry)
@@ -46,7 +57,9 @@ def compare(a,b):
         assert len(aa)==len(bb)
         changes=[];identical=0
         def message(parent,cid):
-            r=load(ROOT/'runs'/(parent['run']+'-'+suite+'-'+mode)/'raw'/(cid.replace('/','_')+'.json'))['response']['choices'][0]['message']
+            raw=load(ROOT/'runs'/(parent['run']+'-'+suite+'-'+mode)/'raw'/(cid.replace('/','_')+'.json'))
+            if is_output_parser_error(raw):return {'http_status':500,'error':raw['response']['error']}
+            r=raw['response']['choices'][0]['message']
             for t in r.get('tool_calls') or []:t.pop('id',None)
             return r
         for x,y in zip(aa,bb):

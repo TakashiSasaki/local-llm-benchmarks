@@ -1,0 +1,120 @@
+{
+  "id": "parallel_26",
+  "request": {
+    "model": "mtp-study-qwen3-6-35b-a3b-q5-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user wants to find details of lawsuits with specific case numbers ('67813', '71249') filed in the New York District court.\nThey mentioned case types 'Civil' and 'Criminal'.\nLooking at the `court_case_find` function:\n- `location`: \"The city and court where the lawsuit is filed.\" -> \"New York District court\"\n- `case_number`: \"The unique case numbers of the lawsuits.\" -> [\"67813\", \"71249\"]\n- `case_type`: \"Type of the court case.\" -> enum [\"Civil\", \"Criminal\"], default \"Civil\"\n\nThe user wants details for both 'Civil' and 'Criminal' cases. I should probably make two separate calls, one for Civil and one for Criminal, or check if the function can handle multiple types. The parameter `case_type` is a string, not an array, so I'll need to make two calls.\n\nWait, the prompt says \"for type 'Civil' and 'Criminal' cases.\" This implies I should query both.\nLet's make two calls:\n1. location: \"New York District court\", case_number: [\"67813\", \"71249\"], case_type: \"Civil\"\n2. location: \"New York District court\", case_number: [\"67813\", \"71249\"], case_type: \"Criminal\"\n\nActually, I can just call it once for Civil and once for Criminal.\nLet's construct the calls.\nWait, the prompt says \"New York District court\". I will use exactly that for location.\nCase numbers: [\"67813\", \"71249\"]\nCase types: \"Civil\", \"Criminal\"\n\nI will make two tool calls.\nLet's verify parameters:\nlocation: string\ncase_number: array of strings\ncase_type: string (enum)\n\nCall 1:\nlocation: \"New York District court\"\ncase_number: [\"67813\", \"71249\"]\ncase_type: \"Civil\"\n\nCall 2:\nlocation: \"New York District court\"\ncase_number: [\"67813\", \"71249\"]\ncase_type: \"Criminal\"\n\nProceed. \nWait, sometimes the API expects just one call if it can handle it, but since `case_type` is a single string, I'll do two calls.\nActually, I can just make one call for Civil and one for Criminal.\nLet's do it. \nI will generate the tool calls now. \nWait, is there any chance the user wants me to combine them? The function signature says `case_type` is a string. So two calls are necessary.\nI'll proceed. \nLet's generate the response. \nTool calls:\ncourt_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")\ncourt_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")\nDone. \nWait, checking the prompt: \"Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases.\"\nIt's straightforward. I will execute both.\nOne minor point: sometimes the location should be formatted exactly as requested. \"New York District court\" is fine.\nProceeding. \nOutput matches tool calls. \nDone. \nSelf-Correction/Verification during thought: \nCould the user mean they want to search for both types in one go? The tool only accepts one type at a time. So two calls is correct.\nI will generate the tool calls now. \nAll parameters are correctly mapped.\nReady. \nOutput Generation. \n[Tool Call 1] court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")\n[Tool Call 2] court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")\nDone. \nProceeds. \n(Note: I'll format it exactly as required by the system.) \nActually, I'll just output the tool calls.\nWait, the prompt says \"New York District court\". I'll use that exactly.\nCase numbers: [\"67813\", \"71249\"]\nCase types: \"Civil\", \"Criminal\"\nEverything looks good.\nProceeding. \n[Output Generation] -> Tool calls. \n(Self-Correction/Refinement during thought)\nIs it possible that the function expects `case_type` to be passed as an array? The schema says `type: \"string\"`. So it's a single string. Two calls are necessary.\nI will make the calls.\nDone. \nOutput matches. \nProceeds. \n[Final Check]\nFunction: court_case_find\nParameters: location, case_number, case_type\nValues: \"New York District court\", [\"67813\", \"71249\"], \"Civil\" / \"Criminal\"\nMatches schema.\nReady. \nOutput Generation. \n(Note: I will generate the tool calls exactly as specified.)",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "TRyQcMrxfketA80iZtRHXb07OU8Sd3eO"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Criminal\"}"
+              },
+              "id": "tWj5Nx5Z1qta2mpC9kjTjnvclImehVhT"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793421897,
+    "model": "mtp-study-qwen3-6-35b-a3b-q5-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1297,
+      "prompt_tokens": 406,
+      "total_tokens": 1703,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-PuiYkIGIIYij0PjQfJaH8iGmV4MytwOZ",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 406,
+      "prompt_ms": 2177.057,
+      "prompt_per_token_ms": 5.36220935960591,
+      "prompt_per_second": 186.4902940070012,
+      "predicted_n": 1297,
+      "predicted_ms": 41156.0,
+      "predicted_per_token_ms": 31.756172839506174,
+      "predicted_per_second": 31.489940713383227
+    }
+  },
+  "seconds": 43.33703289998812,
+  "estimated_prompt_tokens": 406
+}
