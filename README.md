@@ -80,6 +80,8 @@ Qwen 35BのBFCLではOFF/ONとも72/80でしたが、ONの応答中央値は16.6
 
 ## 今後の測定
 
+[将来試したいモデル](docs/FUTURE_MODELS.md)には、より強力なマシンを入手したら試す候補と、現在の環境で見送った理由を記録しています。
+
 Gitルートは `C:\LocalLLM\local-llm-benchmarks` です。モデル単体の測定コードは `benchmarks/`、Hermes等の接続・実ツール動作検証は `integrations/<harness>/`、共通処理は `src/`、共有入力は `datasets/`、すべての実行結果は `runs/<run-id>/`、表示ページは `reports/` に置きます。作成・再開・コミット・プッシュの手順は[WORKFLOW.md](docs/WORKFLOW.md)にまとめています。過去の `artifacts/` は凍結した証拠として残します。
 
 Hermesのネイティブ起動・接続、4B/35Bの実ツール往復、JSON/CSV/修正課題、64K容量と短いHermes会話、MCP接続を含む**過去6件の検証**も収録しています。MCPのアプリ側接続失敗や、初回課題の失敗も残しています。構成と手順は [Hermes検証](integrations/hermes/README.md) を参照してください。これらは当時のb11946等の記録で、最終b11960マトリックス全モデルのHermes対応を証明するものではありません。
