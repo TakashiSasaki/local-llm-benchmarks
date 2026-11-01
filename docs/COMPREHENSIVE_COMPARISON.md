@@ -73,4 +73,4 @@ python -B -m unittest discover -s tests -v
 
 [証拠照合結果](../publication/comprehensive-evidence-validation.json) · [表示確認結果](../publication/comprehensive-ui-validation.json)
 
-今後は新しいrunを保持したまま再生成します。既存10構成の参照元は固定し、後続の`quantization-mtp` / `mtp-speed-only`親runを追加で取り込みます。新方式のベンチマークや採点を追加する場合は、集計器・検証器にもその方式を明示的に追加してください。過去の凍結証拠は編集しません。
+第1期は閉鎖済みです。この集計器は`experiments/period-001/runs.json`の所属runと、同じ期のrecipe内モデル定義に限定され、次期のrunを自動で取り込みません。[第1期の固定ページと再現手順](../experiments/period-001/README.md)から当時の環境・全結果を参照できます。次期のベンチマークや採点は新しい期の設定・集計器で明示的に扱い、既存結果の参照と新規推論を分けます。

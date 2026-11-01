@@ -12,13 +12,26 @@ def resolve_run(value,root=ROOT):
     base=(root/'runs').resolve();path=(base/value).resolve()
     if path.parent!=base or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',value):raise ValueError('Use a single run ID under runs/')
     return path
-def create_run(title,benchmark,config=None,run_id=None,root=ROOT,kind='measurement',experiment_type='benchmark',harness=None):
+def assert_run_writable(path):
+    from .periods import membership,registry
+    root=path.resolve().parents[1];data=registry(root)
+    if data:
+        period=membership(root,load(path/'manifest.json'))
+        if data['periods'][period]['status']!='open':raise ValueError('Closed experiment period; use a new period and run ID, including when reproducing a failed test')
+def create_run(title,benchmark,config=None,run_id=None,root=ROOT,kind='measurement',experiment_type='benchmark',harness=None,period=None):
     if experiment_type not in EXPERIMENT_TYPES:raise ValueError('Unknown experiment type')
+    from .periods import new_run_period
+    period=new_run_period(root,period or (config or {}).get('period'))
     slug=re.sub(r'[^a-z0-9]+','-',title.lower()).strip('-')[:60] or 'experiment'
     name=run_id or datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ-')+slug
+    if period:
+        if run_id and not run_id.startswith(period+'-'):raise ValueError('Run ID must start with '+period+'-')
+        if not run_id:name=period+'-'+name
     path=resolve_run(name,root);path.mkdir(parents=True,exist_ok=False)
     for sub in ['configs','raw','logs','summaries','source','workspace']: (path/sub).mkdir()
     save(path/'manifest.json',{'schema_version':1,'run_id':name,'title':title,'benchmark':benchmark,'experiment_type':experiment_type,'harness':harness,'kind':kind,'status':'planned','created_at':now(),'config':config or {}})
+    if period:
+        m=load(path/'manifest.json');m['period']=period;save(path/'manifest.json',m)
     return path
 def snapshot_sources(path,root=ROOT):
     files={}
@@ -40,6 +53,8 @@ def validate_run(path):
         for rel,value in load(path/'source-manifest.json')['files'].items():assert sha(path/'source'/rel)==value,rel
     if m['status']=='complete':assert (path/'summary.json').exists()
     root=path.resolve().parents[1]
+    from .periods import membership
+    membership(root,m)
     for item in m.get('evidence',[]):
         evidence=(root/item['path']).resolve()
         assert evidence.is_relative_to(root),'Evidence must stay within the repository'

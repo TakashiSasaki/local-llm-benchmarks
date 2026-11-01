@@ -1,0 +1,57 @@
+{
+  "experiment_type": "benchmark",
+  "harness": null,
+  "model": "Empero Qwen3.8-35B-A3B-Distill",
+  "base_profile": "configs/qwen38-35b-distill-iq3m-64k.json",
+  "model_manifests": {
+    "iq3": "configs/models/qwen38-35b-distill-iq3-m.json",
+    "q4": "configs/models/qwen38-35b-distill-q4-k-m.json"
+  },
+  "runtime_build": "b11960 / 8642541b2 / CUDA12.4",
+  "context_tokens": 65536,
+  "max_output_tokens": 64000,
+  "parallel_slots": 1,
+  "target_cpu_moe_layers": 34,
+  "target_load_modes": {"iq3": "auto (mmap)", "q4": "none"},
+  "initial_attempt_study": "20261031-empero-quant-mtp-64k",
+  "recovery_study": "20261031-empero-mtp-load-none",
+  "recovery_reference": "The completed 400 IQ3_M answers keep their initial run IDs; 400 Q4_K_M answers are newly collected with load-mode none.",
+  "threads": 8,
+  "target_kv_type": "f16",
+  "mtp": {
+    "off": {"spec_type": "none"},
+    "on": {
+      "spec_type": "draft-mtp",
+      "draft_n_max": 3,
+      "draft_p_min": 0,
+      "draft_gpu_layers": "all",
+      "draft_ubatch": 128,
+      "draft_kv_type": "f16"
+    },
+    "verification": "Saved launch arguments and actual draft/accepted token counts; default /props alone is insufficient."
+  },
+  "capability_benchmarks": {
+    "bfcl": {"dataset": "datasets/bfcl/6ea5797/selected-80.json", "cases": 80, "temperature": 0, "thinking": ["off", "on"]},
+    "humaneval": {"dataset": "datasets/humaneval/b9453e8", "cases": 20, "temperature": 0.6, "thinking": ["off", "on"]}
+  },
+  "speed": {
+    "source": "benchmarks/mtp_speed.py",
+    "dataset": "datasets/mtp-speed/v1",
+    "prompts": ["prose", "code", "json"],
+    "repeats": 3,
+    "output_tokens": 256,
+    "warmup_tokens": 64,
+    "thinking": "off",
+    "temperature": 0,
+    "ignore_eos": true,
+    "cache_prompt": false,
+    "scope": "Equal prompt and output token count; generated content may differ. Not a quality score."
+  },
+  "collection_order": ["iq3-off", "iq3-on", "q4-off", "q4-on"],
+  "expected_capability_conditions": 16,
+  "expected_capability_answers": 800,
+  "expected_measured_speed_cases": 36,
+  "deployment_speed_supplement": {"quantization": "IQ3_M", "cpu_moe_layers": 30, "mtp": ["off", "on"], "speed_cases": 18, "capability_answers": 0},
+  "historical_results_used_as_fresh_measurements": false,
+  "notes": "Separate pilot runs are excluded. Capability conditions have one answer per problem; speed has three repeats per prompt."
+}

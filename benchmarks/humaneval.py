@@ -2,7 +2,7 @@
 import argparse,ast,ctypes,gzip,hashlib,json,pathlib,random,re,statistics,subprocess,sys,time,urllib.error,urllib.request
 from ctypes import wintypes as w
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
-from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_sources
+from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_sources,assert_run_writable
 from local_llm_benchmarks.output_errors import read_output_parser_error,is_output_parser_error,failure_fields
 
 def grader():
@@ -15,7 +15,7 @@ def grader():
     return scope['grade'],scope['unwrap_code']
 
 def run(a):
-    path=resolve_run(a.run);manifest=load(path/'manifest.json')
+    path=resolve_run(a.run);assert_run_writable(path);manifest=load(path/'manifest.json')
     if manifest['status']=='complete':raise ValueError('Completed run is immutable')
     params={'endpoint':a.endpoint.rstrip('/'),'model':a.model,'thinking':a.thinking,'context':65536,'max_output':64000,'temperature':0.6,'seed':42}
     if getattr(a,'continue_on_output_parser_error',False):params['output_parser_error_policy']='Record explicit HTTP500 peg-native output rejection as failure; do not repair; continue remaining cases'

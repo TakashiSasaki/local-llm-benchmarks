@@ -26,7 +26,11 @@ def verify():
     base_path = 'reports/20261031-empero-qwen38-iq3m-64k/matrix-data.json'
     baseline = {m['key']: m for m in read(base_path)['models']}
     parent_ids = set()
+    period_index=ROOT/'experiments/period-001/runs.json'
+    period_ids=set(read(period_index.relative_to(ROOT))['run_ids']) if period_index.exists() else None
     for path in (ROOT / 'runs').glob('*/manifest.json'):
+        if period_ids is not None and path.parent.name not in period_ids:
+            continue
         m = read(path.relative_to(ROOT))
         if m['benchmark'] in ['quantization-mtp', 'mtp-speed-only'] and not m.get('config', {}).get('pilot'):
             parent_ids.add(path.parent.name)

@@ -2,6 +2,7 @@
 import html,json,pathlib,os,sys
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,load,validate_run,EXPERIMENT_TYPES
+from local_llm_benchmarks.periods import membership,registry
 
 LABELS={'benchmark':'モデル単体のベンチマーク','harness-integration':'Hermes等のエージェント動作検証','transport-integration':'MCP等の接続・通信検証','capacity':'コンテキスト容量と関連動作の検証'}
 STYLE='body{font:16px/1.6 system-ui;max-width:1200px;margin:32px auto;padding:20px;color:#18283b;background:#f7f9fc}h1{font-size:1.8rem}h2{margin-top:2rem}section{background:white;border:1px solid #dce4ed;border-radius:12px;padding:16px;margin:16px 0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:580px}td,th{text-align:left;border-bottom:1px solid #dce4ed;padding:12px;vertical-align:top}small{color:#556576}a{color:#176c65}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}li{overflow-wrap:anywhere}.note{color:#556576}code{overflow-wrap:anywhere}'
@@ -33,17 +34,20 @@ def refresh():
         if not folder.is_dir() or not(folder/'manifest.json').exists():continue
         m=validate_run(folder);s=load(folder/'summary.json') if (folder/'summary.json').exists() else {}
         if m['kind']=='replay':continue
-        report=ROOT/m['report'] if m.get('report') else run_report(folder,m,s)
+        period=membership(ROOT,m);periods=registry(ROOT)
+        existing=ROOT/'reports'/folder.name/'index.html'
+        report=ROOT/m['report'] if m.get('report') else existing if period and periods['periods'][period]['status']=='closed' and existing.exists() else run_report(folder,m,s)
         rows.append((m,s,report))
     for output in [ROOT/'index.html',ROOT/'reports/index.html']:
-        body='<h1>local-llm-benchmarks</h1><p>モデルの性能比較から、Hermesを通した実ツール実行、MCP接続までの実験記録。</p><p>'+link(ROOT/'reports/comprehensive/index.html',output.parent,'全測定の横断比較（モデル・量子化・MTP・思考・配置）')+'</p><p class="note">completeは記録の収集完了です。結果のpassed / partial / failedとは別です。BFCLの呼び出し採点と、Hermesによる実際のツール実行も別々に表示します。</p>'
+        period_page=ROOT/'experiments/period-001/report.html'
+        body='<h1>local-llm-benchmarks</h1><p>モデルの性能比較から、Hermesを通した実ツール実行、MCP接続までの実験記録。</p><p>'+link(period_page if period_page.exists() else ROOT/'reports/comprehensive/index.html',output.parent,'第1期の横断比較（モデル・量子化・MTP・思考・配置）')+' · '+link(ROOT/'experiments/README.md',output.parent,'実験期の区分と再現記録')+'</p><p class="note">completeは記録の収集完了です。結果のpassed / partial / failedとは別です。BFCLの呼び出し採点と、Hermesによる実際のツール実行も別々に表示します。</p>'
         for typ in EXPERIMENT_TYPES:
             group=[row for row in rows if row[0].get('experiment_type','benchmark')==typ]
             if not group:continue
             body+='<section><h2>'+esc(LABELS[typ])+'</h2><div class="table-scroll"><table><thead><tr><th>Run</th><th>Suite / Harness</th><th>収集状態 / 結果</th><th>Summary</th></tr></thead><tbody>'
             for m,s,p in group:
                 score=s.get('headline') or (str(s['passed'])+'/'+str(s['attempted']) if 'passed' in s else str(s['conditions'])+' conditions / '+str(s['answers'])+' answers' if 'conditions' in s else '—')
-                body+='<tr><td>'+link(p,output.parent,m['title'])+'<br><small>'+esc(m['run_id'])+'</small></td><td>'+esc(m['benchmark'])+'<br><small>'+esc(m.get('harness') or 'direct API')+'</small></td><td>'+esc(m['status'])+'<br><strong>'+esc(s.get('outcome','see report'))+'</strong></td><td>'+esc(score)+'</td></tr>'
+                body+='<tr><td>'+link(p,output.parent,m['title'])+'<br><small>'+esc(m['run_id'])+' / '+esc(membership(ROOT,m) or 'legacy')+'</small></td><td>'+esc(m['benchmark'])+'<br><small>'+esc(m.get('harness') or 'direct API')+'</small></td><td>'+esc(m['status'])+'<br><strong>'+esc(s.get('outcome','see report'))+'</strong></td><td>'+esc(score)+'</td></tr>'
             body+='</tbody></table></div></section>'
         body+='<p>'+link(ROOT/'README.md',output.parent,'README')+' · '+link(ROOT/'docs/WORKFLOW.md',output.parent,'追加実験の手順')+' · '+link(ROOT/'integrations/hermes/README.md',output.parent,'Hermes検証の構成')+'</p>'
         write_page(output,'Local LLM benchmark and integration runs',body)

@@ -52,7 +52,9 @@ def collect(root=ROOT):
         p=ROOT/rel;sources[rel]=hashlib.sha256(p.read_bytes()).hexdigest();return load(p)
     base=read(BASE);early=read(EARLY);legacy=read(LEGACY);rows=[]
     definitions={}
-    for p in sorted((ROOT/'configs/models').glob('*.json')):
+    period=ROOT/'experiments/period-001'
+    definitions_root=period/'recipe/configs/models' if (period/'recipe/configs/models').exists() else ROOT/'configs/models'
+    for p in sorted(definitions_root.glob('*.json')):
         rel=p.relative_to(ROOT).as_posix();v=read(rel);definitions[(v['model'],v['quantization'])]=(v,rel)
     for m in base['models']:
         key=m['key'];entry=None
@@ -75,7 +77,8 @@ def collect(root=ROOT):
                 assert len(records)==metric['attempted'] and sum(r['passed'] for r in records)==metric['passed']
                 row['conditions'][suite+'_'+mode]=condition(records,80 if suite=='bfcl' else 20,'complete' if metric['complete'] else 'partial',row['evidence'])
         rows.append(row)
-    manifests={p.parent.name:read(p.relative_to(ROOT).as_posix()) for p in sorted((ROOT/'runs').glob('*/manifest.json'))}
+    period_ids=set(load(period/'runs.json')['run_ids']) if (period/'runs.json').exists() else None
+    manifests={p.parent.name:read(p.relative_to(ROOT).as_posix()) for p in sorted((ROOT/'runs').glob('*/manifest.json')) if period_ids is None or p.parent.name in period_ids}
     for name,m in manifests.items():
         cfg=m.get('config',{})
         if m['benchmark'] not in ['quantization-mtp','mtp-speed-only'] or cfg.get('pilot'):continue
@@ -160,4 +163,4 @@ def collect(root=ROOT):
     archives=[{'path':p.relative_to(ROOT).as_posix(),'role':'補助採点（replay）' if 'grader-sensitivity' in p.parts else '原集計／参照スナップショット（主比較に再加算しない）'} for p in sorted((ROOT/'artifacts/local-llm').rglob('results.json'))]
     conditions=[(r,c) for r in rows for c in r['conditions'].values()]
     counts={'configuration_rows':len(rows),'quality_rows':sum(r['kind']=='quality' for r in rows),'speed_only_rows':sum(r['kind']=='speed-only' for r in rows),'complete_quality_rows':sum(len(r['conditions'])==4 and all(c['complete'] for c in r['conditions'].values()) for r in rows),'complete_conditions':sum(c['complete'] for r,c in conditions),'condition_slots':len(conditions),'unique_saved_responses':len(raw),'unique_model_quant_pairs_measured':len({(r['model'],r['quantization']) for r in rows}),'unique_model_quant_mtp_measured':len({(r['model'],r['quantization'],r['mtp']) for r in rows}),'candidate_model_quant_pairs':len(pairs),'registered_runs':len(inventory),'historical_condition_snapshots':len(historical),'archived_result_files':len(archives)}
-    return {'title':'ローカルLLM測定の横断比較','scope':'主比較はb11960・65536 context・最大64000出力の固定HE20/BFCL80。旧予算・旧ランタイム、固定長速度、容量、実ツール、replayは区別する。未測定欄は対応保証や今後の測定計画を意味しない。','counts':counts,'rows':rows,'coverage':coverage,'historical':historical,'ancillary':ancillary,'inventory':inventory,'archives':archives,'sources':sources}
+    return {'period':'period-001','title':'第1期 ローカルLLM測定の横断比較','scope':'主比較はb11960・65536 context・最大64000出力の固定HE20/BFCL80。旧予算・旧ランタイム、固定長速度、容量、実ツール、replayは区別する。未測定欄は対応保証や今後の測定計画を意味しない。','counts':counts,'rows':rows,'coverage':coverage,'historical':historical,'ancillary':ancillary,'inventory':inventory,'archives':archives,'sources':sources}

@@ -39,7 +39,7 @@ def build():
     counts = data['counts']
     OUTPUT.mkdir(parents=True, exist_ok=True)
     save(OUTPUT / 'results.json', data)
-    template = TEMPLATE.replace('94完了条件や4,776応答', f"{counts['complete_conditions']}完了条件や{counts['unique_saved_responses']:,}応答").replace('全173登録run', f"全{counts['registered_runs']}登録run").replace('原集計20ファイル', f"原集計{counts['archived_result_files']}ファイル")
+    template = TEMPLATE.replace('ローカルLLM・全測定比較', '第1期 — ローカルLLM・全測定比較').replace('94完了条件や4,776応答', f"{counts['complete_conditions']}完了条件や{counts['unique_saved_responses']:,}応答").replace('全173登録run', f"全{counts['registered_runs']}登録run").replace('原集計20ファイル', f"原集計{counts['archived_result_files']}ファイル")
     text = template.replace('STYLE', STYLE).replace('DATA', json.dumps(data, ensure_ascii=False).replace('<', '\\u003c'))
     (OUTPUT / 'index.html').write_text(text, encoding='utf-8')
     (OUTPUT / 'dashboard.js').write_bytes((ROOT / 'tools/comprehensive_dashboard.cjs').read_bytes())

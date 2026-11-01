@@ -1,7 +1,7 @@
 """Collect the fixed BFCL 80 cases from an already running llama.cpp endpoint."""
 import argparse,hashlib,json,pathlib,re,statistics,sys,time,urllib.error,urllib.request
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
-from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_sources
+from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_sources,assert_run_writable
 from local_llm_benchmarks.bfcl import components
 from local_llm_benchmarks.output_errors import read_output_parser_error,is_output_parser_error,failure_fields
 def public_props(value):
@@ -10,7 +10,7 @@ def public_props(value):
     if isinstance(value,str):return re.sub(r'(?i)([A-Z]:[\\/]+Users[\\/]+)[^\\/"\r\n]+',lambda m:m[1]+'benchmark',value)
     return value
 def run(args):
-    path=resolve_run(args.run);manifest=load(path/'manifest.json')
+    path=resolve_run(args.run);assert_run_writable(path);manifest=load(path/'manifest.json')
     if manifest['status']=='complete':raise ValueError('Completed runs are immutable; create a new run ID')
     params={'endpoint':args.endpoint.rstrip('/'),'model':args.model,'thinking':args.thinking,'mode_control':args.mode_control,'context':args.context,'max_output':args.max_output,'dataset':'bfcl/6ea5797/selected-80.json','temperature':0,'seed':42}
     if getattr(args,'continue_on_output_parser_error',False):params['output_parser_error_policy']='Record explicit HTTP500 peg-native output rejection as failure; do not repair; continue remaining cases'

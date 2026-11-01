@@ -3,12 +3,12 @@ const fs=require('node:fs'),path=require('node:path');
 const {pathToFileURL,fileURLToPath}=require('node:url');
 const {chromium}=require('playwright');
 (async()=>{
- const root=path.resolve(__dirname,'..'),out=path.join(root,'reports/comprehensive');
- const d=JSON.parse(fs.readFileSync(path.join(out,'results.json'),'utf8'));
+ const root=path.resolve(__dirname,'..'),period=process.argv.includes('--period'),rel=period?'experiments/period-001':'reports/comprehensive',out=path.join(root,rel),prefix=period?'period-001':'comprehensive',entry=period?'report.html':'index.html';
+ const d=JSON.parse(fs.readFileSync(path.join(out,period?'comparison.json':'results.json'),'utf8'));
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH});
  try{
   const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
-  await page.goto(pathToFileURL(path.join(out,'index.html')).href);
+  await page.goto(pathToFileURL(path.join(out,entry)).href);
   const rows=page.locator('#main-table tbody tr');
   if(await rows.count()!==d.rows.length)throw Error('Wrong initial row count');
   for(const r of d.rows){
@@ -44,10 +44,10 @@ const {chromium}=require('playwright');
   for(const width of [1440,768,390]){
    await page.setViewportSize({width,height:1000});
    if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Overflow '+width);
-   if(width!==768)await page.screenshot({path:path.join(root,'publication',`comprehensive-${width}.png`),fullPage:true});
+   if(width!==768)await page.screenshot({path:path.join(root,'publication',`${prefix}-${width}.png`),fullPage:true});
   }
   if(errors.length)throw Error(JSON.stringify(errors));
-  const result={passed:true,report:'reports/comprehensive/index.html',row_count:d.rows.length,filters_and_sort_verified:true,partial_and_missing_score_labels_verified:true,heatmap_and_coverage_verified:true,old_conditions_and_run_inventory_verified:true,viewports:[1440,768,390],local_links_checked:links,errors};
-  fs.writeFileSync(path.join(root,'publication/comprehensive-ui-validation.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
+  const result={passed:true,report:rel+'/'+entry,row_count:d.rows.length,filters_and_sort_verified:true,partial_and_missing_score_labels_verified:true,heatmap_and_coverage_verified:true,old_conditions_and_run_inventory_verified:true,viewports:[1440,768,390],local_links_checked:links,errors};
+  fs.writeFileSync(path.join(root,'publication',prefix+'-ui-validation.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
