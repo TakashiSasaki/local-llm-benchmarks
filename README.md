@@ -1,5 +1,7 @@
 # Local LLM benchmarks on an 8 GB laptop GPU
 
+**[全測定の横断比較](reports/comprehensive/index.html)** · [全30行の比較表](reports/comprehensive/summary.md) · [条件別CSV](reports/comprehensive/conditions.csv) · [読み方](docs/COMPREHENSIVE_COMPARISON.md)。16モデル・量子化ペア、MTPを含む21組み合わせを、配置・再測定を区別した30行に集約。能力条件94件完了、保存応答4,776件で、未完了・未測定と旧条件も確認できます。
+
 [Mage Q4/Q3・MTP非対応・GPU配置の結果](reports/20261031-mage-text-64k/index.html)（能力試験は途中終了、Q3のBFCL160件は完了） · [Q5とMTPの追加比較](docs/Q5_MTP.md)（新規1,200回答＋既存400回答参照）。失敗・未実施条件も保存しています。
 
 RTX 4070 Laptop GPU（8 GB VRAM）・Ryzen 9 7940HS・RAM 32 GiB の Windows PC で行ったローカルLLM比較の測定記録です。2026-10-30の最終比較では、8構成 × HumanEval / BFCL × 思考OFF / ON の **32条件・1,600回答**をまとめています。

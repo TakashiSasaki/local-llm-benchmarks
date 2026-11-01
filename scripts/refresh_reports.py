@@ -36,7 +36,7 @@ def refresh():
         report=ROOT/m['report'] if m.get('report') else run_report(folder,m,s)
         rows.append((m,s,report))
     for output in [ROOT/'index.html',ROOT/'reports/index.html']:
-        body='<h1>local-llm-benchmarks</h1><p>モデルの性能比較から、Hermesを通した実ツール実行、MCP接続までの実験記録。</p><p class="note">completeは記録の収集完了です。結果のpassed / partial / failedとは別です。BFCLの呼び出し採点と、Hermesによる実際のツール実行も別々に表示します。</p>'
+        body='<h1>local-llm-benchmarks</h1><p>モデルの性能比較から、Hermesを通した実ツール実行、MCP接続までの実験記録。</p><p>'+link(ROOT/'reports/comprehensive/index.html',output.parent,'全測定の横断比較（モデル・量子化・MTP・思考・配置）')+'</p><p class="note">completeは記録の収集完了です。結果のpassed / partial / failedとは別です。BFCLの呼び出し採点と、Hermesによる実際のツール実行も別々に表示します。</p>'
         for typ in EXPERIMENT_TYPES:
             group=[row for row in rows if row[0].get('experiment_type','benchmark')==typ]
             if not group:continue
