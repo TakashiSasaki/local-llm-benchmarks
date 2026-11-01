@@ -14,7 +14,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'src'))
 from local_llm_benchmarks.study import ROOT, load, save, now
 
 PERIOD='period-001'
-TAG='period-001-2026-11-01'
+TAG='period-001-2026-11-01-r1'
 FOLDER=ROOT/'experiments'/PERIOD
 
 

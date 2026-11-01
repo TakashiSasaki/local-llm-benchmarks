@@ -26,12 +26,14 @@ def verify(period,root=ROOT):
     for path in (root/'runs').glob('*/manifest.json'):membership(root,load(path))
     assets=load(folder/'assets.json');present=0
     for asset in assets['models']:
+        assert (folder/'models'/(asset['filename']+'.json')).relative_to(root).as_posix() in files, 'Acquisition manifest missing from frozen file inventory'
         assert asset['revision'] in asset['url'] and len(asset['revision'])==40
         assert asset['sha256']==load(folder/'models'/(asset['filename']+'.json'))['sha256']
         value=asset['end_of_period_verification']
         if value['present']:
             assert value['sha256']==asset['sha256'] and value['bytes']==asset['bytes'] and value['matches_pinned_artifact'];present+=1
     d=load(folder/'comparison.json')
+    assert set(d['sources']).issubset(files), 'Referenced source missing from frozen file inventory'
     assert d['counts']==m['counts'] and d['counts']['registered_runs']==len(index['run_ids'])
     assert all(not pathlib.PurePosixPath(name).suffix.lower() in ['.exe','.dll','.gguf','.safetensors'] for name in files)
     result={'passed':True,'period':period,'tag':m['git_tag'],'frozen_files_verified':len(files),'registered_runs':len(index['run_ids']),'external_model_files_verified_at_close':present,'external_runtime_files_verified_at_close':sum(len(v['installed_files_verified']) for v in assets['runtimes']),'inference_performed':False,'tag_commit_resolution':'Resolve the annotated tag in Git; the manifest deliberately does not embed its own commit hash.'}

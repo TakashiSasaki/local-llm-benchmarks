@@ -2,13 +2,13 @@
 
 [固定比較ページ](report.html) · [Markdown比較表](comparison.md) · [条件CSV](conditions.csv) · [全run索引](runs.json) · [期のmanifest](manifest.json)
 
-Gitタグ **`period-001-2026-11-01`** が、この期の最終コード・入力・条件・結果を含むコミットを指します。対象のベース結果はコミット`b1e5eeaf3c0cab1c064fa73445eac320ab3f5086`までの記録です。終結用コミット自身のhashをファイル内へ自己参照させず、タグをGitで解決します。
+Gitタグ **`period-001-2026-11-01-r1`** が、この期の最終コード・入力・条件・結果を含むコミットを指します。対象のベース結果はコミット`b1e5eeaf3c0cab1c064fa73445eac320ab3f5086`までの記録です。終結用コミット自身のhashをファイル内へ自己参照させず、タグをGitで解決します。
 
 ```powershell
 git clone https://github.com/TakashiSasaki/local-llm-benchmarks.git
 cd local-llm-benchmarks
-git checkout --detach period-001-2026-11-01
-git rev-parse 'period-001-2026-11-01^{commit}'
+git checkout --detach period-001-2026-11-01-r1
+git rev-parse 'period-001-2026-11-01-r1^{commit}'
 ```
 
 ## 範囲と配置
@@ -105,3 +105,5 @@ foreach ($Zip in $Runtime.assets) {
 期のinventoryは入力・証拠・当期レポートとrecipeを保護します。ルートの維持管理コードとカタログは次期に更新可能です。同じコードを取り出すには必ずタグをcheckoutしてください。第1期の比較集計はrun索引とrecipe内モデル定義に限定され、次期のrunを自動で足しません。
 
 新規の再測定は[次期の開始手順](../README.md)で新期を開き、`period-002-...`等の新しいIDを使います。たとえば同じMTPセルを再現するときは`run_mtp_study.py`へ固定model manifest、新期へコピーしてパス等を調整したprofile、元の`--mtp`/`--cpu-moe`/`--load-mode`、明示した`--benchmark-python`を渡します。既存IDへの上書きや、取得失敗したキューの自動再開はしません。
+
+最初のタグ`period-001-2026-11-01`は取得manifestのJSONがGit除外された不完全な保存点です。完全な再現用には上記の`period-001-2026-11-01-r1`を使ってください。原測定データの変更はありません。
