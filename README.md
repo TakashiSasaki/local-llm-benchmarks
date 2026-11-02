@@ -1,5 +1,7 @@
 # Local LLM benchmarks on an 8 GB laptop GPU
 
+**[第2期: 無検閲モデルの調査・実験計画](experiments/period-002/README.md)**を2026-11-02に開始しました。現在は候補・固定取得情報・対照設計の段階で、追加ウェイトの取得・推論は未実施です。
+
 **第1期の実験は2026-11-01に終了しました。** [固定した比較表と再現記録](experiments/period-001/README.md) · [実験期の区分](experiments/README.md)。タグ `period-001-2026-11-01-r1` で環境・モデル入手情報・ソース・結果を取り出せます。次の測定は新しい期へ分けます。
 
 **[全測定の横断比較](reports/comprehensive/index.html)** · [全30行の比較表](reports/comprehensive/summary.md) · [条件別CSV](reports/comprehensive/conditions.csv) · [読み方](docs/COMPREHENSIVE_COMPARISON.md)。16モデル・量子化ペア、MTPを含む21組み合わせを、配置・再測定を区別した30行に集約。能力条件94件完了、保存応答4,776件で、未完了・未測定と旧条件も確認できます。

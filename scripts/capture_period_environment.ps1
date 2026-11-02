@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory=$true)][string]$Output,
     [Parameter(Mandatory=$true)][string]$BenchmarkPython,
     [Parameter(Mandatory=$true)][string]$MaintenancePython,
-    [string]$HermesSource
+    [string]$HermesSource,
+    [string]$ObservationScope='End-of-period observation; not proof these OS/driver/power settings were constant during every historical run'
 )
 $ErrorActionPreference='Stop'
 if(Test-Path -LiteralPath $Output){throw 'Environment snapshot already exists; use a new output file'}
@@ -19,7 +20,7 @@ if($LASTEXITCODE){throw 'GPU inspection failed'}
 $scheme=[regex]::Match((& powercfg /getactivescheme | Out-String),'[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}').Value
 $result=[ordered]@{
     captured_at_utc=(Get-Date).ToUniversalTime().ToString('o')
-    scope='End-of-period observation; not proof these OS/driver/power settings were constant during every historical run'
+    scope=$ObservationScope
     os=[ordered]@{caption=$os.Caption;version=$os.Version;build=$os.BuildNumber;ubr=$win.UBR;display_version=$win.DisplayVersion;architecture=$os.OSArchitecture;timezone=(Get-TimeZone).Id;culture=(Get-Culture).Name}
     computer=[ordered]@{manufacturer=$cs.Manufacturer;model=$cs.Model;physical_memory_bytes=$cs.TotalPhysicalMemory;automatic_managed_pagefile=$cs.AutomaticManagedPagefile}
     cpu=@(Get-CimInstance Win32_Processor | Select-Object Name,Manufacturer,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed)
