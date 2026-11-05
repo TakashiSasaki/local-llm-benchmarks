@@ -1,0 +1,195 @@
+{
+  "id": "multiple_188",
+  "request": {
+    "model": "mtp-study-qwen3-5-4b-ordinary-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find the grocery store closest to Berkeley that has at least a 4.5 star rating, selling tomatoes and also pet food."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "sentiment_analysis",
+          "description": "Perform sentiment analysis on a given piece of text.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "The text on which to perform sentiment analysis."
+              },
+              "language": {
+                "type": "string",
+                "description": "The language in which the text is written."
+              }
+            },
+            "required": [
+              "text",
+              "language"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "psych_research_get_preference",
+          "description": "Gathers research data on public preference between two options, based on societal category.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "The societal category the preference data is about. E.g. reading, transportation, food"
+              },
+              "option_one": {
+                "type": "string",
+                "description": "The first option people could prefer."
+              },
+              "option_two": {
+                "type": "string",
+                "description": "The second option people could prefer."
+              },
+              "demographic": {
+                "type": "string",
+                "description": "Specific demographic of society to narrow down the research.",
+                "default": "all"
+              }
+            },
+            "required": [
+              "category",
+              "option_one",
+              "option_two"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "grocery_store_find_best",
+          "description": "Find the closest high-rated grocery stores based on certain product availability.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "my_location": {
+                "type": "string",
+                "description": "The current location of the user."
+              },
+              "rating": {
+                "type": "number",
+                "description": "The minimum required store rating. Default is 0.0. This is a float type value.",
+                "format": "float"
+              },
+              "products": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Required products in a list."
+              }
+            },
+            "required": [
+              "my_location",
+              "products"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "train_random_forest_classifier",
+          "description": "Train a Random Forest classifier with the specified parameters.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "dataset": {
+                "type": "string",
+                "description": "The dataset to train the classifier on."
+              },
+              "max_depth": {
+                "type": "integer",
+                "description": "The maximum depth of the trees in the forest."
+              },
+              "n_estimators": {
+                "type": "integer",
+                "description": "The number of trees in the forest."
+              }
+            },
+            "required": [
+              "dataset",
+              "max_depth",
+              "n_estimators"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user is asking me to find a grocery store that meets specific criteria:\n1. Closest to Berkeley\n2. At least 4.5 star rating\n3. Sells tomatoes and pet food\n\nI need to use the grocery_store_find_best function with these parameters:\n- my_location: \"Berkeley\"\n- rating: 4.5 (minimum required store rating)\n- products: [\"tomatoes\", \"pet food\"] (the products they need)\n\nAll required parameters are provided, so I can make the function call.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "grocery_store_find_best",
+                "arguments": "{\"my_location\":\"Berkeley\",\"products\":[\"tomatoes\", \"pet food\"],\"rating\":4.5}"
+              },
+              "id": "yodBAH92gwxLlWSpQRxvRdICjYpHrgxc"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1793589723,
+    "model": "mtp-study-qwen3-5-4b-ordinary-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 180,
+      "prompt_tokens": 791,
+      "total_tokens": 971,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-KizTD8C6QCJwSCVLXXjOHnj8gBLHeJ3s",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 791,
+      "prompt_ms": 215.36,
+      "prompt_per_token_ms": 0.2722629582806574,
+      "prompt_per_second": 3672.9197622585434,
+      "predicted_n": 180,
+      "predicted_ms": 2496.285,
+      "predicted_per_token_ms": 13.945726256983239,
+      "predicted_per_second": 71.70655594213001
+    }
+  },
+  "seconds": 2.729533599980641,
+  "estimated_prompt_tokens": 791
+}

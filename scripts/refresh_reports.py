@@ -18,6 +18,7 @@ def run_report(folder,m,summary):
     body='<p>'+link(ROOT/'index.html',output.parent,'測定・検証一覧へ')+'</p><h1>'+esc(m['title'])+'</h1>'
     body+='<p>'+esc(LABELS[m.get('experiment_type','benchmark')])+' / '+esc(m.get('harness') or 'direct API')+'</p>'
     body+='<p>収集状態: '+esc(m['status'])+' / 検証結果: '+esc(summary.get('outcome','see summary'))+'</p>'
+    if summary.get('outcome')=='deferred':body+='<p><strong>停止指示・実行窓による保留。部分結果を保存し、モデル障害や完了0点として扱いません。</strong></p>'
     if m.get('notes'):body+='<p class="note">'+esc(m['notes'])+'</p>'
     body+='<section><h2>Summary</h2><pre>'+esc(json.dumps(summary,ensure_ascii=False,indent=2))+'</pre></section>'
     body+='<details><summary>実験定義・使用モデル・時刻・出典</summary><pre>'+esc(json.dumps(m,ensure_ascii=False,indent=2))+'</pre></details>'
@@ -42,11 +43,14 @@ def refresh():
         period_page=ROOT/'experiments/period-001/report.html'
         body='<h1>local-llm-benchmarks</h1><p>モデルの性能比較から、Hermesを通した実ツール実行、MCP接続までの実験記録。</p><p>'+link(period_page if period_page.exists() else ROOT/'reports/comprehensive/index.html',output.parent,'第1期の横断比較（モデル・量子化・MTP・思考・配置）')+' · '+link(ROOT/'experiments/README.md',output.parent,'実験期の区分と再現記録')+'</p><p class="note">completeは記録の収集完了です。結果のpassed / partial / failedとは別です。BFCLの呼び出し採点と、Hermesによる実際のツール実行も別々に表示します。</p>'
         for typ in EXPERIMENT_TYPES:
+            if typ==EXPERIMENT_TYPES[0] and (ROOT/'experiments/period-002/reports/index.html').exists():
+                body+='<p>'+link(ROOT/'experiments/period-002/reports/index.html',output.parent,'第2期の主比較（保存回答・保留と未実施を区別）')+'</p>'
             group=[row for row in rows if row[0].get('experiment_type','benchmark')==typ]
             if not group:continue
             body+='<section><h2>'+esc(LABELS[typ])+'</h2><div class="table-scroll"><table><thead><tr><th>Run</th><th>Suite / Harness</th><th>収集状態 / 結果</th><th>Summary</th></tr></thead><tbody>'
             for m,s,p in group:
-                score=s.get('headline') or (str(s['passed'])+'/'+str(s['attempted']) if 'passed' in s else str(s['conditions'])+' conditions / '+str(s['answers'])+' answers' if 'conditions' in s else '—')
+                score=s.get('headline') or (str(s['passed'])+'/'+str(s['attempted']) if 'passed' in s else str(s['conditions'])+' conditions / '+str(s['answers'])+' answers' if 'conditions' in s and 'answers' in s else str(s['capability_answers'])+' capability answers' if 'capability_answers' in s else '—')
+                if s.get('outcome')=='deferred' and 'passed_saved' in s:score=str(s['passed_saved'])+'/'+str(s['attempted'])+' saved; '+str(s.get('expected','?'))+' planned; 部分収集'
                 body+='<tr><td>'+link(p,output.parent,m['title'])+'<br><small>'+esc(m['run_id'])+' / '+esc(membership(ROOT,m) or 'legacy')+'</small></td><td>'+esc(m['benchmark'])+'<br><small>'+esc(m.get('harness') or 'direct API')+'</small></td><td>'+esc(m['status'])+'<br><strong>'+esc(s.get('outcome','see report'))+'</strong></td><td>'+esc(score)+'</td></tr>'
             body+='</tbody></table></div></section>'
         body+='<p>'+link(ROOT/'README.md',output.parent,'README')+' · '+link(ROOT/'docs/WORKFLOW.md',output.parent,'追加実験の手順')+' · '+link(ROOT/'integrations/hermes/README.md',output.parent,'Hermes検証の構成')+'</p>'

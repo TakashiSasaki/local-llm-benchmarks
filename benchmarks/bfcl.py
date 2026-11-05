@@ -4,6 +4,7 @@ sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_sources,assert_run_writable
 from local_llm_benchmarks.bfcl import components
 from local_llm_benchmarks.output_errors import read_output_parser_error,is_output_parser_error,failure_fields
+from local_llm_benchmarks.execution_window import require,ExecutionWindowDeferred
 def public_props(value):
     if isinstance(value,dict):return {k:('[Model template omitted; SHA256 '+hashlib.sha256(v.encode()).hexdigest()+']' if k=='chat_template' and isinstance(v,str) else public_props(v)) for k,v in value.items()}
     if isinstance(value,list):return [public_props(v) for v in value]
@@ -29,6 +30,7 @@ def run(args):
     manifest.update(status='running',execution=params,started_at=manifest.get('started_at') or now(),runtime_build=props.get('build_info'));manifest.pop('error',None);save(path/'manifest.json',manifest);save(path/'configs/server-props.json',public_props(props))
     entries=[]
     try:
+        require(path,'BFCL mode warmup','question')
         warm={'model':args.model,'messages':[{'role':'user','content':'What is 17 times 23? Think carefully and then answer with the number.'}],'max_tokens':512,'temperature':0,'seed':42,'cache_prompt':False,'chat_template_kwargs':{'enable_thinking':args.thinking=='on'}}
         warm_response=api('/v1/chat/completions',warm);save(path/'configs/mode-warmup.json',{'request':warm,'response':warm_response})
         msg=warm_response['choices'][0]['message'];observed=bool(msg.get('reasoning_content') or msg.get('reasoning'))
@@ -40,6 +42,7 @@ def run(args):
                 raw=load(rawfile);expected=dict(payload,max_tokens=raw['request']['max_tokens']);assert raw['request']==expected
                 assert expected['max_tokens']==min(args.max_output,args.context-raw['estimated_prompt_tokens']-32)
             else:
+                require(path,'BFCL '+cid,'question')
                 templ=api('/apply-template',{k:v for k,v in payload.items() if k in ['messages','tools','tool_choice','parallel_tool_calls','chat_template_kwargs']},30)
                 n=len(api('/tokenize',{'content':templ['prompt'],'add_special':False},30)['tokens']);payload['max_tokens']=min(args.max_output,args.context-n-32)
                 if payload['max_tokens']<=0:raise ValueError('No output space remaining')
@@ -63,6 +66,9 @@ def run(args):
         if getattr(args,'continue_on_output_parser_error',False):summary.update(server_output_parser_errors=sum(bool(x.get('server_output_parser_error')) for x in entries),unavailable_response_stats_cases=sum(x['usage'] is None for x in entries),output_parser_error_policy=params['output_parser_error_policy'])
         save(path/'summary.json',summary);manifest.update(status='complete',completed_at=now());save(path/'manifest.json',manifest);return summary
     except Exception as exc:
+        if isinstance(exc,ExecutionWindowDeferred):
+            manifest.update(stop_reason='execution_window_deferred',model_failure=False)
+            save(path/'summary.json',{'outcome':'deferred','benchmark':'bfcl','attempted':len(entries),'expected':80,'passed_saved':sum(e['passed'] for e in entries),'scope':'Partial collection preserved; deadline admission, not a completed score or model failure'})
         manifest.update(status='failed',error=repr(exc),failed_at=now());save(path/'manifest.json',manifest);raise
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--mode-control',choices=['native','runtime-forced'],default='native');p.add_argument('--context',type=int,default=65536);p.add_argument('--max-output',type=int,default=64000);p.add_argument('--continue-on-output-parser-error',action='store_true');a=p.parse_args();run(a)

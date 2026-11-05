@@ -4,6 +4,7 @@ from ctypes import wintypes as w
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_sources,assert_run_writable
 from local_llm_benchmarks.output_errors import read_output_parser_error,is_output_parser_error,failure_fields
+from local_llm_benchmarks.execution_window import require,ExecutionWindowDeferred
 
 def grader():
     bench=ROOT/'artifacts/local-llm/hermes/benchmarks'
@@ -18,17 +19,38 @@ def run(a):
     path=resolve_run(a.run);assert_run_writable(path);manifest=load(path/'manifest.json')
     if manifest['status']=='complete':raise ValueError('Completed run is immutable')
     params={'endpoint':a.endpoint.rstrip('/'),'model':a.model,'thinking':a.thinking,'context':65536,'max_output':64000,'temperature':0.6,'seed':42}
+    subset=getattr(a,'subset_plan',None)
+    if subset:params['subset_plan_sha256']=hashlib.sha256(pathlib.Path(subset).read_bytes()).hexdigest()
+    policy=getattr(a,'grader_policy','legacy')
+    if policy!='legacy':params['grader_policy']=policy
     if getattr(a,'continue_on_output_parser_error',False):params['output_parser_error_policy']='Record explicit HTTP500 peg-native output rejection as failure; do not repair; continue remaining cases'
     if manifest.get('execution') and manifest['execution']!=params:raise ValueError('Resume conditions changed')
+    if manifest.get('execution'):
+        for rel,value in load(path/'source-manifest.json')['files'].items():
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=value:raise ValueError('Source changed; create a new run ID')
     if not manifest.get('execution'):snapshot_sources(path)
     def api(route,payload=None):
         req=urllib.request.Request(params['endpoint']+route,data=json.dumps(payload).encode() if payload is not None else None,headers={'Content-Type':'application/json'})
         with urllib.request.urlopen(req,timeout=7200) as f:return json.load(f)
+    require(path,'HumanEval collection admission','condition')
     props=api('/props');assert props['model_alias']==a.model and props['default_generation_settings']['n_ctx']==65536 and props['total_slots']==1
-    grade,unwrap=grader();dataset=ROOT/'datasets/humaneval/b9453e8'
+    legacy_grade,unwrap=grader();grade=legacy_grade
+    if policy=='standard-windows-v1':
+        from local_llm_benchmarks.humaneval_standard_windows import grade,provenance
+        save(path/'configs/grader-policy.json',provenance())
+    dataset=ROOT/'datasets/humaneval/b9453e8'
     for rel,expected in load(dataset/'manifest.json')['files'].items():assert hashlib.sha256((dataset/rel).read_bytes()).hexdigest()==expected,rel
     data=gzip.decompress((dataset/'HumanEval.jsonl.gz').read_bytes());rows=[json.loads(s) for s in data.decode().splitlines()]
     problems=[rows[i] for i in sorted(random.Random(42).sample(range(len(rows)),20))]
+    full_selection=problems
+    if subset:
+        from local_llm_benchmarks.humaneval_subset import select
+        plan=load(pathlib.Path(subset));assert policy==plan['grader_policy'] and a.thinking==plan['thinking']
+        assert path.name!=plan['source_run'],'Continuation requires a new run'
+        assert manifest['config']['model']['sha256']==plan['model_sha256'],'Use the pinned original model'
+        problems=select(problems,plan);save(path/'configs/subset-plan.json',plan)
+        allowed={p['task_id'].replace('/','_')+'.json' for p in problems}
+        assert all(p.name in allowed for p in (path/'raw').glob('*.json')),'Unexpected raw cases in subset run'
     controls=[{'task_id':p['task_id'],**grade(p['prompt']+p['canonical_solution'],p)} for p in problems];assert all(x['passed'] for x in controls);save(path/'configs/canonical-controls.json',controls)
     manifest.update(status='running',execution=params,started_at=manifest.get('started_at') or now(),runtime_build=props['build_info']);save(path/'manifest.json',manifest);entries=[]
     try:
@@ -38,6 +60,7 @@ def run(a):
             if rawfile.exists():
                 raw=load(rawfile);assert raw['request']==dict(payload,max_tokens=raw['request']['max_tokens'])
             else:
+                require(path,'HumanEval '+p['task_id'],'question')
                 templ=api('/apply-template',{k:v for k,v in payload.items() if k in ['messages','chat_template_kwargs']})
                 n=len(api('/tokenize',{'content':templ['prompt'],'add_special':False})['tokens']);payload['max_tokens']=min(64000,65536-n-32)
                 start=time.monotonic();http_status=None
@@ -54,12 +77,22 @@ def run(a):
                 code=unwrap(content,p['prompt'],p['entry_point']) if content.strip() else ''
                 outcome=grade(code,p) if code else {'passed':False,'status':'no_final_code'}
                 entry={'task_id':p['task_id'],**outcome,'code':code,'seconds':raw['seconds'],'finish_reason':response['choices'][0]['finish_reason'],'reasoning_observed':bool(msg.get('reasoning_content') or msg.get('reasoning')),'usage':response['usage']}
+                if policy!='legacy':entry['legacy_replay']=legacy_grade(code,p) if code else {'passed':False,'status':'no_final_code'}
             entries.append(entry);save(path/'summaries/cases.json',entries)
             print(json.dumps({'suite':'humaneval','mode':a.thinking,'done':len(entries),'task':p['task_id'],'passed':entry['passed']}),flush=True)
         summary={'benchmark':'humaneval','thinking':a.thinking,'passed':sum(e['passed'] for e in entries),'attempted':len(entries),'expected':20,'median_seconds':statistics.median(e['seconds'] for e in entries),'total_seconds':sum(e['seconds'] for e in entries),'output_cap_hits':sum(e['finish_reason']=='length' for e in entries),'reasoning_observed_cases':sum(e['reasoning_observed'] is True for e in entries),'grading_python':sys.version,'grader_policy':'Original restricted Windows worker; no reasoning salvage or normalizer changes'}
+        summary['expected']=len(problems)
+        if subset:
+            from local_llm_benchmarks.humaneval_subset import combined_score
+            summary.update(subset=True,referenced_answers=plan['referenced_answer_count'],source_run=plan['source_run'],combined_expected=plan['combined_expected'],combined_reference_score=combined_score(full_selection,plan,entries),scope='Only pending IDs collected; combine with referenced original answers by unique task ID')
+        if policy!='legacy':summary.update(grader_policy=provenance()['policy'],legacy_replay_passed=sum(e.get('legacy_replay',{}).get('passed',False) for e in entries),legacy_replay_scope='Same saved final code only; no new inference, not the period-002 primary score')
         if getattr(a,'continue_on_output_parser_error',False):summary.update(server_output_parser_errors=sum(bool(e.get('server_output_parser_error')) for e in entries),unavailable_response_stats_cases=sum(e['usage'] is None for e in entries),output_parser_error_policy=params['output_parser_error_policy'])
         save(path/'summary.json',summary);manifest.update(status='complete',completed_at=now());save(path/'manifest.json',manifest);return summary
-    except Exception as e:manifest.update(status='failed',error=repr(e));save(path/'manifest.json',manifest);raise
+    except Exception as e:
+        if isinstance(e,ExecutionWindowDeferred):
+            manifest.update(stop_reason='execution_window_deferred',model_failure=False)
+            save(path/'summary.json',{'outcome':'deferred','benchmark':'humaneval','attempted':len(entries),'expected':len(problems),'passed_saved':sum(e['passed'] for e in entries),'scope':'Partial collection preserved; deadline admission, not a completed score or model failure'})
+        manifest.update(status='failed',error=repr(e));save(path/'manifest.json',manifest);raise
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--continue-on-output-parser-error',action='store_true');run(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--continue-on-output-parser-error',action='store_true');p.add_argument('--grader-policy',choices=['legacy','standard-windows-v1'],default='legacy');p.add_argument('--subset-plan',type=pathlib.Path);run(p.parse_args())

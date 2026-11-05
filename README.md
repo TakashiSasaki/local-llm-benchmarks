@@ -1,6 +1,6 @@
 # Local LLM benchmarks on an 8 GB laptop GPU
 
-**[第2期: 無検閲モデルの調査・実験計画](experiments/period-002/README.md)**を2026-11-02に開始しました。現在は候補・固定取得情報・対照設計の段階で、追加ウェイトの取得・推論は未実施です。
+**第2期は測定停止中です。** [保存済み588/1,600回答の比較](experiments/period-002/reports/index.html) · [監査・継続手順](experiments/period-002/AUDIT.md) · [実験計画](experiments/period-002/README.md)。段階Aは400回答完了、通常9Bは188回答保存、全体の未収集は1,012回答です。第1期の確定結果とは分離しています。
 
 **第1期の実験は2026-11-01に終了しました。** [固定した比較表と再現記録](experiments/period-001/README.md) · [実験期の区分](experiments/README.md)。タグ `period-001-2026-11-01-r1` で環境・モデル入手情報・ソース・結果を取り出せます。次の測定は新しい期へ分けます。
 

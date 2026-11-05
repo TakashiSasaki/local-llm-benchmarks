@@ -13,7 +13,7 @@ def check():
     for path in manifests:validate_run(path.parent)
     for item in load(ROOT/'publication/hermes-export-manifest.json')['entries']:
         assert hashlib.sha256((ROOT/item['path']).read_bytes()).hexdigest()==item['exported_sha256'],item['path']
-    for location in [ROOT/'datasets/bfcl/6ea5797',ROOT/'datasets/humaneval/b9453e8',ROOT/'vendor/bfcl']:
+    for location in [ROOT/'datasets/bfcl/6ea5797',ROOT/'datasets/humaneval/b9453e8',ROOT/'vendor/bfcl',ROOT/'vendor/humaneval/b9453e8']:
         for rel,expected in load(location/'manifest.json')['files'].items():assert hashlib.sha256((location/rel).read_bytes()).hexdigest()==expected,str(location/rel)
     private_user=os.environ.get('USERNAME','');findings=[]
     patterns=[r'github_pat_[A-Za-z0-9_]{20,}',r'gh[pousr]_[A-Za-z0-9_]{20,}',r'hf_[A-Za-z0-9]{24,}',r'sk-(?:proj-)?[A-Za-z0-9_-]{25,}',r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----']

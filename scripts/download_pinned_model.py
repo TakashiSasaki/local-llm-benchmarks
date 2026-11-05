@@ -1,5 +1,5 @@
 """Download an explicitly pinned GGUF outside the repository and verify its SHA256."""
-import argparse,concurrent.futures,hashlib,json,pathlib,re,subprocess
+import argparse,atexit,concurrent.futures,hashlib,json,pathlib,re,subprocess,msvcrt
 
 def digest(p):
     h=hashlib.sha256()
@@ -8,15 +8,22 @@ def digest(p):
     return h.hexdigest()
 
 if __name__=='__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('--manifest',type=pathlib.Path,required=True);ap.add_argument('--model-dir',type=pathlib.Path,required=True);ap.add_argument('--connections',type=int,default=1);a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--manifest',type=pathlib.Path,required=True);ap.add_argument('--model-dir',type=pathlib.Path,required=True);ap.add_argument('--connections',type=int,default=1);ap.add_argument('--download-query',choices=['download=true'],default=None);a=ap.parse_args()
     repo=pathlib.Path(__file__).resolve().parents[1];dest=a.model_dir.resolve()
     assert not dest.is_relative_to(repo),'Weights must stay outside the repository'
     m=json.loads(a.manifest.read_text(encoding='utf-8'));dest.mkdir(parents=True,exist_ok=True);target=dest/m['filename']
     assert target.parent==dest and m['revision'] in m['url'],'Expected pinned single-file model URL'
+    lock=target.with_suffix(target.suffix+'.download.lock').open('a+b')
+    if lock.seek(0,2)==0:lock.write(b'0');lock.flush()
+    lock.seek(0)
+    try:msvcrt.locking(lock.fileno(),msvcrt.LK_NBLCK,1)
+    except OSError:raise RuntimeError('Another downloader owns this model; do not overlap writers')
+    atexit.register(lock.close)
     if not target.exists():
         part=target.with_suffix(target.suffix+'.part')
         if a.connections==1:
-            subprocess.run(['curl.exe','--fail','--location','--silent','--show-error','--retry','5','--continue-at','-','--output',str(part),m['url']],check=True)
+            url=m['url']+('?' + a.download_query if a.download_query else '')
+            subprocess.run(['curl.exe','--fail','--location','--silent','--show-error','--connect-timeout','30','--speed-time','60','--speed-limit','1024','--retry','5','--continue-at','-','--output',str(part),url],check=True)
         else:
             start=part.stat().st_size if part.exists() else 0;block=64*1024*1024
             ranges=[(s,min(s+block,m['bytes'])-1) for s in range(start,m['bytes'],block)]

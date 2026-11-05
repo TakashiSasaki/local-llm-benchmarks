@@ -3,6 +3,7 @@ import argparse, hashlib, importlib.util, json, os, pathlib, re, socket, subproc
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'src'))
 from local_llm_benchmarks.study import ROOT,create_run,load,save,sha,snapshot_sources,now
 from local_llm_benchmarks import memory_windows as memory
+from local_llm_benchmarks.execution_window import require,ExecutionWindowDeferred
 
 def module(name,path):
     s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m
@@ -21,14 +22,19 @@ def run(a):
     snapshot_sources(parent); manifest=load(parent/'manifest.json'); manifest.update(status='running',started_at=now()); save(parent/'manifest.json',manifest)
     server=None; mon=None; stop=threading.Event(); guard_hits=[]; children=[]
     try:
+        require(parent,a.id,'model-preflight' if a.pilot else 'speed' if a.speed_only else 'model-benchmark')
         assert model.exists() and model.stat().st_size==metadata['bytes'],'Model absent or size differs'
         h=hashlib.sha256()
         with model.open('rb') as f:
             for block in iter(lambda:f.read(8*1024*1024),b''): h.update(block)
         assert h.hexdigest()==metadata['sha256'],'Model hash differs'
         save(parent/'configs/model-file-verification.json',{'filename':model.name,'bytes':model.stat().st_size,'sha256':h.hexdigest(),'verified':True})
+        save(parent/'configs/runtime-file-verification.json',{'filename':binary.name,'bytes':binary.stat().st_size,'sha256':sha(binary),'scope':'Actual server executable before launch; served build/commit and dependent runtime identity are recorded separately'})
+        header=module('gguf_inspector',ROOT/'tools/inspect_gguf_header.py').inspect(model,include_template=True)
+        save(parent/'configs/gguf-header.json',header)
         with socket.socket() as sock: assert sock.connect_ex(('127.0.0.1',8089))!=0,'Port occupied; existing server will not be replaced'
         save(parent/'configs/baseline-memory.json',memory.snapshot(os.getpid()))
+        require(parent,'start owned server','model-preflight' if a.pilot else 'speed' if a.speed_only else 'model-benchmark')
         command=[str(binary),'-m',str(model),'--host','127.0.0.1','--port','8089','--alias',alias]+args
         save(parent/'configs/server-command.json',{'args':command})
         started=time.monotonic()
@@ -37,8 +43,9 @@ def run(a):
         def guard():
             low=0
             while not stop.wait(3):
-                snap=memory.snapshot(server.pid); low=low+1 if snap['available_ram_bytes']<1024**3 else 0
-                if low>=3: guard_hits.append({'at':now(),'reason':'Physical available RAM under 1 GiB for three samples'}); server.terminate(); return
+                minimum=profile.get('minimum_available_ram_bytes',1024**3)
+                snap=memory.snapshot(server.pid); low=low+1 if snap['available_ram_bytes']<minimum else 0
+                if low>=3: guard_hits.append({'at':now(),'reason':'Physical available RAM under configured reserve for three samples','minimum_available_ram_bytes':minimum}); server.terminate(); return
         threading.Thread(target=guard,daemon=True).start()
         def api(route,payload=None,timeout=15):
             req=urllib.request.Request('http://127.0.0.1:8089'+route,data=json.dumps(payload).encode() if payload is not None else None,headers={'Content-Type':'application/json'})
@@ -65,19 +72,32 @@ def run(a):
             sm.update(status='complete',completed_at=now()); save(speed/'manifest.json',sm)
         except BaseException as e: sm.update(status='failed',error=repr(e));save(speed/'manifest.json',sm);raise
         print(json.dumps({'event':'speed_complete','run':parent.name,**summary}),flush=True)
+        if profile.get('tool_smoke'):
+            result=module('tool_smoke',ROOT/'benchmarks/tool_smoke.py').collect(parent,api,alias)
+            save(parent/'summaries/tool-smoke.json',result)
+            assert result['transport_and_mode_checks_passed'],'Tool/mode smoke incomplete; inspect raw responses'
         if not a.pilot and not a.speed_only:
             for suite in ['bfcl','humaneval']:
                 for thinking in ['off','on']:
+                    require(parent,suite+' thinking '+thinking,'condition')
                     child=create_run(title+' '+suite+' thinking '+thinking,suite,config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-'+suite+'-'+thinking); children.append(child.name)
                     command=[str(a.benchmark_python),'-B',str(ROOT/'benchmarks'/(suite+'.py')),'--run',child.name,'--model',alias,'--thinking',thinking]
                     command+=profile.get('benchmark_extra_args',[])
+                    if suite=='humaneval' and profile.get('humaneval_grader_policy'):command+=['--grader-policy',profile['humaneval_grader_policy']]
                     print(json.dumps({'event':'condition_start','run':child.name}),flush=True)
                     with (parent/'logs'/(suite+'-'+thinking+'.log')).open('w',encoding='utf-8') as log:result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW,env=dict(os.environ,PYTHONUTF8='1',PYTHONIOENCODING='utf-8'))
-                    if result.returncode:raise RuntimeError('Condition failed: '+child.name)
+                    if result.returncode:
+                        if load(child/'manifest.json').get('stop_reason')=='execution_window_deferred':raise ExecutionWindowDeferred('Child condition deferred by finish-by admission: '+child.name)
+                        raise RuntimeError('Condition failed: '+child.name)
                     print(json.dumps({'event':'condition_complete','run':child.name,**load(child/'summary.json')}),flush=True)
         save(parent/'summary.json',{'outcome':'passed','headline':title,'child_runs':children,'mtp':a.mtp,'quantization':metadata['quantization'],'cpu_moe_layers':a.cpu_moe,'pilot':a.pilot,'summaries':{name:load(ROOT/'runs'/name/'summary.json') for name in children},'scope':'Collection complete; capability scores are recorded separately from throughput.'})
         manifest.update(status='complete',completed_at=now())
-    except BaseException as e: manifest.update(status='failed',error=repr(e));raise
+    except BaseException as e:
+        manifest.update(status='failed',error=repr(e))
+        if isinstance(e,ExecutionWindowDeferred):
+            manifest.update(stop_reason='execution_window_deferred',model_failure=False)
+            save(parent/'summary.json',{'outcome':'deferred','child_runs':children,'scope':'Deadline admission; partial evidence preserved, not a completed model score'})
+        raise
     finally:
         stop.set()
         if server and server.poll() is None:server.terminate();server.wait(timeout=30)
