@@ -1,0 +1,65 @@
+{
+  "request": {
+    "model": "mtp-study-qwen3-5-9b-heretic-q4-k-m-off",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests."
+      },
+      {
+        "role": "user",
+        "content": "\ndef minPath(grid, k):\n    \"\"\"\n    Given a grid with N rows and N columns (N >= 2) and a positive integer k, \n    each cell of the grid contains a value. Every integer in the range [1, N * N]\n    inclusive appears exactly once on the cells of the grid.\n\n    You have to find the minimum path of length k in the grid. You can start\n    from any cell, and in each step you can move to any of the neighbor cells,\n    in other words, you can go to cells which share an edge with you current\n    cell.\n    Please note that a path of length k means visiting exactly k cells (not\n    necessarily distinct).\n    You CANNOT go off the grid.\n    A path A (of length k) is considered less than a path B (of length k) if\n    after making the ordered lists of the values on the cells that A and B go\n    through (let's call them lst_A and lst_B), lst_A is lexicographically less\n    than lst_B, in other words, there exist an integer index i (1 <= i <= k)\n    such that lst_A[i] < lst_B[i] and for any j (1 <= j < i) we have\n    lst_A[j] = lst_B[j].\n    It is guaranteed that the answer is unique.\n    Return an ordered list of the values on the cells that the minimum path go through.\n\n    Examples:\n\n        Input: grid = [ [1,2,3], [4,5,6], [7,8,9]], k = 3\n        Output: [1, 2, 1]\n\n        Input: grid = [ [5,9,3], [4,1,6], [7,8,2]], k = 1\n        Output: [1]\n    \"\"\"\n"
+      }
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0,
+    "presence_penalty": 0,
+    "repeat_penalty": 1,
+    "seed": 42,
+    "max_tokens": 64000,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "cache_prompt": false
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "from heapq import heappush, heappop\n\ndef minPath(grid, k):\n    \"\"\"\n    Given a grid with N rows and N columns (N >= 2) and a positive integer k, \n    each cell of the grid contains a value. Every integer in the range [1, N * N]\n    inclusive appears exactly once on the cells of the grid.\n\n    You have to find the minimum path of length k in the grid. You can start\n    from any cell, and in each step you can move to any of the neighbor cells,\n    in other words, you can go to cells which share an edge with you current\n    cell.\n    Please note that a path of length k means visiting exactly k cells (not\n    necessarily distinct).\n    You CANNOT go off the grid.\n    A path A (of length k) is considered less than a path B (length k) if\n    after making the ordered lists of the values on the cells that A and B go\n    through (let's call them lst_A and lst_B), lst_A is lexicographically less\n    than lst_B, in other words, there exist an integer index i (1 <= i <= k)\n    such that lst_A[i] < lst_B[i] and for any j (1 <= j < i) we have\n    lst_A[j] = lst_B[j].\n    It is guaranteed that the answer is unique.\n    Return an ordered list of the values on the cells that the minimum path go through.\n\n    Examples:\n\n        Input: grid = [ [1,2,3], [4,5,6], [7,8,9]], k = 3\n        Output: [1, 2, 1]\n\n        Input: grid = [ [5,9,3], [4,1,6], [7,8,2]], k = 1\n        Output: [1]\n    \"\"\"\n    n = len(grid)\n    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]\n\n    # Priority queue stores tuples: (path_so_far, current_row, current_col)\n    # path_so_far is a list of values visited so far.\n    # We use a min-heap ordered by the path list (lexicographically).\n    pq = []\n\n    # Initialize: push all single-cell paths into the heap\n    for r in range(n):\n        for c in range(n):\n            start_val = grid[r][c]\n            heappush(pq, ([start_val], r, c))\n\n    # Expand up to k steps. At each step, we pop the lexicographically smallest path\n    # and extend it to its neighbors. We stop as soon as we have a path of length k.\n    # Since the heap always gives the smallest lexicographic continuation,\n    # the first time we pop a path of length k, it is guaranteed to be the minimum.\n    while pq:\n        path, r, c = heappop(pq)\n        path_len = len(path)\n\n        if path_len == k:\n            return path\n\n        if path_len >= k:\n            continue\n\n        # Try moving to each neighbor\n        for dr, dc in directions:\n            nr, nc = r + dr, c + dc\n            if 0 <= nr < n and 0 <= nc < n:\n                new_val = grid[nr][nc]\n                new_path = path + [new_val]\n                heappush(pq, (new_path, nr, nc))\n\n    # Theoretically unreachable given problem constraints\n    return []"
+        }
+      }
+    ],
+    "created": 1794319290,
+    "model": "mtp-study-qwen3-5-9b-heretic-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 794,
+      "prompt_tokens": 452,
+      "total_tokens": 1246,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-FjnaWGvNu4MHKV60u5F7mbDlMhN2dT9y",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 452,
+      "prompt_ms": 517.911,
+      "prompt_per_token_ms": 1.1458207964601768,
+      "prompt_per_second": 872.7368215774526,
+      "predicted_n": 794,
+      "predicted_ms": 38311.883,
+      "predicted_per_token_ms": 48.31258890290038,
+      "predicted_per_second": 20.69853888413681
+    }
+  },
+  "seconds": 38.83258259994909,
+  "estimated_prompt_tokens": 452
+}

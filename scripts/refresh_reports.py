@@ -44,7 +44,7 @@ def refresh():
         body='<h1>local-llm-benchmarks</h1><p>モデルの性能比較から、Hermesを通した実ツール実行、MCP接続までの実験記録。</p><p>'+link(period_page if period_page.exists() else ROOT/'reports/comprehensive/index.html',output.parent,'第1期の横断比較（モデル・量子化・MTP・思考・配置）')+' · '+link(ROOT/'experiments/README.md',output.parent,'実験期の区分と再現記録')+'</p><p class="note">completeは記録の収集完了です。結果のpassed / partial / failedとは別です。BFCLの呼び出し採点と、Hermesによる実際のツール実行も別々に表示します。</p>'
         for typ in EXPERIMENT_TYPES:
             if typ==EXPERIMENT_TYPES[0] and (ROOT/'experiments/period-002/reports/index.html').exists():
-                body+='<p>'+link(ROOT/'experiments/period-002/reports/index.html',output.parent,'第2期の主比較（保存回答・保留と未実施を区別）')+'</p>'
+                body+='<p>'+link(ROOT/'experiments/period-002/reports/completed.html' if (ROOT/'experiments/period-002/reports/completed.html').exists() else ROOT/'experiments/period-002/reports/index.html',output.parent,'第2期の比較（原回答と出力上限・採点の注意を併記）')+'</p>'
             group=[row for row in rows if row[0].get('experiment_type','benchmark')==typ]
             if not group:continue
             body+='<section><h2>'+esc(LABELS[typ])+'</h2><div class="table-scroll"><table><thead><tr><th>Run</th><th>Suite / Harness</th><th>収集状態 / 結果</th><th>Summary</th></tr></thead><tbody>'

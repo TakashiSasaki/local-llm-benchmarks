@@ -1,0 +1,120 @@
+{
+  "id": "parallel_26",
+  "request": {
+    "model": "mtp-study-qwen3-5-9b-defiant-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user wants to find details of court cases with specific case numbers. Let me break down the requirements:\n\n1. Case numbers: '67813' and '71249'\n2. Location: New York District court\n3. Case types: Both 'Civil' and 'Criminal'\n\nLooking at the court_case_find function, I need to provide:\n- location (required): \"New York District\"\n- case_number (required): [\"67813\", \"71249\"]\n- case_type (optional, default \"Civil\"): The user wants both Civil and Criminal cases\n\nSince the function only accepts one case_type at a time, I'll need to make two separate calls - one for Civil and one for Criminal.\n\nLet me make these function calls.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "DsEGtG4jVDQiaAwFcIWacs0WqXKvsYK2"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Criminal\"}"
+              },
+              "id": "Ty34xUCFztRWNLH4iTOKWaC17v8qN3aV"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1794350725,
+    "model": "mtp-study-qwen3-5-9b-defiant-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 311,
+      "prompt_tokens": 406,
+      "total_tokens": 717,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-Oz38YnaepFpujeidyl7heeDdwYqvbE4C",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 406,
+      "prompt_ms": 443.529,
+      "prompt_per_token_ms": 1.092435960591133,
+      "prompt_per_second": 915.3854652119704,
+      "predicted_n": 311,
+      "predicted_ms": 15469.178,
+      "predicted_per_token_ms": 49.90057419354839,
+      "predicted_per_second": 20.039849564081557
+    }
+  },
+  "seconds": 15.929205400054343,
+  "estimated_prompt_tokens": 406
+}

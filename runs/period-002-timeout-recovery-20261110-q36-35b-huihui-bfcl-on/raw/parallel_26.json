@@ -1,0 +1,120 @@
+{
+  "id": "parallel_26",
+  "request": {
+    "model": "mtp-study-qwen3-6-35b-a3b-huihui-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user wants to find details of lawsuits with specific case numbers ('67813', '71249') filed in the New York District court.\nThey want details for both 'Civil' and 'Criminal' case types.\nLooking at the `court_case_find` function:\n- `location`: \"New York District court\"\n- `case_number`: [\"67813\", \"71249\"]\n- `case_type`: \"Civil\" or \"Criminal\" (default is \"Civil\")\n\nWait, the function takes a single `case_type` string, not an array. The prompt says \"for type 'Civil' and 'Criminal' cases.\" I should probably make two calls, one for Civil and one for Criminal, or check if I can pass both. The schema says `case_type` is a string with enum [\"Civil\", \"Criminal\"]. I'll make two calls to be safe, or just call it once with \"Civil\" and once with \"Criminal\". Actually, I can just call it twice.\n\nLet's check the parameters:\n`location`: \"New York District court\"\n`case_number`: [\"67813\", \"71249\"]\n`case_type`: \"Civil\" (first call), \"Criminal\" (second call)\n\nI will make two function calls.\nWait, can I call it once with case_type=\"Civil\" and it returns both? The description says \"Type of the court case.\" It's a single string. I'll make two calls.\nActually, I can just call it twice.\nLet's prepare the calls.\nCall 1: court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")\nCall 2: court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")\nWait, the prompt says \"for type 'Civil' and 'Criminal' cases.\" It might be better to call it twice.\nI will execute both calls.\nLet's verify the parameters format. `case_number` is an array of strings. `location` is a string. `case_type` is a string.\nAll good.\nI will generate the tool calls. \nActually, I can just call it once with case_type=\"Civil\" and once with case_type=\"Criminal\".\nLet's do that.\nWait, sometimes the API accepts comma-separated or I can just pass \"Civil\" and \"Criminal\" separately. I'll stick to two calls.\nLet's generate. \nWait, the prompt says \"for type 'Civil' and 'Criminal' cases.\" It might mean I should query both. I'll make two calls.\nActually, I'll just make two calls.\nCall 1: court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")\nCall 2: court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")\nDone. \nLet's output. \nWait, is there any chance `case_type` can be an array? The schema says `type: string`. So it's a single string. Two calls is correct.\nI will proceed. \nOne minor thing: \"New York District court\" vs \"New York District Court\". I'll use exactly as provided or standard capitalization. The prompt says \"New York District court\". I'll use that.\nCase numbers: '67813', '71249'. I'll pass as array of strings.\nReady. \nProceeding. \n[Tool Calls]\ncourt_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")\ncourt_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "tko9d1H7ivUv0gEKiRLT45BYp0NC8Gke"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Criminal\"}"
+              },
+              "id": "dhFNCRQxm2SHijlsF9Ow2SxNmLtNYVCt"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1794365812,
+    "model": "mtp-study-qwen3-6-35b-a3b-huihui-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1019,
+      "prompt_tokens": 406,
+      "total_tokens": 1425,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-drJclxPbkUDvsNFKLpEvBZKr6zfK1m8a",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 406,
+      "prompt_ms": 1880.099,
+      "prompt_per_token_ms": 4.6307857142857145,
+      "prompt_per_second": 215.9460751800836,
+      "predicted_n": 1019,
+      "predicted_ms": 27917.044,
+      "predicted_per_token_ms": 27.423422396856584,
+      "predicted_per_second": 36.4651787631957
+    }
+  },
+  "seconds": 29.80052439996507,
+  "estimated_prompt_tokens": 406
+}

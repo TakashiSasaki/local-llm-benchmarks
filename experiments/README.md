@@ -3,13 +3,13 @@
 | 期 | 状態 | 固定した記録 | Gitタグ |
 | --- | --- | --- | --- |
 | period-001 | 2026-11-01終了 | [再現手順・環境・全結果](period-001/README.md) / [比較ページ](period-001/report.html) | `period-001-2026-11-01-r1` |
-| period-002 | 2026-11-02開始、調査・計画中 | [無検閲モデルの候補と実験計画](period-002/README.md) | 未確定 |
+| period-002 | 主比較1,600件収集済み、レジストリopen | [完成結果](period-002/reports/completed.html) / [再現手順・モデル取得](period-002/REPRODUCE.md) | 未確定 |
 
 `period-001/`は今回までの閉鎖記録です。`recipe/`に当時の維持管理コード・設定・手順を保存し、`models/`に固定revisionとSHA-256を持つ入手用manifestをまとめています。モデルウェイトとランタイムバイナリは含みません。
 
 原応答・run内ソース・ログは元の`runs/<run-id>/`と`artifacts/`を保持し、[run索引](period-001/runs.json)と[inventory](period-001/inventory.json)から所属とバイト単位の同一性を確認します。既存runを書き換えて期を付与したり移動したりせず、参照関係も維持します。
 
-第2期の新しい定義・環境・レポートは`experiments/period-002/{configs,environment,reports}/`に置き、実行データは共通の`runs/period-002-<新しいID>/`へ保存します。第2期は既に開いていますが、現時点では計画のみで推論は未実施です。
+第2期の新しい定義・環境・レポートは`experiments/period-002/{configs,environment,reports}/`に置き、実行データは共通の`runs/period-002-<新しいID>/`へ保存します。第2期の主比較は2026-11-11に1,600回答を収集済みです。レジストリ上はopenのままで、任意追加項目は未実施です。新規の再現測定はREPRODUCE.mdに従い、明示的に新しい期を開いて行います。
 
 ```powershell
 # 第2期の開始コマンド（既に実行済み。再実行しない）

@@ -1,6 +1,8 @@
 # Local LLM benchmarks on an 8 GB laptop GPU
 
-**第2期は測定停止中です。** [保存済み588/1,600回答の比較](experiments/period-002/reports/index.html) · [監査・継続手順](experiments/period-002/AUDIT.md) · [実験計画](experiments/period-002/README.md)。段階Aは400回答完了、通常9Bは188回答保存、全体の未収集は1,012回答です。第1期の確定結果とは分離しています。
+**[第1期・第2期の性能比較](reports/period-comparison.md)**: モデル・設定別の全体像、MTP対応8ペア、32K/64Kの長入力・メモリ実測を、比較できる範囲と限界を分けて整理しています。
+
+**第2期は主比較1,600/1,600回答を収集済みです。** [完成結果（8配布物・32条件）](experiments/period-002/reports/completed.html) / [結果Markdown](experiments/period-002/reports/completed.md) / [再現手順とモデル取得](experiments/period-002/REPRODUCE.md)。全体の出力上限到達14件（直近回収分8件）とBFCLの空回答による見かけの成功2件を区別して報告しています。第1期の凍結記録とは分離しています。
 
 **第1期の実験は2026-11-01に終了しました。** [固定した比較表と再現記録](experiments/period-001/README.md) · [実験期の区分](experiments/README.md)。タグ `period-001-2026-11-01-r1` で環境・モデル入手情報・ソース・結果を取り出せます。次の測定は新しい期へ分けます。
 

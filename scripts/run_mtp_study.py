@@ -8,8 +8,21 @@ from local_llm_benchmarks.execution_window import require,ExecutionWindowDeferre
 def module(name,path):
     s=importlib.util.spec_from_file_location(name,path); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m
 
+def capability_conditions(continuation=None,bfcl_continuation=None):
+    if continuation and bfcl_continuation:raise ValueError("Choose only one continuation type")
+    if continuation:return [("humaneval","on")]
+    if bfcl_continuation:return [("bfcl","on"),("humaneval","off"),("humaneval","on")]
+    return [(suite,thinking) for suite in ["bfcl","humaneval"] for thinking in ["off","on"]]
+
 def run(a):
     metadata=load(ROOT/a.model_manifest); profile=load(ROOT/a.profile)
+    continuation=getattr(a,'continuation_plan',None)
+    bfcl_continuation=getattr(a,'bfcl_continuation_plan',None)
+    capability_conditions(continuation,bfcl_continuation)
+    if bfcl_continuation and (a.pilot or a.speed_only or a.mtp!='off'):
+        raise ValueError('BFCL continuation requires an MTP OFF capability run')
+    if continuation and (a.pilot or a.speed_only or a.mtp!='off'):
+        raise ValueError('HumanEval continuation requires an MTP OFF capability run')
     model=pathlib.Path(r'C:\LocalLLM\models')/metadata['filename']; binary=pathlib.Path(profile['runtime_executable'])
     alias='mtp-study-'+re.sub('[^a-z0-9]+','-',metadata['model'].lower()).strip('-')+'-'+metadata['quantization'].lower().replace('_','-')+'-'+a.mtp
     args=list(profile['server_args']); args[args.index('--n-cpu-moe')+1]=str(a.cpu_moe)
@@ -29,13 +42,26 @@ def run(a):
             for block in iter(lambda:f.read(8*1024*1024),b''): h.update(block)
         assert h.hexdigest()==metadata['sha256'],'Model hash differs'
         save(parent/'configs/model-file-verification.json',{'filename':model.name,'bytes':model.stat().st_size,'sha256':h.hexdigest(),'verified':True})
-        save(parent/'configs/runtime-file-verification.json',{'filename':binary.name,'bytes':binary.stat().st_size,'sha256':sha(binary),'scope':'Actual server executable before launch; served build/commit and dependent runtime identity are recorded separately'})
+        runtime_sha=sha(binary)
+        save(parent/'configs/runtime-file-verification.json',{'filename':binary.name,'bytes':binary.stat().st_size,'sha256':runtime_sha,'scope':'Actual server executable before launch; served build/commit and dependent runtime identity are recorded separately'})
         header=module('gguf_inspector',ROOT/'tools/inspect_gguf_header.py').inspect(model,include_template=True)
         save(parent/'configs/gguf-header.json',header)
         with socket.socket() as sock: assert sock.connect_ex(('127.0.0.1',8089))!=0,'Port occupied; existing server will not be replaced'
         save(parent/'configs/baseline-memory.json',memory.snapshot(os.getpid()))
         require(parent,'start owned server','model-preflight' if a.pilot else 'speed' if a.speed_only else 'model-benchmark')
         command=[str(binary),'-m',str(model),'--host','127.0.0.1','--port','8089','--alias',alias]+args
+        if continuation or bfcl_continuation:
+            plan=load(continuation or bfcl_continuation)
+            if bfcl_continuation:
+                from local_llm_benchmarks.bfcl_subset import select as select_bfcl
+                select_bfcl(load(ROOT/'datasets/bfcl/6ea5797/selected-80.json'),plan)
+            from local_llm_benchmarks.study import resolve_run
+            original=resolve_run(load(resolve_run(plan['source_run'])/'manifest.json')['config']['parent_run'])
+            assert command==load(original/'configs/server-command.json')['args'],'Original server configuration changed'
+            assert runtime_sha==load(original/'configs/runtime-file-verification.json')['sha256'],'Original server executable changed'
+            assert metadata['sha256']==plan['model_sha256']
+            if continuation:assert profile.get('humaneval_grader_policy')==plan['grader_policy']
+            save(parent/'configs'/('continuation-plan.json' if continuation else 'bfcl-continuation-plan.json'),plan)
         save(parent/'configs/server-command.json',{'args':command})
         started=time.monotonic()
         with (parent/'logs/llama-server.log').open('wb') as log: server=subprocess.Popen(command,cwd=binary.parent,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)
@@ -61,35 +87,43 @@ def run(a):
         assert props['build_info'].startswith('b11960-') and props['model_alias']==alias
         assert props['default_generation_settings']['n_ctx']==65536 and props['total_slots']==1
         spec=props['default_generation_settings']['params']['speculative.types']
+        if 'maximum_gpu_used_mib' in profile:
+            admitted=memory.snapshot(server.pid)
+            save(parent/'configs/collection-memory.json',admitted)
+            assert admitted['available_ram_bytes']>=profile['minimum_available_ram_bytes'],'RAM reserve not met after loading'
+            assert admitted['gpu_used_mib'] is not None and admitted['gpu_used_mib']<=profile['maximum_gpu_used_mib'],'GPU reserve not met after loading'
         save(parent/'configs/server-props.json',bf.public_props(props)); save(parent/'configs/server-load.json',{'seconds':time.monotonic()-started,'pid':server.pid,'speculative.types':spec})
         print(json.dumps({'event':'ready','run':parent.name,'load_seconds':round(time.monotonic()-started,2),'speculative.types':spec}),flush=True)
-        speed=create_run(title+' fixed length speed','fixed-length-speed',config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-speed'); children.append(speed.name)
-        sm=load(speed/'manifest.json'); snapshot_sources(speed); sm.update(status='running',started_at=now());save(speed/'manifest.json',sm)
-        try:
-            summary=module('mtp_speed',ROOT/'benchmarks/mtp_speed.py').collect(speed,'http://127.0.0.1:8089',alias,count=128 if a.pilot else 256,repeats=1 if a.pilot else 3)
-            if a.mtp=='on': assert summary['draft_tokens']>0,'MTP requested but no draft tokens observed'
-            else: assert summary['draft_tokens']==0,'Unexpected draft tokens in MTP OFF control'
-            sm.update(status='complete',completed_at=now()); save(speed/'manifest.json',sm)
-        except BaseException as e: sm.update(status='failed',error=repr(e));save(speed/'manifest.json',sm);raise
-        print(json.dumps({'event':'speed_complete','run':parent.name,**summary}),flush=True)
+        if not continuation and not bfcl_continuation:
+            speed=create_run(title+' fixed length speed','fixed-length-speed',config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-speed'); children.append(speed.name)
+            sm=load(speed/'manifest.json'); snapshot_sources(speed); sm.update(status='running',started_at=now());save(speed/'manifest.json',sm)
+            try:
+                summary=module('mtp_speed',ROOT/'benchmarks/mtp_speed.py').collect(speed,'http://127.0.0.1:8089',alias,count=128 if a.pilot else 256,repeats=1 if a.pilot else 3)
+                if a.mtp=='on': assert summary['draft_tokens']>0,'MTP requested but no draft tokens observed'
+                else: assert summary['draft_tokens']==0,'Unexpected draft tokens in MTP OFF control'
+                sm.update(status='complete',completed_at=now()); save(speed/'manifest.json',sm)
+            except BaseException as e: sm.update(status='failed',error=repr(e));save(speed/'manifest.json',sm);raise
+            print(json.dumps({'event':'speed_complete','run':parent.name,**summary}),flush=True)
         if profile.get('tool_smoke'):
             result=module('tool_smoke',ROOT/'benchmarks/tool_smoke.py').collect(parent,api,alias)
             save(parent/'summaries/tool-smoke.json',result)
             assert result['transport_and_mode_checks_passed'],'Tool/mode smoke incomplete; inspect raw responses'
         if not a.pilot and not a.speed_only:
-            for suite in ['bfcl','humaneval']:
-                for thinking in ['off','on']:
-                    require(parent,suite+' thinking '+thinking,'condition')
-                    child=create_run(title+' '+suite+' thinking '+thinking,suite,config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-'+suite+'-'+thinking); children.append(child.name)
-                    command=[str(a.benchmark_python),'-B',str(ROOT/'benchmarks'/(suite+'.py')),'--run',child.name,'--model',alias,'--thinking',thinking]
-                    command+=profile.get('benchmark_extra_args',[])
-                    if suite=='humaneval' and profile.get('humaneval_grader_policy'):command+=['--grader-policy',profile['humaneval_grader_policy']]
-                    print(json.dumps({'event':'condition_start','run':child.name}),flush=True)
-                    with (parent/'logs'/(suite+'-'+thinking+'.log')).open('w',encoding='utf-8') as log:result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW,env=dict(os.environ,PYTHONUTF8='1',PYTHONIOENCODING='utf-8'))
-                    if result.returncode:
-                        if load(child/'manifest.json').get('stop_reason')=='execution_window_deferred':raise ExecutionWindowDeferred('Child condition deferred by finish-by admission: '+child.name)
-                        raise RuntimeError('Condition failed: '+child.name)
-                    print(json.dumps({'event':'condition_complete','run':child.name,**load(child/'summary.json')}),flush=True)
+            conditions=capability_conditions(continuation,bfcl_continuation)
+            for suite,thinking in conditions:
+                require(parent,suite+' thinking '+thinking,'condition')
+                child=create_run(title+' '+suite+' thinking '+thinking,suite,config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-'+suite+'-'+thinking); children.append(child.name)
+                command=[str(a.benchmark_python),'-B','-X','utf8',str(ROOT/'benchmarks'/(suite+'.py')),'--run',child.name,'--model',alias,'--thinking',thinking]
+                command+=profile.get('benchmark_extra_args',[])
+                if suite=='humaneval' and profile.get('humaneval_grader_policy'):command+=['--grader-policy',profile['humaneval_grader_policy']]
+                if continuation:command+=['--subset-plan',str(parent/'configs/continuation-plan.json')]
+                if bfcl_continuation and suite=='bfcl':command+=['--subset-plan',str(parent/'configs/bfcl-continuation-plan.json')]
+                print(json.dumps({'event':'condition_start','run':child.name}),flush=True)
+                with (parent/'logs'/(suite+'-'+thinking+'.log')).open('w',encoding='utf-8') as log:result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW,env=dict(os.environ,PYTHONUTF8='1',PYTHONIOENCODING='utf-8'))
+                if result.returncode:
+                    if load(child/'manifest.json').get('stop_reason')=='execution_window_deferred':raise ExecutionWindowDeferred('Child condition deferred by finish-by admission: '+child.name)
+                    raise RuntimeError('Condition failed: '+child.name)
+                print(json.dumps({'event':'condition_complete','run':child.name,**load(child/'summary.json')}),flush=True)
         save(parent/'summary.json',{'outcome':'passed','headline':title,'child_runs':children,'mtp':a.mtp,'quantization':metadata['quantization'],'cpu_moe_layers':a.cpu_moe,'pilot':a.pilot,'summaries':{name:load(ROOT/'runs'/name/'summary.json') for name in children},'scope':'Collection complete; capability scores are recorded separately from throughput.'})
         manifest.update(status='complete',completed_at=now())
     except BaseException as e:
@@ -107,4 +141,4 @@ def run(a):
     print(json.dumps({'event':'cell_complete','run':parent.name}),flush=True)
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--id',required=True);p.add_argument('--model-manifest',required=True);p.add_argument('--profile',default='configs/qwen38-35b-distill-iq3m-64k.json');p.add_argument('--mtp',choices=['off','on'],required=True);p.add_argument('--cpu-moe',type=int,default=34);p.add_argument('--load-mode',choices=['none','mmap']);p.add_argument('--pilot',action='store_true');p.add_argument('--speed-only',action='store_true');p.add_argument('--benchmark-python',type=pathlib.Path,default=sys.executable);run(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--id',required=True);p.add_argument('--model-manifest',required=True);p.add_argument('--profile',default='configs/qwen38-35b-distill-iq3m-64k.json');p.add_argument('--mtp',choices=['off','on'],required=True);p.add_argument('--cpu-moe',type=int,default=34);p.add_argument('--load-mode',choices=['none','mmap']);p.add_argument('--pilot',action='store_true');p.add_argument('--speed-only',action='store_true');p.add_argument('--benchmark-python',type=pathlib.Path,default=sys.executable);p.add_argument('--continuation-plan',type=pathlib.Path);p.add_argument('--bfcl-continuation-plan',type=pathlib.Path);run(p.parse_args())

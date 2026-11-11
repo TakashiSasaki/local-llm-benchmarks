@@ -6,6 +6,8 @@ from local_llm_benchmarks.study import ROOT,load,save,now,resolve_run,snapshot_s
 from local_llm_benchmarks.output_errors import read_output_parser_error,is_output_parser_error,failure_fields
 from local_llm_benchmarks.execution_window import require,ExecutionWindowDeferred
 
+from local_llm_benchmarks.bfcl_subset import positive_timeout
+
 def grader():
     bench=ROOT/'artifacts/local-llm/hermes/benchmarks'
     source=(bench/'compare_models.py').read_text(encoding='utf-8')
@@ -18,7 +20,8 @@ def grader():
 def run(a):
     path=resolve_run(a.run);assert_run_writable(path);manifest=load(path/'manifest.json')
     if manifest['status']=='complete':raise ValueError('Completed run is immutable')
-    params={'endpoint':a.endpoint.rstrip('/'),'model':a.model,'thinking':a.thinking,'context':65536,'max_output':64000,'temperature':0.6,'seed':42}
+    timeout=positive_timeout(getattr(a,'api_timeout_seconds',7200))
+    params={'api_timeout_seconds':timeout,'endpoint':a.endpoint.rstrip('/'),'model':a.model,'thinking':a.thinking,'context':65536,'max_output':64000,'temperature':0.6,'seed':42}
     subset=getattr(a,'subset_plan',None)
     if subset:params['subset_plan_sha256']=hashlib.sha256(pathlib.Path(subset).read_bytes()).hexdigest()
     policy=getattr(a,'grader_policy','legacy')
@@ -31,7 +34,7 @@ def run(a):
     if not manifest.get('execution'):snapshot_sources(path)
     def api(route,payload=None):
         req=urllib.request.Request(params['endpoint']+route,data=json.dumps(payload).encode() if payload is not None else None,headers={'Content-Type':'application/json'})
-        with urllib.request.urlopen(req,timeout=7200) as f:return json.load(f)
+        with urllib.request.urlopen(req,timeout=timeout) as f:return json.load(f)
     require(path,'HumanEval collection admission','condition')
     props=api('/props');assert props['model_alias']==a.model and props['default_generation_settings']['n_ctx']==65536 and props['total_slots']==1
     legacy_grade,unwrap=grader();grade=legacy_grade
@@ -95,4 +98,4 @@ def run(a):
         manifest.update(status='failed',error=repr(e));save(path/'manifest.json',manifest);raise
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--continue-on-output-parser-error',action='store_true');p.add_argument('--grader-policy',choices=['legacy','standard-windows-v1'],default='legacy');p.add_argument('--subset-plan',type=pathlib.Path);run(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--continue-on-output-parser-error',action='store_true');p.add_argument('--grader-policy',choices=['legacy','standard-windows-v1'],default='legacy');p.add_argument('--subset-plan',type=pathlib.Path);p.add_argument('--api-timeout-seconds',type=positive_timeout,default=7200);run(p.parse_args())

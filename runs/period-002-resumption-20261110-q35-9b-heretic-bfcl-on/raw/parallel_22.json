@@ -1,0 +1,116 @@
+{
+  "id": "parallel_22",
+  "request": {
+    "model": "mtp-study-qwen3-5-9b-heretic-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the status and scheduled trial date for case number XY1234 in Los Angeles County Court, and case number GH5678 in Orange County Court?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_info_get_case_status",
+          "description": "Retrieves the status and trial dates for court cases from specified county courts.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "case_number": {
+                "type": "string",
+                "description": "The specific court case number."
+              },
+              "court": {
+                "type": "string",
+                "description": "The county court where the case is filed."
+              },
+              "details": {
+                "type": "string",
+                "enum": [
+                  "status",
+                  "trial_date"
+                ],
+                "description": "Specific details required about the court case. Defaults to 'status'."
+              }
+            },
+            "required": [
+              "case_number",
+              "court"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user is asking for the status and scheduled trial date for two different court cases:\n1. Case number XY1234 in Los Angeles County Court\n2. Case number GH5678 in Orange County Court\n\nI need to make two function calls to the court_info_get_case_status function, one for each case.\n\nFor the first case:\n- case_number: \"XY1234\"\n- court: \"Los Angeles County Court\"\n- details: \"status\" (the user wants status and trial date, so I should use \"status\" which is the default, but I need to check if this covers both. Looking at the function description, it says \"Specific details required about the court case. Defaults to 'status'.\" and the enum shows [\"status\", \"trial_date\"]. Since the user wants both status and trial date, I might need to make two calls or use \"status\" which might include trial date info. Let me use \"status\" for both calls since that's the default and likely includes the information needed.)\n\nActually, looking more carefully, the user wants both status AND trial date. The function has a \"details\" parameter that can be \"status\" or \"trial_date\". Since I need both pieces of information, I should probably make two calls for each case, or I could make one call with \"status\" and see if it includes trial date info. However, since the parameter is an enum with two options, it seems like I need to specify which detail I want.\n\nLet me think about this differently. The user wants both status and trial date for both cases. I could make 4 calls total (2 cases × 2 details each), or I could make 2 calls with \"status\" and see if that includes trial date info.\n\nActually, looking at the function description again: \"Retrieves the status and trial dates for court cases from specified county courts.\" This suggests the function can return both status and trial dates. The \"details\" parameter defaults to \"status\", but the enum shows [\"status\", \"trial_date\"]. This is a bit confusing.\n\nLet me make calls with \"status\" for each case first, as that's the default and likely includes the trial date information as well. If needed, I can make additional calls with \"trial_date\" specifically.\n\nActually, I think the best approach is to make two calls - one for each case - and use \"status\" as the details parameter (which is the default). This should give me the information the user needs.\n\nLet me make the two function calls:",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"XY1234\",\"court\":\"Los Angeles County Court\",\"details\":\"status\"}"
+              },
+              "id": "rgGKTxcRkW76XFwFR5dCj5x1MKBAp8mj"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_info_get_case_status",
+                "arguments": "{\"case_number\":\"GH5678\",\"court\":\"Orange County Court\",\"details\":\"status\"}"
+              },
+              "id": "lSxbJfUjASjEDiKNOPc4y4vkBnhlcp5Z"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1794295092,
+    "model": "mtp-study-qwen3-5-9b-heretic-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 659,
+      "prompt_tokens": 391,
+      "total_tokens": 1050,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-amT8S5obK6lQKnBaPrAaCLxmSrO2pLlp",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 391,
+      "prompt_ms": 519.929,
+      "prompt_per_token_ms": 1.3297416879795396,
+      "prompt_per_second": 752.0257573630246,
+      "predicted_n": 659,
+      "predicted_ms": 31690.276,
+      "predicted_per_token_ms": 48.161513677811556,
+      "predicted_per_second": 20.763467001675846
+    }
+  },
+  "seconds": 32.22623819997534,
+  "estimated_prompt_tokens": 391
+}

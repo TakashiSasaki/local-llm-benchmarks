@@ -1,0 +1,120 @@
+{
+  "id": "parallel_26",
+  "request": {
+    "model": "mtp-study-qwen3-6-35b-a3b-ordinary-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find details of lawsuits with case numbers '67813', '71249' filed in the New York District court for type 'Civil' and 'Criminal' cases."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "court_case_find",
+          "description": "Locate details of court cases based on specific parameters like case number and case type.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city and court where the lawsuit is filed."
+              },
+              "case_number": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The unique case numbers of the lawsuits."
+              },
+              "case_type": {
+                "type": "string",
+                "enum": [
+                  "Civil",
+                  "Criminal"
+                ],
+                "description": "Type of the court case.",
+                "default": "Civil"
+              }
+            },
+            "required": [
+              "location",
+              "case_number"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 64000,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "The user wants to find details of lawsuits with case numbers '67813' and '71249'.\nThe location is \"New York District court\".\nThe case types are 'Civil' and 'Criminal'.\nI need to call the `court_case_find` function.\nLooking at the parameters:\n- `location`: \"New York District court\"\n- `case_number`: ['67813', '71249']\n- `case_type`: The user says \"for type 'Civil' and 'Criminal' cases.\" The function only accepts one case_type at a time (enum: \"Civil\", \"Criminal\"). I should probably make two separate calls, or check if I can pass a list. The schema says `case_type` is a string, not an array. So I will make two calls.\n\nWait, let's check the function definition again:\n`case_type`: {\"description\": \"Type of the court case.\", \"enum\": [\"Civil\", \"Criminal\"], \"type\": \"string\"}\nSo I need to call it twice, once for Civil and once for Criminal.\n\nCall 1:\nlocation: \"New York District court\"\ncase_number: [\"67813\", \"71249\"]\ncase_type: \"Civil\"\n\nCall 2:\nlocation: \"New York District court\"\ncase_number: [\"67813\", \"71249\"]\ncase_type: \"Criminal\"\n\nLet's do that.\nWait, sometimes users expect a single call if they say \"and\", but the API restricts it to one type. I will make two calls.\nActually, I can just make two calls.\nLet's proceed. \nWait, is there any chance the API accepts a comma-separated string? The enum says \"Civil\" or \"Criminal\". I'll stick to two calls.\nActually, I'll just make two calls.\nLet's generate the tool calls. \nWait, the prompt says \"for type 'Civil' and 'Criminal' cases.\" I will call it twice.\nLet's verify the parameters.\n`location`: \"New York District court\"\n`case_number`: [\"67813\", \"71249\"]\n`case_type`: \"Civil\"\nand\n`case_type`: \"Criminal\"\n\nI will make both calls.\nWait, sometimes it's better to just call it once with one type and see, but the user explicitly asked for both. I'll make two calls.\nActually, I can just call it twice.\nLet's do it. \nWait, the function description says `case_type` is a string. I will make two calls.\nLet's generate. \nActually, I'll just make two calls.\nWait, is there any reason to combine them? No.\nI will call `court_case_find` twice.\nFirst call: Civil\nSecond call: Criminal\nDone. \nLet's write out the tool calls. \nWait, I should check if the user meant to pass both types in one call. The schema doesn't allow it. I'll make two calls.\nActually, I'll just make two calls.\nLet's proceed. \nWait, I'll just make the calls now.\n`court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")`\n`court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")`\nDone. \nI will generate the response. \nWait, let's think if I should just make one call with \"Civil\" and another with \"Criminal\". Yes.\nProceeding. \nActually, I'll just make the calls.\nWait, the prompt says \"for type 'Civil' and 'Criminal' cases.\" It might be a trick to see if I handle multiple types. I will handle it by making two calls.\nLet's do it. \n[Tool Call 1] court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Civil\")\n[Tool Call 2] court_case_find(location=\"New York District court\", case_number=[\"67813\", \"71249\"], case_type=\"Criminal\")\nDone. \nI will output the tool calls. \nWait, is there any chance the API expects a list for case_type? The schema says `type: string`. So no.\nI will proceed. \nLet's generate. \nActually, I'll just make the calls.\nWait, I'll just make the calls.\nDone. \n[Output Generation]",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Civil\"}"
+              },
+              "id": "LFEysiOIXVmcTh55sBRb0GPivRRadDLM"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "court_case_find",
+                "arguments": "{\"location\":\"New York District court\",\"case_number\":[\"67813\", \"71249\"],\"case_type\":\"Criminal\"}"
+              },
+              "id": "GRMamTRj0bBTf8jF8bveLllJe7DicHZj"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1794359853,
+    "model": "mtp-study-qwen3-6-35b-a3b-ordinary-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1158,
+      "prompt_tokens": 406,
+      "total_tokens": 1564,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-tGpVzUelQyeKR9fTN4BtTkedCCK4L8rJ",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 406,
+      "prompt_ms": 1845.832,
+      "prompt_per_token_ms": 4.5463842364532026,
+      "prompt_per_second": 219.95501215711937,
+      "predicted_n": 1158,
+      "predicted_ms": 31779.664,
+      "predicted_per_token_ms": 27.467298184961106,
+      "predicted_per_second": 36.40692991593618
+    }
+  },
+  "seconds": 33.62921410007402,
+  "estimated_prompt_tokens": 406
+}
