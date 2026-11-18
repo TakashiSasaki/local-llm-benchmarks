@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/0",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\nfrom typing import List\n\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    \"\"\" Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom typing import List\nimport time\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    \"\"\" \n    Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n\n    The function achieves O(N log N) time complexity by first sorting the list \n    and then only checking adjacent elements, as the minimum difference must \n    occur between adjacent elements in a sorted list.\n\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    >>> has_close_elements([], 1.0)\n    False\n    >>> has_close_elements([5.0], 0.1)\n    False\n    \"\"\"\n    n = len(numbers)\n    \n    # If there are 0 or 1 elements, no pairs exist.\n    if n < 2:\n        return False\n\n    # Sorting the list is the most efficient way to guarantee that we only need\n    # to check adjacent elements. Time complexity: O(N log N).\n    sorted_numbers = sorted(numbers)\n\n    # Iterate through adjacent pairs. Time complexity: O(N).\n    for i in range(n - 1):\n        # Calculate the difference between the current number and the next number.\n        # Since the list is sorted, the difference is always positive.\n        difference = sorted_numbers[i+1] - sorted_numbers[i]\n        \n        if difference < threshold:\n            # Found a pair closer than the threshold.\n            return True\n            \n    # If the loop completes, no adjacent pair (and therefore no pair) meets the condition.\n    return False\n\nif __name__ == \"__main__\":\n    # --- Test Cases ---\n    \n    print(\"--- Testing has_close_elements ---\")\n    \n    # Test Case 1: No close elements\n    list1 = [1.0, 2.0, 3.0]\n    threshold1 = 0.5\n    result1 = has_close_elements(list1, threshold1)\n    print(f\"Test 1: {list1} vs Threshold {threshold1} -> Expected: False, Got: {result1}\")\n    assert result1 == False\n\n    # Test Case 2: Close elements exist (2.8 and 3.0 -> difference 0.2)\n    list2 = [1.0, 2.8, 3.0, 4.0, 5.0, 2.0]\n    threshold2 = 0.3\n    result2 = has_close_elements(list2, threshold2)\n    print(f\"Test 2: {list2} vs Threshold {threshold2} -> Expected: True, Got: {result2}\")\n    assert result2 == True\n\n    # Test Case 3: Edge case - Empty list\n    list3 = []\n    threshold3 = 1.0\n    result3 = has_close_elements(list3, threshold3)\n    print(f\"Test 3: {list3} vs Threshold {threshold3} -> Expected: False, Got: {result3}\")\n    assert result3 == False\n    \n    # Test Case 4: Edge case - Single element list\n    list4 = [5.0]\n    threshold4 = 0.1\n    result4 = has_close_elements(list4, threshold4)\n    print(f\"Test 4: {list4} vs Threshold {threshold4} -> Expected: False, Got: {result4}\")\n    assert result4 == False\n\n    # Test Case 5: Elements exactly equal to threshold (Should be False)\n    list5 = [1.0, 2.0, 3.0]\n    threshold5 = 1.0\n    result5 = has_close_elements(list5, threshold5)\n    print(f\"Test 5: {list5} vs Threshold {threshold5} -> Expected: False, Got: {result5}\")\n    assert result5 == False\n    \n    # Test Case 6: Elements slightly below threshold (Should be True)\n    list6 = [1.0, 2.0, 3.0]\n    threshold6 = 1.001\n    result6 = has_close_elements(list6, threshold6)\n    print(f\"Test 6: {list6} vs Threshold {threshold6} -> Expected: True, Got: {result6}\")\n    assert result6 == True\n    \n    print(\"\\nAll tests passed successfully!\")\n```",
+          "reasoning_content": "Thinking Process:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python script that implements the function `has_close_elements(numbers: List[float], threshold: float) -> bool`. This function must determine if any pair of numbers in the input list `numbers` has an absolute difference (distance) less than the specified `threshold`.\n\n2.  **Analyze the Input/Output:**\n    *   Input: `numbers` (a list of floats), `threshold` (a float).\n    *   Output: `True` if there exists a pair $(a, b)$ in `numbers` such that $|a - b| < \\text{threshold}$, otherwise `False`.\n\n3.  **Determine the Optimal Strategy:**\n    *   *Naive approach (O(N^2)):* Iterate through all pairs $(i, j)$ where $i \\neq j$, calculate $|numbers[i] - numbers[j]|$, and check the condition. This works, but it's inefficient.\n    *   *Optimized approach (O(N log N)):* If the list is sorted, the minimum difference must occur between adjacent elements.\n        1. Sort the input list `numbers`. (Time complexity: $O(N \\log N)$).\n        2. Iterate through the sorted list, checking the difference between `numbers[i+1]` and `numbers[i]`. (Time complexity: $O(N)$).\n        3. If any adjacent difference is less than the `threshold`, return `True`.\n        4. If the loop finishes, return `False`.\n\n4.  **Develop the Code (Implementation based on Optimization):**\n\n    *   *Step 1: Handle edge cases.* If the list has 0 or 1 element, no pair exists, so the result must be `False`.\n    *   *Step 2: Sort.* `numbers.sort()`. (Note: Since we are modifying the list, if we need the original list later, we should sort a copy, but here, modifying the input copy is fine, or we can use `sorted(numbers)`). Let's use `sorted()` to keep the original list intact (a good practice).\n    *   *Step 3: Iterate and check.*\n        ```python\n        sorted_numbers = sorted(numbers)\n        for i in range(len(sorted_numbers) - 1):\n            diff = sorted_numbers[i+1] - sorted_numbers[i]\n            if diff < threshold:\n                return True\n        return False\n        ```\n\n5.  **Refinement and Structuring (Self-Contained Script):**\n    *   Include necessary imports (`List` from `typing`).\n    *   Include the function signature and docstrings (as provided in the prompt).\n    *   Add test cases to demonstrate functionality (using `if __name__ == \"__main__\":`).\n\n6.  **Final Review (Checking against constraints):**\n    *   Self-contained Python script? Yes.\n    *   Solves the problem? Yes, efficiently (O(N log N)).\n    *   Implements the function signature provided? Yes.\n    *   Uses Markdown code block? Yes.\n\n*(Self-Correction during implementation: Ensure the comparison is strictly less than the threshold, as implied by the problem definition.)*\n\nThis leads directly to the provided solution structure."
+        }
+      }
+    ],
+    "created": 1794991049,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1813,
+      "prompt_tokens": 171,
+      "total_tokens": 1984,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-MRgVaUHZhLjI1xVixusj6Q2t061WPLYL",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 171,
+      "prompt_ms": 218.335,
+      "prompt_per_token_ms": 1.276812865497076,
+      "prompt_per_second": 783.2001282432958,
+      "predicted_n": 1813,
+      "predicted_ms": 11415.994,
+      "predicted_per_token_ms": 6.300217439293599,
+      "predicted_per_second": 158.7246804789841,
+      "draft_n": 1701,
+      "draft_n_accepted": 1245
+    }
+  },
+  "seconds": 11.64000000001397
+}

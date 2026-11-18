@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/99",
+  "request": {
+    "model": "gemma-e4b-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef closest_integer(value):\n    '''\n    Create a function that takes a value (string) representing a number\n    and returns the closest integer to it. If the number is equidistant\n    from two integers, round it away from zero.\n\n    Examples\n    >>> closest_integer(\"10\")\n    10\n    >>> closest_integer(\"15.3\")\n    15\n\n    Note:\n    Rounding away from zero means that if the given number is equidistant\n    from two integers, the one you should return is the one that is the\n    farthest from zero. For example closest_integer(\"14.5\") should\n    return 15 and closest_integer(\"-14.5\") should return -15.\n    '''\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport math\n\ndef closest_integer(value: str) -> int:\n    \"\"\"\n    Create a function that takes a value (string) representing a number\n    and returns the closest integer to it. If the number is equidistant\n    from two integers, round it away from zero.\n\n    Examples\n    >>> closest_integer(\"10\")\n    10\n    >>> closest_integer(\"15.3\")\n    15\n    >>> closest_integer(\"15.7\")\n    16\n    >>> closest_integer(\"14.5\")\n    15\n    >>> closest_integer(\"-14.5\")\n    -15\n    >>> closest_integer(\"-15.3\")\n    -15\n    >>> closest_integer(\"0.5\")\n    1\n    >>> closest_integer(\"-0.5\")\n    -1\n    \"\"\"\n    \n    # Convert the input string to a float\n    num = float(value)\n    \n    # To implement \"round away from zero,\" we use the following logic:\n    # 1. Take the absolute value of the number.\n    # 2. Add 0.5 and take the floor (this is standard rounding for positive numbers).\n    # 3. Reapply the original sign using math.copysign.\n    \n    # math.copysign(1.0, num) returns 1.0 if num >= 0 and -1.0 if num < 0.\n    # We apply this sign to the result of rounding the absolute value.\n    return int(math.copysign(1.0, num) * math.floor(abs(num) + 0.5))\n\nif __name__ == '__main__':\n    import doctest\n    doctest.testmod()\n    \n    # Example usage verification\n    print(\"\\n--- Test Cases ---\")\n    print(f\"closest_integer('10'): {closest_integer('10')}\")\n    print(f\"closest_integer('15.3'): {closest_integer('15.3')}\")\n    print(f\"closest_integer('14.5'): {closest_integer('14.5')}\")\n    print(f\"closest_integer('-14.5'): {closest_integer('-14.5')}\")\n    print(f\"closest_integer('15.7'): {closest_integer('15.7')}\")\n    print(f\"closest_integer('-0.5'): {closest_integer('-0.5')}\")\n```",
+          "reasoning_content": "Plan:\n1.  Understand the requirements for `closest_integer(value)`:\n    *   Input `value` is a string representing a number.\n    *   Output must be the closest integer.\n    *   If equidistant, round away from zero.\n2.  Determine the standard rounding behavior for Python (or how to implement the specific 'round away from zero' rule).\n3.  Implement the conversion and rounding logic.\n\nExecution:\n1.  Convert the input string `value` to a float.\n2.  The standard `round()` function in Python 3 rounds to the nearest even number for `.5` cases (e.g., `round(2.5)` is 2, `round(3.5)` is 4). This does *not* meet the \"round away from zero\" requirement.\n3.  To enforce \"round away from zero,\" we can check the sign and manually adjust based on the fractional part.\n    *   If positive: `floor(x + 0.5)`\n    *   If negative: `ceil(x - 0.5)` (or use mathematical properties).\n\nA simpler way to implement \"round away from zero\" is using `math.copysign(1, x) * math.floor(abs(x) + 0.5)`.\n\nLet's test the logic:\n*   $x = 15.3$: $\\text{floor}(15.3 + 0.5) = \\text{floor}(15.8) = 15$. (Correct)\n*   $x = 14.5$: $\\text{floor}(14.5 + 0.5) = \\text{floor}(15.0) = 15$. (Correct)\n*   $x = -14.5$: $\\text{copysign}(-1, -14.5) * \\text{floor}(14.5 + 0.5) = -1 * 15 = -15$. (Correct)\n*   $x = -15.3$: $\\text{copysign}(-1, -15.3) * \\text{floor}(15.3 + 0.5) = -1 * 15 = -15$. (Correct)\n\n4.  Structure the solution as a self-contained Python script and include doctests for verification."
+        }
+      }
+    ],
+    "created": 1794961241,
+    "model": "gemma-e4b-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1095,
+      "prompt_tokens": 206,
+      "total_tokens": 1301,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-PHTGUZjbCRpzkKp1cB021EaHY3M9pmMk",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 206,
+      "prompt_ms": 475.199,
+      "prompt_per_token_ms": 2.3067912621359223,
+      "prompt_per_second": 433.50259575462064,
+      "predicted_n": 1095,
+      "predicted_ms": 45665.865,
+      "predicted_per_token_ms": 41.74210694698355,
+      "predicted_per_second": 23.956624931992422
+    }
+  },
+  "seconds": 46.15599999995902
+}

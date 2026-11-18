@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/95",
+  "request": {
+    "model": "period4-bonsai2-q20-chat",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef check_dict_case(dict):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False is the given dictionary is empty.\n    Examples:\n    check_dict_case({\"a\":\"apple\", \"b\":\"banana\"}) should return True.\n    check_dict_case({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}) should return False.\n    check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}) should return False.\n    check_dict_case({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}) should return False.\n    check_dict_case({\"STATE\":\"NC\", \"ZIP\":\"12345\" }) should return True.\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.05,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true,
+      "reasoning_effort": "medium"
+    },
+    "presence_penalty": 0.0
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef check_dict_case(dict):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False is the given dictionary is empty.\n    Examples:\n    check_dict_case({\"a\":\"apple\", \"b\":\"banana\"}) should return True.\n    check_dict_case({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}) should return False.\n    check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}) should return False.\n    check_dict_case({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}) should return False.\n    check_dict_case({\"STATE\":\"NC\", \"ZIP\":\"12345\" }) should return True.\n    \"\"\"\n    if not dict:\n        return False\n    \n    keys = list(dict.keys())\n    \n    # All keys must be strings\n    if not all(isinstance(k, str) for k in keys):\n        return False\n    \n    # Check if all keys are lowercase or all keys are uppercase\n    all_lower = all(k == k.lower() for k in keys)\n    all_upper = all(k == k.upper() for k in keys)\n    \n    return all_lower or all_upper\n```\n\n**How it works:**\n\n1. **Empty check:** If the dictionary is empty, immediately return `False`.\n2. **Type check:** Verify every key is a `str`. If any key is not (e.g., an integer like `8`), return `False`.\n3. **Case check:** \n   - `all_lower` — True if every key equals its own `.lower()` (i.e., no uppercase characters present).\n   - `all_upper` — True if every key equals its own `.upper()` (i.e., no lowercase characters present).\n4. Return `True` if **either** condition holds, otherwise `False`.\n\n**Quick verification against the provided examples:**\n\n| Input | Result | Reason |\n|---|---|---|\n| `{\"a\":\"apple\", \"b\":\"banana\"}` | `True` | all keys are lowercase |\n| `{\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}` | `False` | mixed upper/lower |\n| `{\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}` | `False` | `8` is not a string |\n| `{\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}` | `False` | mixed upper/lower |\n| `{\"STATE\":\"NC\", \"ZIP\":\"12345\"}` | `True` | all keys are uppercase |",
+          "reasoning_content": "Let me analyze this problem:\n\n1. Given a dictionary, return True if ALL keys are strings in lower case OR ALL keys are strings in upper case.\n2. Return False if the dictionary is empty.\n3. Return False if any key is not a string.\n\nLet me think about the logic:\n- If dict is empty → return False\n- Check if all keys are strings\n- If not all keys are strings → return False\n- Check if all keys are lowercase (key == key.lower())\n- Check if all keys are uppercase (key == key.upper())\n- If all are lowercase OR all are uppercase → return True\n- Otherwise → return False\n\nWait, I need to be careful. What about keys that are both lowercase and uppercase? Like \"a\" is both lower and upper (it's a single letter). Actually \"a\".upper() is \"A\" and \"a\".lower() is \"a\", so \"a\" == \"a\".lower() is True.\n\nWhat about empty string? \"\".lower() is \"\" and \"\".upper() is \"\". So an empty string would be both. But the problem says \"strings in lower case\" - I'll assume empty string edge case isn't tested.\n\nLet me write the solution:\n\n```python\ndef check_dict_case(dict):\n    if not dict:\n        return False\n    \n    keys = list(dict.keys())\n    \n    # Check if all keys are strings\n    if not all(isinstance(k, str) for k in keys):\n        return False\n    \n    # Check if all keys are lowercase\n    all_lower = all(k == k.lower() for k in keys)\n    all_upper = all(k == k.upper() for k in keys)\n    \n    return all_lower or all_upper\n```\n\nLet me verify with the examples:\n- {\"a\":\"apple\", \"b\":\"banana\"}: all strings, all lower → True ✓\n- {\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}: all strings, not all lower (\"a\" != \"A\" in the check... wait, \"a\" == \"a\".lower() is True, \"A\" == \"A\".lower() is False since \"A\".lower() is \"a\"). Not all upper either. → False ✓\n- {\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}: not all strings (8 is int) → False ✓\n- {\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}: all strings, not all lower (\"N\" != \"n\"), not all upper (\"ame\" != \"AME\") → False ✓\n- {\"STATE\":\"NC\", \"ZIP\":\"12345\"}: all strings, not all lower, all upper (\"STATE\" == \"STATE\".upper(), \"ZIP\" == \"ZIP\".upper()) → True ✓\n\nLooks good. Let me also consider the edge case where a key like \"a\" (single lowercase letter). \"a\" == \"a\".lower() → True. \"a\" == \"a\".upper() → \"a\" == \"A\" → False. So it would be considered lowercase. That seems fine.\n\nWhat about a key that's a single uppercase letter \"A\"? \"A\" == \"A\".lower() → \"A\" == \"a\" → False. \"A\" == \"A\".upper() → True. So it's uppercase. Fine.\n\nThis looks correct."
+        }
+      }
+    ],
+    "created": 1794933900,
+    "model": "period4-bonsai2-q20-chat",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1315,
+      "prompt_tokens": 211,
+      "total_tokens": 1526,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-qZeL3UDriHX1KcEkfHHvZfRS2wAtrDGv",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 211,
+      "prompt_ms": 617.694,
+      "prompt_per_token_ms": 2.9274597156398103,
+      "prompt_per_second": 341.5930865444702,
+      "predicted_n": 1315,
+      "predicted_ms": 76940.255,
+      "predicted_per_token_ms": 58.55422754946728,
+      "predicted_per_second": 17.07818618485213
+    }
+  },
+  "seconds": 77.59399999992456
+}

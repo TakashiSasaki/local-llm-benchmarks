@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/95",
+  "request": {
+    "model": "gemma-e4b-chat-thinking-allgpu",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef check_dict_case(dict):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False is the given dictionary is empty.\n    Examples:\n    check_dict_case({\"a\":\"apple\", \"b\":\"banana\"}) should return True.\n    check_dict_case({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}) should return False.\n    check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}) should return False.\n    check_dict_case({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}) should return False.\n    check_dict_case({\"STATE\":\"NC\", \"ZIP\":\"12345\" }) should return True.\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef check_dict_case(dict_obj):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False if the given dictionary is empty.\n    \n    Args:\n        dict_obj (dict): The input dictionary.\n        \n    Returns:\n        bool: True if all string keys are consistently cased (all lower or all upper), \n              False otherwise (including if the dict is empty or contains non-string keys).\n    \"\"\"\n    \n    # Condition 1: Handle empty dictionary\n    if not dict_obj:\n        return False\n\n    has_lower = False\n    has_upper = False\n\n    for key in dict_obj.keys():\n        # Condition 2: Ensure all keys are strings\n        if not isinstance(key, str):\n            return False\n        \n        # Determine the case of the string key\n        if key.islower():\n            has_lower = True\n        elif key.isupper():\n            has_upper = True\n        else:\n            # Handle keys that are not strictly upper or lower (e.g., \"MiXeD\")\n            return False\n\n    # Condition 3: Check for consistency (must be all lower OR all upper)\n    # The exclusive OR (XOR) ensures that exactly one state (lower or upper) was observed.\n    return has_lower ^ has_upper\n\n# Example Test Cases:\nprint(f\"Test 1 (All lower): {check_dict_case({'a':'apple', 'b':'banana'})}\")\nprint(f\"Test 2 (Mixed case): {check_dict_case({'a':'apple', 'A':'banana', 'B':'banana'})}\")\nprint(f\"Test 3 (Non-string key): {check_dict_case({'a':'apple', 8:'banana'})}\")\nprint(f\"Test 4 (Mixed keys/case): {check_dict_case({'Name':'John', 'Age':'36', 'City':'Houston'})}\")\nprint(f\"Test 5 (All upper): {check_dict_case({'STATE':'NC', 'ZIP':'12345'})}\")\nprint(f\"Test 6 (Empty dict): {check_dict_case({})}\")\nprint(f\"Test 7 (Key is mixed case): {check_dict_case({'MIXED': 'val'})}\")\nprint(f\"Test 8 (Single key lower): {check_dict_case({'onlylower': 1})}\")\nprint(f\"Test 9 (Single key upper): {check_dict_case({'ONLYUPPER': 1})}\")\n```",
+          "reasoning_content": "Plan:\n1.  Analyze the requirements for `check_dict_case(dict)`.\n    *   If the dictionary is empty, return `False`.\n    *   All keys must be strings.\n    *   All string keys must be either lowercase *or* all uppercase.\n    *   If the keys are mixed (some lower, some upper), return `False`.\n2.  Implement the checks iteratively or by collecting key properties.\n3.  Ensure the script is self-contained and runnable.\n\nConstraint Checklist & Confidence Score:\n1. Self-contained Python script: Yes.\n2. Solves the specific problem: Yes.\n3. Outputs in markdown code block: Yes.\n\nConfidence Score: 5/5\n\nSteps:\n1. Handle the empty dictionary case.\n2. Check if all keys are strings. If not, return `False`.\n3. Initialize flags (e.g., `is_all_lower`, `is_all_upper`) to track the case observed among the string keys.\n4. Iterate through the keys:\n    *   If a key is a string:\n        *   Check if it's lowercase.\n        *   Check if it's uppercase.\n        *   Update the flags based on the observed case.\n    *   (Wait, step 2 handled non-string keys, so we only need to worry about string keys now).\n5. After iterating, if both `is_all_lower` and `is_all_upper` are `True` (meaning we saw both lowercase and uppercase), the condition is violated, unless all keys were empty strings (which is debatable but let's stick to the main requirement).\n\nRefining the logic:\nA simpler approach is to determine the required case (Lower or Upper) based on the first key, and then check all subsequent keys against that requirement.\n\n1. Check if `len(dict) == 0`. If so, return `False`.\n2. Check if all values in `dict` are strings. Wait, the requirement only talks about *keys* being strings and having a consistent case.\n3. Check if all keys are strings. If not, return `False`.\n4. Iterate through the keys.\n    a. Get the case of the first key (e.g., `first_key = next(iter(dict))`).\n    b. Determine the required case: `target_case = first_key.islower()` or `first_key.isupper()`.\n    c. Iterate through all keys:\n        i. Check if the key matches the `target_case`.\n        ii. If it doesn't match, return `False`.\n5. If the loop completes, return `True`.\n\nLet's stick to tracking consistency, as it handles the mixed case scenario elegantly.\n\n1. Initialize `has_lower = False`, `has_upper = False`.\n2. Iterate through `key` in `dict.keys()`:\n    a. If `key` is not a string, return `False` (based on the provided example `{\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}`).\n    b. If `key.islower()`: `has_lower = True`.\n    c. If `key.isupper()`: `has_upper = True`.\n3. Return `has_lower` XOR `has_upper` (i.e., one must be true, but not both).\n\nWait, if the dictionary only has one key, and it is \"a\", `has_lower` is True, `has_upper` is False. Returns True. Correct.\nIf the dictionary is `{\"A\":\"x\"}`, `has_lower` is False, `has_upper` is True. Returns True. Correct.\nIf the dictionary is `{\"a\":\"x\", \"A\":\"y\"}`, `has_lower` is True, `has_upper` is True. Returns False. Correct.\nIf the dictionary is empty, the loop doesn't run. We must handle this upfront.\n\nRevised Plan:\n1. Check if `len(dict) == 0`. If so, return `False`.\n2. Initialize `has_lower = False`, `has_upper = False`.\n3. Iterate through keys:\n    a. Check if the key is a string. If not, return `False`.\n    b. Check case and set flags.\n4. Return `has_lower ^ has_upper` (exclusive OR)."
+        }
+      }
+    ],
+    "created": 1794985041,
+    "model": "gemma-e4b-chat-thinking-allgpu",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1578,
+      "prompt_tokens": 232,
+      "total_tokens": 1810,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-W27ZmSgnhXClebZBkQ5Co90llCLCthPw",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 232,
+      "prompt_ms": 104.916,
+      "prompt_per_token_ms": 0.45222413793103444,
+      "prompt_per_second": 2211.292843798849,
+      "predicted_n": 1578,
+      "predicted_ms": 24994.581,
+      "predicted_per_token_ms": 15.849448953709574,
+      "predicted_per_second": 63.09367618524991
+    }
+  },
+  "seconds": 25.140999999945052
+}

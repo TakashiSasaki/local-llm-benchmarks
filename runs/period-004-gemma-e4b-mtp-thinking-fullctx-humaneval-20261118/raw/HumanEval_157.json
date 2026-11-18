@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/157",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef right_angle_triangle(a, b, c):\n    '''\n    Given the lengths of the three sides of a triangle. Return True if the three\n    sides form a right-angled triangle, False otherwise.\n    A right-angled triangle is a triangle in which one angle is right angle or \n    90 degree.\n    Example:\n    right_angle_triangle(3, 4, 5) == True\n    right_angle_triangle(1, 2, 3) == False\n    '''\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport math\n\ndef right_angle_triangle(a, b, c):\n    '''\n    Given the lengths of the three sides of a triangle. Return True if the three\n    sides form a right-angled triangle, False otherwise.\n    A right-angled triangle is a triangle in which one angle is right angle or \n    90 degree.\n    \n    This function checks the Pythagorean theorem (a^2 + b^2 = c^2) for all three\n    possible combinations, as we do not know which side is the hypotenuse.\n    '''\n    # To handle potential floating point errors when squaring and summing, \n    # we check if the difference is extremely small (close to zero).\n    TOLERANCE = 1e-9 \n\n    a_sq = a * a\n    b_sq = b * b\n    c_sq = c * c\n\n    # Check Case 1: c is the hypotenuse (a^2 + b^2 = c^2)\n    if abs(a_sq + b_sq - c_sq) < TOLERANCE:\n        return True\n    \n    # Check Case 2: b is the hypotenuse (a^2 + c^2 = b^2)\n    if abs(a_sq + c_sq - b_sq) < TOLERANCE:\n        return True\n    \n    # Check Case 3: a is the hypotenuse (b^2 + c^2 = a^2)\n    if abs(b_sq + c_sq - a_sq) < TOLERANCE:\n        return True\n        \n    return False\n\n# --- Example Usage and Testing ---\n\nprint(\"--- Test Cases ---\")\n\n# Example 1: Standard 3-4-5 right triangle\nsides1 = (3, 4, 5)\nresult1 = right_angle_triangle(*sides1)\nprint(f\"Sides {sides1}: Is a right triangle? {result1}\") \n\n# Example 2: Non-right triangle (1, 2, 3)\nsides2 = (1, 2, 3)\nresult2 = right_angle_triangle(*sides2)\nprint(f\"Sides {sides2}: Is a right triangle? {result2}\") \n\n# Example 3: Right triangle, sides not in order (5, 3, 4)\nsides3 = (5, 3, 4)\nresult3 = right_angle_triangle(*sides3)\nprint(f\"Sides {sides3}: Is a right triangle? {result3}\")\n\n# Example 4: Using floating point numbers (e.g., 0.5, 1.0, 1.11803...)\n# Since 0.25 + 1.0 = 1.25, and sqrt(1.25) approx 1.11803\nsides4 = (0.5, 1.0, math.sqrt(1.25))\nresult4 = right_angle_triangle(*sides4)\nprint(f\"Sides {sides4}: Is a right triangle? {result4}\")\n\n# Example 5: Edge case - non-positive side length (should technically fail, \n# but mathematically the theorem still holds if we ignore triangle inequality)\nsides5 = (0, 1, 1)\nresult5 = right_angle_triangle(*sides5)\nprint(f\"Sides {sides5}: Is a right triangle? {result5}\")\n```",
+          "reasoning_content": "Thinking Process:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python script that implements the function `right_angle_triangle(a, b, c)`. This function must determine if three given side lengths form a right-angled triangle.\n\n2.  **Recall the Mathematical Principle:** The defining characteristic of a right-angled triangle is the Pythagorean theorem: $a^2 + b^2 = c^2$, where $c$ is the hypotenuse (the longest side).\n\n3.  **Handle Input Flexibility (The Challenge):** The input sides (a, b, c) are not guaranteed to be ordered (i.e., 'c' might not be the hypotenuse). Therefore, I must check all possible combinations:\n    *   Case 1: $a$ is the hypotenuse: $b^2 + c^2 = a^2$\n    *   Case 2: $b$ is the hypotenuse: $a^2 + c^2 = b^2$\n    *   Case 3: $c$ is the hypotenuse: $a^2 + b^2 = c^2$\n\n4.  **Implement the Logic (Initial Draft):**\n    ```python\n    def right_angle_triangle(a, b, c):\n        return (a*a + b*b == c*c) or \\\n               (a*a + c*c == b*b) or \\\n               (b*b + c*c == a*a)\n    ```\n\n5.  **Refinement and Robustness Check (Floating Point Issues):** Although the examples use integers, in a real-world scenario, side lengths might be floats. When dealing with squares and sums of squares, using standard floating-point comparisons (`==`) can lead to errors due to precision issues. It is safer to check if the difference is very close to zero (i.e., use a tolerance or `math.isclose` if allowed). Since the prompt implies simple geometry, I will stick to the strict equality check, assuming integer or precise float inputs, but I will acknowledge that robust solutions often require tolerance.\n\n6.  **Structure the Self-Contained Script:** A self-contained script needs:\n    *   The function definition.\n    *   Example usage (test cases) to demonstrate that it works.\n\n7.  **Final Code Review:** (Checking the examples provided in the prompt)\n    *   `right_angle_triangle(3, 4, 5)`: $3^2 + 4^2 = 9 + 16 = 25$. $5^2 = 25$. True. (Correct)\n    *   `right_angle_triangle(1, 2, 3)`: $1^2+2^2=5$. $3^2=9$. False. (Correct)\n\n8.  **Produce the final output in the required markdown code block.** (Self-correction: Ensure the script includes the testing calls.)"
+        }
+      }
+    ],
+    "created": 1794992724,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1439,
+      "prompt_tokens": 156,
+      "total_tokens": 1595,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-0oPgYHvoU0sGnmpH1nsVS6P0rR89BwRp",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 156,
+      "prompt_ms": 87.263,
+      "prompt_per_token_ms": 0.5593782051282051,
+      "prompt_per_second": 1787.6992539793498,
+      "predicted_n": 1439,
+      "predicted_ms": 9762.919,
+      "predicted_per_token_ms": 6.789234353268428,
+      "predicted_per_second": 147.29201379218654,
+      "draft_n": 1446,
+      "draft_n_accepted": 956
+    }
+  },
+  "seconds": 9.875
+}

@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/49",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef modp(n: int, p: int):\n    \"\"\"Return 2^n modulo p (be aware of numerics).\n    >>> modp(3, 5)\n    3\n    >>> modp(1101, 101)\n    2\n    >>> modp(0, 101)\n    1\n    >>> modp(3, 11)\n    8\n    >>> modp(100, 101)\n    1\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport doctest\n\ndef modp(n: int, p: int) -> int:\n    \"\"\"\n    Return 2^n modulo p (be aware of numerics).\n\n    This function uses the built-in pow(base, exp, mod) function \n    to perform modular exponentiation efficiently, preventing overflow \n    even when n is very large.\n\n    >>> modp(3, 5)\n    3\n    >>> modp(1101, 101)\n    2\n    >>> modp(0, 101)\n    1\n    >>> modp(3, 11)\n    8\n    >>> modp(100, 101)\n    1\n    \"\"\"\n    if p <= 0:\n        raise ValueError(\"Modulus p must be positive.\")\n    if n < 0:\n        # Handle negative exponents if necessary, though typically not required for this context\n        raise ValueError(\"Exponent n must be non-negative.\")\n    \n    # Efficiently calculates (2^n) % p\n    return pow(2, n, p)\n\nif __name__ == \"__main__\":\n    # Run doctests to verify the function correctness\n    doctest.testmod()\n    \n    print(\"Doctests passed successfully.\")\n    \n    # Example usage\n    print(f\"\\nExample 1: modp(3, 5) = {modp(3, 5)}\")\n    print(f\"Example 2: modp(100, 101) = {modp(100, 101)}\")\n```",
+          "reasoning_content": "Here's a thinking process to arrive at the solution:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python script implementing the function `modp(n, p)`, which calculates $2^n \\pmod p$. The constraints emphasize \"be aware of numerics,\" which immediately suggests that $n$ can be large, meaning calculating $2^n$ directly will cause overflow or be computationally slow, even if Python handles large integers.\n\n2.  **Identify the Core Algorithm:** The standard way to calculate $a^b \\pmod m$ efficiently is using Modular Exponentiation (also known as exponentiation by squaring).\n\n3.  **Analyze Input Constraints (Implicit):**\n    *   $n$ (the exponent) can be large (e.g., 1101, even larger).\n    *   $p$ (the modulus) can also be moderately large.\n    *   $2^n$ will be extremely large.\n\n4.  **Implement Modular Exponentiation (`pow(base, exp, mod)`):**\n    *   Python's built-in `pow(base, exp, mod)` function is specifically designed for this task and is highly optimized. Using it is the most robust and Pythonic solution.\n    *   In this case, $base = 2$, $exp = n$, and $mod = p$.\n    *   The function call would be `pow(2, n, p)`.\n\n5.  **Handle Edge Cases (from the doctests):**\n    *   `modp(3, 5)`: $2^3 \\pmod 5 = 8 \\pmod 5 = 3$. (Correct)\n    *   `modp(0, 101)`: $2^0 \\pmod{101} = 1 \\pmod{101} = 1$. (Correct, standard behavior of exponentiation)\n    *   `modp(100, 101)`: $2^{100} \\pmod{101}$. Since 101 is prime, by Fermat's Little Theorem, $2^{101-1} \\equiv 2^{100} \\equiv 1 \\pmod{101}$. (Correct)\n\n6.  **Structure the Code:**\n    *   Define the function signature `def modp(n: int, p: int):`.\n    *   Implement the calculation using `pow(2, n, p)`.\n    *   Add the doctests to ensure the script is self-contained and testable.\n\n7.  **Final Review (Self-Contained Requirement):** The script must include the function definition and demonstrate its usage (usually via doctests or a main block). Using `if __name__ == \"__main__\":` with `doctest.testmod()` is the cleanest way to make it self-contained and executable. (Self-correction: Since the request is just for the solution, putting the doctests in the function definition is sufficient, but running them in a main block is good practice for a robust script.)\n\n8.  **Generate Code.** (This leads directly to the provided final answer.)"
+        }
+      }
+    ],
+    "created": 1794991486,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1058,
+      "prompt_tokens": 155,
+      "total_tokens": 1213,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-nBopWoFZjplXaJCVe6kBwxVcJLkwrKSI",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 155,
+      "prompt_ms": 90.218,
+      "prompt_per_token_ms": 0.5820516129032258,
+      "prompt_per_second": 1718.0606974218003,
+      "predicted_n": 1058,
+      "predicted_ms": 7260.23,
+      "predicted_per_token_ms": 6.868713339640491,
+      "predicted_per_second": 145.58767421968724,
+      "draft_n": 1074,
+      "draft_n_accepted": 699
+    }
+  },
+  "seconds": 7.375
+}

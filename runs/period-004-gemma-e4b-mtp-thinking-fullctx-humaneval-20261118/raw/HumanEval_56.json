@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/56",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef correct_bracketing(brackets: str):\n    \"\"\" brackets is a string of \"<\" and \">\".\n    return True if every opening bracket has a corresponding closing bracket.\n\n    >>> correct_bracketing(\"<\")\n    False\n    >>> correct_bracketing(\"<>\")\n    True\n    >>> correct_bracketing(\"<<><>>\")\n    True\n    >>> correct_bracketing(\"><<>\")\n    False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef correct_bracketing(brackets: str):\n    \"\"\"\n    Checks if a string of '<' (opening) and '>' (closing) brackets is correctly balanced.\n\n    A string is correctly balanced if:\n    1. The count of closing brackets never exceeds the count of opening brackets during a left-to-right scan.\n    2. The final count of open brackets equals the final count of closing brackets.\n\n    >>> correct_bracketing(\"<\")\n    False\n    >>> correct_bracketing(\"<>\")\n    True\n    >>> correct_bracketing(\"<<><>>\")\n    True\n    >>> correct_bracketing(\"><<>\")\n    False\n    >>> correct_bracketing(\"\")\n    True\n    >>> correct_bracketing(\"<>\")\n    True\n    \"\"\"\n    balance = 0\n    \n    for bracket in brackets:\n        if bracket == '<':\n            balance += 1\n        elif bracket == '>':\n            balance -= 1\n        \n        # Condition 1: If balance drops below zero, we have a closing bracket \n        # without a preceding open bracket, meaning it's invalid immediately.\n        if balance < 0:\n            return False\n            \n    # Condition 2: For the string to be correct, the final balance must be zero.\n    return balance == 0\n\nif __name__ == '__main__':\n    import doctest\n    doctest.testmod()\n\n    # Example usage:\n    print(\"\\n--- Test Cases ---\")\n    print(f\"'<' is correct: {correct_bracketing('<')}\")\n    print(f\"'<>' is correct: {correct_bracketing('<>')}\")\n    print(f\"'<<><>>' is correct: {correct_bracketing('<<><>>')}\")\n    print(f\"'><<>' is correct: {correct_bracketing('><<>')}\")\n    print(f\"'<><>' is correct: {correct_bracketing('<><>')}\")\n```",
+          "reasoning_content": "Thinking Process:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python script implementing the `correct_bracketing(brackets: str)` function. This function determines if a string composed of '<' (opening) and '>' (closing) brackets is *well-formed* or *correctly balanced*.\n\n2.  **Analyze the Requirements (Bracket Balancing):**\n    *   A string is correctly balanced if:\n        a. The total number of opening brackets equals the total number of closing brackets. (Total count check)\n        b. At no point while reading the string from left to right does the count of closing brackets exceed the count of opening brackets. (Prefix validity check)\n\n3.  **Determine the Algorithm (Stack/Counter Method):** The standard way to solve bracket balancing is using a counter.\n    *   Initialize `count = 0`.\n    *   Iterate through the string:\n        *   If the character is '<' (opening), increment `count`.\n        *   If the character is '>' (closing), decrement `count`.\n        *   *Crucial Check (Validity during iteration):* If `count` drops below zero at any point, it means a closing bracket appeared without a corresponding open bracket preceding it. The string is invalid immediately.\n    *   *Final Check:* After iterating through the whole string, if `count` is exactly zero, it means every opening bracket was matched, and no unmatched opening brackets remain.\n\n4.  **Implement the Code (Python):**\n\n    ```python\n    def correct_bracketing(brackets: str):\n        count = 0\n        for bracket in brackets:\n            if bracket == '<':\n                count += 1\n            elif bracket == '>':\n                count -= 1\n            # Check for immediate invalidity (more closing than opening)\n            if count < 0:\n                return False\n        \n        # Final check: must end with a balanced count (zero)\n        return count == 0\n    ```\n\n5.  **Prepare the Output Format:** The request requires a self-contained script, including the docstrings and tests (preferably using `doctest` or explicit assertions) and delivered in a markdown code block.\n\n6.  **Final Review against Examples:**\n    *   `correct_bracketing(\"<\")`: count=1. Returns `1 == 0` -> False. (Correct)\n    *   `correct_bracketing(\"<>\")`: count=1 -> 0. Returns `0 == 0` -> True. (Correct)\n    *   `correct_bracketing(\"<<><>>\")`: count=1, 2, 1, 2, 1, 0. Returns `0 == 0` -> True. (Correct)\n    *   `correct_bracketing(\"><<>\")`: count=0 -> -1. Returns False immediately. (Correct)\n\n7.  **Construct the final script.** (Using the standard structure and including the provided examples for verification)."
+        }
+      }
+    ],
+    "created": 1794991532,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1066,
+      "prompt_tokens": 129,
+      "total_tokens": 1195,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-DaNnQuxEX7n96fh07SfRJMcYHpbe3tyM",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 129,
+      "prompt_ms": 85.129,
+      "prompt_per_token_ms": 0.6599147286821706,
+      "prompt_per_second": 1515.3472964559667,
+      "predicted_n": 1066,
+      "predicted_ms": 7340.973,
+      "predicted_per_token_ms": 6.8929323943661975,
+      "predicted_per_second": 145.07613636502956,
+      "draft_n": 1092,
+      "draft_n_accepted": 701
+    }
+  },
+  "seconds": 7.454000000027008
+}

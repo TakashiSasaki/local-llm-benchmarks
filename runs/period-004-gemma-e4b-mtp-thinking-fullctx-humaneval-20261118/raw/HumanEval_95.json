@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/95",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef check_dict_case(dict):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False is the given dictionary is empty.\n    Examples:\n    check_dict_case({\"a\":\"apple\", \"b\":\"banana\"}) should return True.\n    check_dict_case({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}) should return False.\n    check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}) should return False.\n    check_dict_case({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}) should return False.\n    check_dict_case({\"STATE\":\"NC\", \"ZIP\":\"12345\" }) should return True.\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef check_dict_case(d):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False if the given dictionary is empty.\n\n    Args:\n        d (dict): The dictionary to check.\n\n    Returns:\n        bool: True if all keys meet the case requirements, False otherwise.\n    \"\"\"\n    # Requirement 1: Return False if the dictionary is empty.\n    if not d:\n        return False\n\n    all_lower = True\n    all_upper = True\n\n    for key in d.keys():\n        # Requirement 2: All keys must be strings.\n        if not isinstance(key, str):\n            return False\n\n        # Check case consistency\n        if not key.islower():\n            all_lower = False\n        \n        if not key.isupper():\n            all_upper = False\n            \n        # Optimization: If both flags are false, we can stop early.\n        if not all_lower and not all_upper:\n            return False\n            \n    # Return True if at least one case consistency rule was maintained.\n    return all_lower or all_upper\n\n# --- Test Cases ---\n\n# Examples provided in the prompt\ntests = [\n    ({\"a\":\"apple\", \"b\":\"banana\"}, True),  # All lower case\n    ({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}, False), # Mixed case\n    ({\"a\":\"apple\", 8:\"banana\"}, False),  # Non-string key (8)\n    ({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}, False), # Mixed case (N vs a)\n    ({\"STATE\":\"NC\", \"ZIP\":\"12345\" }, True), # All upper case\n    ({}, False), # Empty dictionary\n    ({\"KEY\": \"val\"}, True), # Single key, upper\n    ({\"key\": \"val\"}, True) # Single key, lower\n]\n\nprint(\"--- Running Test Cases ---\")\nall_passed = True\nfor input_dict, expected in tests:\n    result = check_dict_case(input_dict)\n    test_status = \"PASSED\" if result == expected else \"FAILED\"\n    if result != expected:\n        all_passed = False\n    print(f\"Input: {input_dict}\")\n    print(f\"Expected: {expected}, Got: {result} [{test_status}]\\n\")\n\nif all_passed:\n    print(\"All test cases passed successfully!\")\nelse:\n    print(\"Some test cases failed.\")\n```",
+          "reasoning_content": "Plan:\n1.  Analyze the requirements for `check_dict_case(dict)`.\n    *   Condition 1: All keys must be strings.\n    *   Condition 2: All string keys must be either lowercase OR all uppercase.\n    *   Constraint: If the dictionary is empty, return `False`.\n2.  Implement the logic within a Python function.\n3.  Include test cases (as provided in the prompt and derived from requirements) to ensure correctness.\n4.  Format the output as a self-contained script in a markdown code block.\n\nExecution:\n1. Check for empty dictionary.\n2. Iterate through keys.\n3. Validate key type (must be `str`). If not, return `False`.\n4. Check the case consistency.\n    *   Assume `all_lower = True` and `all_upper = True` initially.\n    *   For each string key:\n        *   If the key is not lowercase, set `all_lower = False`.\n        *   If the key is not uppercase, set `all_upper = False`.\n5. Return `all_lower or all_upper`. (If both are false, it means there was a mix of cases, and we return `False`).\n\nRefinement on step 4/5: A more efficient way might be to check the first key's case (if valid) and then verify all others match that case.\n\nLet's stick to the two-flag approach for simplicity and robustness.\n\n(Self-Correction on the example `check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"})`: Wait, standard Python dictionaries cannot have duplicate keys like `\"a\":\"apple\", \"a\":\"apple\"`. The second entry would overwrite the first. Assuming the input is a standard dictionary, the duplicate key example is ill-formed for Python. However, the explicit test case *requires* that if a non-string key exists (like `8`), it should return `False`. This means the type check is paramount.)\n\nLet's implement the code."
+        }
+      }
+    ],
+    "created": 1794991953,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1035,
+      "prompt_tokens": 232,
+      "total_tokens": 1267,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-gcBOcJQDFSb2mlooXY0jDZ70Wt5iRVyf",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 232,
+      "prompt_ms": 99.779,
+      "prompt_per_token_ms": 0.43008189655172413,
+      "prompt_per_second": 2325.1385562092228,
+      "predicted_n": 1035,
+      "predicted_ms": 7437.06,
+      "predicted_per_token_ms": 7.192514506769826,
+      "predicted_per_second": 139.03343525532938,
+      "draft_n": 1101,
+      "draft_n_accepted": 668
+    }
+  },
+  "seconds": 7.562000000034459
+}

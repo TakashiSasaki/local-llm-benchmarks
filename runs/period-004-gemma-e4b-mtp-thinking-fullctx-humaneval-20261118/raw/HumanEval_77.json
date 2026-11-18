@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/77",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef iscube(a):\n    '''\n    Write a function that takes an integer a and returns True \n    if this ingeger is a cube of some integer number.\n    Note: you may assume the input is always valid.\n    Examples:\n    iscube(1) ==> True\n    iscube(2) ==> False\n    iscube(-1) ==> True\n    iscube(64) ==> True\n    iscube(0) ==> True\n    iscube(180) ==> False\n    '''\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef iscube(a: int) -> bool:\n    \"\"\"\n    Takes an integer a and returns True if this integer is a cube of some integer number.\n    \n    Examples:\n    iscube(1) ==> True\n    iscube(2) ==> False\n    iscube(-1) ==> True\n    iscube(64) ==> True\n    iscube(0) ==> True\n    iscube(180) ==> False\n    \"\"\"\n    if a == 0:\n        return True\n    \n    # Calculate the cubic root using floating-point arithmetic.\n    # We must use a power function to handle both positive and negative bases correctly.\n    # We then round this result to the nearest integer.\n    # Note: For negative numbers, Python handles (-a)**(1/3) correctly by\n    # applying the sign later if we were to use a non-native cubic root function,\n    # but standard float operations on negative bases (like (-2)**(1/3))\n    # might return complex numbers or NaN depending on the environment.\n    # We calculate the root of the absolute value and apply the sign back.\n    \n    sign = 1 if a >= 0 else -1\n    \n    # Calculate the approximate root of the absolute value\n    approx_root_abs = abs(a)**(1/3)\n    \n    # Round to the nearest integer\n    root = round(approx_root_abs)\n    \n    # Apply the correct sign to the potential integer root\n    integer_root = int(sign * root)\n    \n    # Check if cubing this integer root results exactly in the original number a\n    return integer_root * integer_root * integer_root == a\n\n# Example Usage and Tests:\nprint(f\"iscube(1): {iscube(1)}\")\nprint(f\"iscube(2): {iscube(2)}\")\nprint(f\"iscube(-1): {iscube(-1)}\")\nprint(f\"iscube(64): {iscube(64)}\")\nprint(f\"iscube(0): {iscube(0)}\")\nprint(f\"iscube(180): {iscube(180)}\")\nprint(f\"iscube(-27): {iscube(-27)}\")\nprint(f\"iscube(125): {iscube(125)}\")\n```",
+          "reasoning_content": "Plan:\n1.  Understand the goal: Implement `iscube(a)` which checks if an integer `a` is the cube of some other integer.\n2.  Analyze the constraints/examples: Handles positive, negative, and zero inputs.\n3.  Determine the approach: We need to find an integer $x$ such that $x^3 = a$.\n4.  Mathematical approach: Calculate the cubic root of $a$, $\\sqrt[3]{a}$. Since we are dealing with integer cubes, we must check if this root is exactly an integer.\n5.  Implementation details:\n    *   Use `a**(1/3)` to calculate the approximate cubic root.\n    *   Since floating-point arithmetic can introduce small errors (e.g., $8^{1/3}$ might be $1.99999999999$), we need to round the result and then check if cubing the rounded integer gives $a$.\n    *   Alternatively, we can use the `round()` function on the float result and check the cube.\n\n*Self-Correction/Refinement (Handling edge cases with floats):* Python's `round(a**(1/3))` is usually robust for standard integers, but direct comparison with floats can be tricky. A safer approach is often to use `round()` and then perform integer arithmetic checks.\n\nLet's try the standard approach:\n1. Calculate $x = \\text{round}(a^{1/3})$.\n2. Check if $x^3 = a$.\n\nTest cases:\n*   `a = 8`: $8^{1/3} = 2.0$. `round(2.0) = 2$. $2^3 = 8$. True.\n*   `a = 7`: $7^{1/3} \\approx 1.9129$. `round(1.9129) = 2$. $2^3 = 8$. $8 \\neq 7$. False.\n*   `a = 1`: $1^{1/3} = 1.0$. `round(1.0) = 1$. $1^3 = 1$. True.\n*   `a = -1$: $(-1)^{1/3} = -1.0$. `round(-1.0) = -1$. $(-1)^3 = -1$. True.\n\nThis approach seems robust for standard integer ranges. I will wrap this logic into the required function structure."
+        }
+      }
+    ],
+    "created": 1794991740,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1076,
+      "prompt_tokens": 155,
+      "total_tokens": 1231,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-umSWRTBSGztFy41XrWNyDOyw5f32YgFT",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 155,
+      "prompt_ms": 88.673,
+      "prompt_per_token_ms": 0.5720838709677419,
+      "prompt_per_second": 1747.9954439344558,
+      "predicted_n": 1076,
+      "predicted_ms": 7469.696,
+      "predicted_per_token_ms": 6.948554418604651,
+      "predicted_per_second": 143.9148259848861,
+      "draft_n": 1113,
+      "draft_n_accepted": 704
+    }
+  },
+  "seconds": 7.577999999979511
+}

@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/43",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef pairs_sum_to_zero(l):\n    \"\"\"\n    pairs_sum_to_zero takes a list of integers as an input.\n    it returns True if there are two distinct elements in the list that\n    sum to zero, and False otherwise.\n    >>> pairs_sum_to_zero([1, 3, 5, 0])\n    False\n    >>> pairs_sum_to_zero([1, 3, -2, 1])\n    False\n    >>> pairs_sum_to_zero([1, 2, 3, 7])\n    False\n    >>> pairs_sum_to_zero([2, 4, -5, 3, 5, 7])\n    True\n    >>> pairs_sum_to_zero([1])\n    False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef pairs_sum_to_zero(l):\n    \"\"\"\n    pairs_sum_to_zero takes a list of integers as an input.\n    it returns True if there are two distinct elements in the list that\n    sum to zero, and False otherwise.\n\n    This solution uses a set (hash map) to achieve O(n) time complexity.\n\n    >>> pairs_sum_to_zero([1, 3, 5, 0])\n    False\n    >>> pairs_sum_to_zero([1, 3, -2, 1])\n    False\n    >>> pairs_sum_to_zero([1, 2, 3, 7])\n    False\n    >>> pairs_sum_to_zero([2, 4, -5, 3, 5, 7])\n    True\n    >>> pairs_sum_to_zero([1])\n    False\n    >>> pairs_sum_to_zero([0, 0])\n    True\n    \"\"\"\n    seen = set()\n    \n    for x in l:\n        # The complement needed to sum to zero is -x\n        complement = -x\n        \n        # If the complement has already been seen, we found a pair.\n        # Note: This correctly handles the case where x=0, because if 0 is\n        # found in the list twice (e.g., [0, 0]), the second 0 will check\n        # for 0, find 0 in the 'seen' set, and return True.\n        if complement in seen:\n            return True\n        \n        # Add the current number to the set of seen elements\n        seen.add(x)\n        \n    return False\n\nif __name__ == '__main__':\n    import doctest\n    doctest.testmod()\n    \n    # Additional manual tests\n    print(f\"Test [5, -5]: {pairs_sum_to_zero([5, -5])}\") # Expected: True\n    print(f\"Test [1, 2, 3]: {pairs_sum_to_zero([1, 2, 3])}\") # Expected: False\n    print(f\"Test [0, 0, 1]: {pairs_sum_to_zero([0, 0, 1])}\") # Expected: True\n```",
+          "reasoning_content": "Here's a thinking process to arrive at the solution:\n\n1.  **Understand the Goal:** The task is to implement the `pairs_sum_to_zero(l)` function. This function takes a list of integers (`l`) and must return `True` if there exist two *distinct* elements in the list that sum up to zero (i.e., they are additive inverses, like $x$ and $-x$), and `False` otherwise.\n\n2.  **Analyze Constraints & Edge Cases:**\n    *   **Distinct Elements:** If the list is `[0, 0]`, do the two zeros count? The problem implies finding two elements $l[i]$ and $l[j]$ where $i \\neq j$. If we use a standard set/dictionary approach, we need to handle duplicates carefully.\n    *   **Zero:** If the list contains `[5, 0, -5]`, `5` and `-5` is a pair. If the list contains `[0, 0]`, $0 + 0 = 0$. Since they must be distinct *elements* in the list (meaning different indices), this technically counts.\n    *   **Empty/Single Element List:** If `len(l) < 2`, the answer must be `False`.\n\n3.  **Develop a Strategy (Approach 1: Brute Force):**\n    *   Iterate through all pairs $(i, j)$ where $i < j$.\n    *   Check if $l[i] + l[j] == 0$.\n    *   If found, return `True`.\n    *   If the loop finishes, return `False`.\n    *   *Complexity:* $O(N^2)$. This works but is inefficient.\n\n4.  **Develop a Strategy (Approach 2: Using a Set/Hash Map):**\n    *   We need to find $x$ such that $-x$ is also in the list, where $x$ and $-x$ correspond to two different indices.\n    *   A standard technique for \"Two Sum\" problems is to iterate through the list and use a set to store elements encountered so far.\n    *   For each number $x$ in the list:\n        *   Check if the required complement, $-x$, is already in the set.\n        *   If it is, we found a pair, return `True`.\n        *   If it is not, add $x$ to the set.\n\n5.  **Refining Strategy 2 (Handling Duplicates and Zero):**\n\n    *   *Case 1: $x \\neq 0$.* If $x=5$, we look for $-5$. If we see $-5$ first, we add $5$ to the set. When we see $-5$, we find $5$ in the set, and return `True`. This handles standard pairs correctly.\n    *   *Case 2: $x = 0$.* We look for $-0$, which is $0$.\n        *   If we use a simple set structure, when we encounter the first $0$, we look for $0$. Since $0$ is not in the set, we add $0$.\n        *   When we encounter the second $0$, we look for $0$. Since $0$ *is* in the set, we return `True`. This correctly handles `[0, 0]`.\n\n6.  **Implementing Strategy 2 (The optimized solution):**\n\n    ```python\n    seen = set()\n    for x in l:\n        complement = -x\n        if complement in seen:\n            return True\n        seen.add(x)\n    return False\n    ```\n\n7.  **Testing against provided examples:**\n    *   `[1, 3, 5, 0]` -> Seen: {1}. x=3. Complement=-3 (No). Seen: {1, 3}. x=5. Complement=-5 (No). Seen: {1, 3, 5}. x=0. Complement=0 (No). Seen: {1, 3, 5, 0}. Returns False. (Correct)\n    *   `[1, 3, -2, 1]` -> Seen: {1}. x=3. Complement=-3 (No). Seen: {1, 3}. x=-2. Complement=2 (No). Seen: {1, 3, -2}. x=1. Complement=-1 (No). Seen: {1, 3, -2}. Returns False. (Wait, the example output was False. This is correct, as the pairs are (1, 3), (1, -2), (3, -2), and none sum to zero).\n    *   `[2, 4, -5, 3, 5, 7]` -> Seen: {2}. x=4. Complement=-4 (No). Seen: {2, 4}. x=-5. Complement=5 (Yes). Returns True. (Correct)\n    *   `[1]` -> Loop runs once. Returns False. (Correct)\n    *   *Self-test:* `[0, 0]` -> Seen: {0}. x=0. Complement=0 (Yes). Returns True. (Correct, as $0$ and $0$ are distinct elements by index).\n\n8.  **Final Code Structure:** Wrap the logic into the required function signature and provide the docstrings. (This matches the final provided solution)."
+        }
+      }
+    ],
+    "created": 1794991449,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1721,
+      "prompt_tokens": 223,
+      "total_tokens": 1944,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-fhwWSxEVv6nlyLkSUZvo35s9ATJY4Q3C",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 223,
+      "prompt_ms": 97.171,
+      "prompt_per_token_ms": 0.43574439461883413,
+      "prompt_per_second": 2294.923382490661,
+      "predicted_n": 1721,
+      "predicted_ms": 11388.557,
+      "predicted_per_token_ms": 6.621254069767442,
+      "predicted_per_second": 151.02879144390286,
+      "draft_n": 1683,
+      "draft_n_accepted": 1159
+    }
+  },
+  "seconds": 11.51500000001397
+}

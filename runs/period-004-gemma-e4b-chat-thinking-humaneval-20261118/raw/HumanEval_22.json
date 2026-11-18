@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/22",
+  "request": {
+    "model": "gemma-e4b-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\nfrom typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers.\n\n    Note: This implementation includes boolean values (True/False) as they are\n    subclasses of int in Python, unless explicitly excluded.\n\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    >>> filter_integers([10, True, 5.0, False, 0])\n    [10, 1, 0]\n    \"\"\"\n    return [item for item in values if isinstance(item, int)]\n\nif __name__ == '__main__':\n    # Run doctests to verify the function\n    import doctest\n    doctest.testmod()\n\n    # Example usage\n    list1 = ['a', 3.14, 5]\n    result1 = filter_integers(list1)\n    print(f\"Input: {list1} -> Output: {result1}\")\n\n    list2 = [1, 2, 3, 'abc', {}, []]\n    result2 = filter_integers(list2)\n    print(f\"Input: {list2} -> Output: {result2}\")\n\n    list3 = [10, True, 5.0, False, 0]\n    result3 = filter_integers(list3)\n    print(f\"Input: {list3} -> Output: {result3}\")\n```",
+          "reasoning_content": "Thinking Process:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python script that implements the function `filter_integers(values: List[Any]) -> List[int]`. This function must take a list of mixed types and return a new list containing only the elements that are integers.\n\n2.  **Analyze the Input/Output (Test Cases):**\n    *   `filter_integers(['a', 3.14, 5])` -> `[5]` (String and float are excluded, int is included).\n    *   `filter_integers([1, 2, 3, 'abc', {}, []])` -> `[1, 2, 3]` (Non-numeric types like strings, dicts, lists are excluded).\n\n3.  **Determine the Implementation Strategy:**\n    *   I need to iterate through the input list (`values`).\n    *   For each element, I must check its type. Python's `isinstance()` function is the standard way to check type.\n    *   The check must be `isinstance(item, int)`.\n    *   *Self-Correction/Refinement (Important Detail):* In Python, `bool` is a subclass of `int`. If the input list contains `True` or `False`, `isinstance(True, int)` is `True`. Since typically when filtering for \"integers\" we mean standard numerical integers, we should explicitly exclude `bool` if the desired behavior is strict numerical integers. However, standard Python practice often accepts boolean as an integer type unless specified otherwise. Looking at the provided doctests, there's no specific requirement for boolean handling. The simplest implementation uses `isinstance(item, int)`.\n\n4.  **Develop the Code (Iterative Approach):**\n    ```python\n    result = []\n    for item in values:\n        if isinstance(item, int):\n            result.append(item)\n    return result\n    ```\n\n5.  **Develop the Code (List Comprehension Approach - Pythonic):**\n    ```python\n    return [item for item in values if isinstance(item, int)]\n    ```\n\n6.  **Construct the Final Script:** The script needs to include the type hinting, the function definition, and the doctests (or runnable examples) to be self-contained. I will use the list comprehension approach as it is clean and efficient.\n\n7.  **Final Review (Self-Correction on Type Hints):** The function signature requires `List[Any]` input and `List[int]` output. The implementation respects this. The code structure is correct. (Adding the `typing` import is necessary). (Adding the doctests ensures the function is immediately testable)."
+        }
+      }
+    ],
+    "created": 1794956550,
+    "model": "gemma-e4b-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 968,
+      "prompt_tokens": 138,
+      "total_tokens": 1106,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-KiAKk3TqtGpA3H3oDbawJjrl9vWlTQ7a",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 138,
+      "prompt_ms": 410.033,
+      "prompt_per_token_ms": 2.9712536231884057,
+      "prompt_per_second": 336.5582770167279,
+      "predicted_n": 968,
+      "predicted_ms": 40476.328,
+      "predicted_per_token_ms": 41.857629782833506,
+      "predicted_per_second": 23.89050706378306
+    }
+  },
+  "seconds": 40.92200000002049
+}

@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/99",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef closest_integer(value):\n    '''\n    Create a function that takes a value (string) representing a number\n    and returns the closest integer to it. If the number is equidistant\n    from two integers, round it away from zero.\n\n    Examples\n    >>> closest_integer(\"10\")\n    10\n    >>> closest_integer(\"15.3\")\n    15\n\n    Note:\n    Rounding away from zero means that if the given number is equidistant\n    from two integers, the one you should return is the one that is the\n    farthest from zero. For example closest_integer(\"14.5\") should\n    return 15 and closest_integer(\"-14.5\") should return -15.\n    '''\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport math\n\ndef closest_integer(value):\n    '''\n    Create a function that takes a value (string) representing a number\n    and returns the closest integer to it. If the number is equidistant\n    from two integers, round it away from zero.\n\n    Examples\n    >>> closest_integer(\"10\")\n    10\n    >>> closest_integer(\"15.3\")\n    15\n    >>> closest_integer(\"15.5\")\n    16\n    >>> closest_integer(\"-15.3\")\n    -15\n    >>> closest_integer(\"-15.5\")\n    -16\n    '''\n    try:\n        f = float(value)\n    except ValueError:\n        raise ValueError(\"Input must be a valid number string.\")\n\n    # To implement rounding away from zero (halfway cases round up in magnitude),\n    # we use the formula: sign(f) * floor(|f| + 0.5)\n    \n    # 1. Get the absolute value of the number\n    abs_f = abs(f)\n    \n    # 2. Calculate the magnitude of the rounded number (round up by 0.5 and floor)\n    rounded_magnitude = math.floor(abs_f + 0.5)\n    \n    # 3. Restore the original sign\n    # math.copysign(magnitude, sign_source)\n    return math.copysign(int(rounded_magnitude), f)\n\nif __name__ == '__main__':\n    import doctest\n    doctest.testmod()\n    \n    # Example tests\n    print(f'10 -> {closest_integer(\"10\")}')\n    print(f'15.3 -> {closest_integer(\"15.3\")}')\n    print(f'15.7 -> {closest_integer(\"15.7\")}')\n    print(f'15.5 -> {closest_integer(\"15.5\")}')\n    print(f'-15.3 -> {closest_integer(\"-15.3\")}')\n    print(f'-15.7 -> {closest_integer(\"-15.7\")}')\n    print(f'-15.5 -> {closest_integer(\"-15.5\")}')\n```",
+          "reasoning_content": "Plan:\n1.  Understand the requirements for `closest_integer(value)`:\n    *   Input `value` is a string representing a number.\n    *   Output must be the closest integer.\n    *   If equidistant, round away from zero.\n2.  Analyze the rounding rule (round away from zero):\n    *   $x.5$ rounds to $x+1$ if $x \\ge 0$. (e.g., 14.5 -> 15)\n    *   $x.5$ rounds to $x-1$ if $x < 0$. (e.g., -14.5 -> -15)\n3.  Implement the function:\n    *   Convert the input string `value` to a float.\n    *   Check if the fractional part is exactly 0.5.\n        *   If it is, apply the specific \"away from zero\" rule.\n        *   If it is not, use standard rounding (or floor/ceil based on absolute value) to find the closest integer.\n4.  Alternative approach for rounding away from zero: Use the `math.copysign` approach or check the sign and add/subtract 0.5 before flooring/ceiling.\n\nLet's test the rule:\n*   15.3 -> 15 (Standard rounding down/floor)\n*   15.7 -> 16 (Standard rounding up/ceil)\n*   15.5 -> 16 (Away from zero)\n*   -15.3 -> -15 (Standard rounding up/ceil)\n*   -15.7 -> -16 (Standard rounding down/floor)\n*   -15.5 -> -16 (Away from zero)\n\nThe standard Python `round()` function rounds to the nearest even number for `.5` (banker's rounding), which is *not* rounding away from zero. Therefore, a custom implementation is required.\n\nCustom implementation strategy:\n1. Convert `value` to float `f`.\n2. Calculate the difference to the floor (`f - floor(f)`) and the difference to the ceiling (`ceil(f) - f`).\n3. If the distance is closer to the floor, return `floor(f)`.\n4. If the distance is closer to the ceiling, return `ceil(f)`.\n5. If distances are equal (i.e., fractional part is 0.5), return the integer with the larger absolute value (away from zero).\n\nWait, checking distance is simpler:\n*   `d_floor = abs(f - floor(f))`\n*   `d_ceil = abs(f - ceil(f))`\n\nIf `d_ceil < d_floor`, return `ceil(f)`.\nIf `d_floor < d_ceil`, return `floor(f)`.\nIf `d_ceil == d_floor` (i.e., fractional part is 0.5), we need to round away from zero.\n    *   If $f \\ge 0$, return `ceil(f)` (or `int(f) + 1`).\n    *   If $f < 0$, return `floor(f)` (or `int(f) - 1`).\n\nLet's use `int()` for truncation/floor if we handle the negative cases carefully.\n\nIf $f \\ge 0$:\n    If $f - \\lfloor f \\rfloor < 0.5$: return $\\lfloor f \\rfloor$\n    If $f - \\lfloor f \\rfloor > 0.5$: return $\\lceil f \\rceil$\n    If $f - \\lfloor f \\rfloor = 0.5$: return $\\lceil f \\rceil$ (Round up/away from zero)\n    This simplifies to: If $f \\ge 0$, return $\\lfloor f + 0.5 \\rfloor$.\n\nIf $f < 0$:\n    If $f - \\lfloor f \\rfloor < 0.5$: return $\\lfloor f \\rfloor$ (e.g., -15.3. $\\lfloor -15.3 \\rfloor = -16$. Distances: |-15.3 - (-16)|=0.7, |-15.3 - (-15)|=0.3. Closer to -15. Return -15.)\n    If $f - \\lfloor f \\rfloor > 0.5$: return $\\lceil f \\rceil$\n    If $f - \\lfloor f \\rfloor = 0.5$: return $\\lfloor f - 0.5 \\rfloor$ (Wait, let's stick to the absolute values method for clarity).\n\nLet's re-examine the simple arithmetic rule for rounding away from zero:\nRound(x) = sign(x) * floor(|x| + 0.5)\n\nTest this rule:\n1. $x = 15.3$. $\\text{sgn}(15.3) \\times \\lfloor 15.3 + 0.5 \\rfloor = 1 \\times \\lfloor 15.8 \\rfloor = 15$. (Correct)\n2. $x = 15.7$. $\\text{sgn}(15.7) \\times \\lfloor 15.7 + 0.5 \\rfloor = 1 \\times \\lfloor 16.2 \\rfloor = 16$. (Correct)\n3. $x = 15.5$. $\\text{sgn}(15.5) \\times \\lfloor 15.5 + 0.5 \\rfloor = 1 \\times \\lfloor 16.0 \\rfloor = 16$. (Correct)\n4. $x = -15.3$. $\\text{sgn}(-15.3) \\times \\lfloor |-15.3| + 0.5 \\rfloor = -1 \\times \\lfloor 15.3 + 0.5 \\rfloor = -1 \\times 15 = -15$. (Correct)\n5. $x = -15.7$. $\\text{sgn}(-15.7) \\times \\lfloor |-15.7| + 0.5 \\rfloor = -1 \\times \\lfloor 15.7 + 0.5 \\rfloor = -1 \\times 16 = -16$. (Correct)\n6. $x = -15.5$. $\\text{sgn}(-15.5) \\times \\lfloor |-15.5| + 0.5 \\rfloor = -1 \\times \\lfloor 15.5 + 0.5 \\rfloor = -1 \\times 16 = -16$. (Correct)\n\nThis general formula works perfectly for rounding away from zero, fulfilling all requirements.\n\nImplementation details:\n1. Need `math.copysign` (or just multiplication by the sign) and `math.floor`.\n2. The input `value` must be converted to `float`.\n\nFinal Code Structure."
+        }
+      }
+    ],
+    "created": 1794992000,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 2043,
+      "prompt_tokens": 206,
+      "total_tokens": 2249,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-5MFftWbXIlj3Awps9jMKeTgscTuZ3ETb",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 206,
+      "prompt_ms": 99.532,
+      "prompt_per_token_ms": 0.4831650485436893,
+      "prompt_per_second": 2069.686131093518,
+      "predicted_n": 2043,
+      "predicted_ms": 13467.253,
+      "predicted_per_token_ms": 6.595128795298727,
+      "predicted_per_second": 151.62706158412558,
+      "draft_n": 1983,
+      "draft_n_accepted": 1381
+    }
+  },
+  "seconds": 13.577999999979511
+}

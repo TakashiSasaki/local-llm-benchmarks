@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/22",
+  "request": {
+    "model": "period4-bonsai2-q20-chat",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\nfrom typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.05,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true,
+      "reasoning_effort": "medium"
+    },
+    "presence_penalty": 0.0
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    return [v for v in values if isinstance(v, int) and not isinstance(v, bool)]\n```\n\n**How it works:**\n\n- **`isinstance(v, int)`** — checks whether the element is an integer.\n- **`not isinstance(v, bool)`** — explicitly excludes `True`/`False`, since in Python `bool` is a subclass of `int` (i.e., `isinstance(True, int)` would otherwise return `True`).\n- The list comprehension collects only the elements that pass both checks, preserving the original order.\n\n**Quick verification:**\n\n```python\nprint(filter_integers(['a', 3.14, 5]))              # [5]\nprint(filter_integers([1, 2, 3, 'abc', {}, []]))     # [1, 2, 3]\nprint(filter_integers([True, False, 7, 3.0, None]))  # [7]\n```",
+          "reasoning_content": "The user wants a Python script that filters a list to return only integers. Let me think about this carefully.\n\nThe function `filter_integers` takes a list of any Python values and returns only the integers.\n\nKey considerations:\n1. `isinstance(5, int)` returns True for integers\n2. `isinstance(True, int)` returns True because `bool` is a subclass of `int` in Python. Should booleans be excluded? Looking at the examples, there's no boolean in the test cases. Let me think... The problem says \"only for integers\". In Python, `True` and `False` are technically instances of `int`. However, typically when people say \"filter for integers\", they mean actual integer values, not booleans. But without explicit exclusion in the docstring or examples, I'll consider both approaches.\n\nLooking at the examples:\n- `filter_integers(['a', 3.14, 5])` → `[5]` - so strings and floats are excluded, integers are kept\n- `filter_integers([1, 2, 3, 'abc', {}, []])` → `[1, 2, 3]` - strings, dicts, and lists are excluded\n\nThe examples don't include booleans. I'll go with `isinstance(x, int)` but exclude `bool` since `bool` is a subclass of `int` and typically when we say \"integers\" we don't mean booleans. Actually, let me reconsider - the simplest interpretation that matches the docstring \"Filter given list of any python values only for integers\" could go either way. \n\nI'll exclude booleans to be safe, as that's the more common expectation in coding challenges. `isinstance(x, int) and not isinstance(x, bool)`\n\nLet me write the solution:\n\n```python\nfrom typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    return [v for v in values if isinstance(v, int) and not isinstance(v, bool)]\n```\n\nThis is clean, concise, and handles the examples correctly. Let me verify:\n- `'a'` → not int → excluded ✓\n- `3.14` → not int (it's float) → excluded ✓\n- `5` → is int, not bool → included ✓\n- `1, 2, 3` → is int, not bool → included ✓\n- `'abc'` → not int → excluded ✓\n- `{}` → not int → excluded ✓\n- `[]` → not int → excluded ✓\n\nThis looks correct. I'll provide it in a markdown code block."
+        }
+      }
+    ],
+    "created": 1794929546,
+    "model": "period4-bonsai2-q20-chat",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 938,
+      "prompt_tokens": 125,
+      "total_tokens": 1063,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-zubAteOOfZEUmoNyPp0vbjY8WcNjuAyn",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 125,
+      "prompt_ms": 402.634,
+      "prompt_per_token_ms": 3.221072,
+      "prompt_per_second": 310.45564954772817,
+      "predicted_n": 938,
+      "predicted_ms": 54816.241,
+      "predicted_per_token_ms": 58.50185805763074,
+      "predicted_per_second": 17.09347417674992
+    }
+  },
+  "seconds": 55.25
+}

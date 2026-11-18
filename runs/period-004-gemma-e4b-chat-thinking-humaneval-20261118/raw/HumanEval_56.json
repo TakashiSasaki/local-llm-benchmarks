@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/56",
+  "request": {
+    "model": "gemma-e4b-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef correct_bracketing(brackets: str):\n    \"\"\" brackets is a string of \"<\" and \">\".\n    return True if every opening bracket has a corresponding closing bracket.\n\n    >>> correct_bracketing(\"<\")\n    False\n    >>> correct_bracketing(\"<>\")\n    True\n    >>> correct_bracketing(\"<<><>>\")\n    True\n    >>> correct_bracketing(\"><<>\")\n    False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef correct_bracketing(brackets: str):\n    \"\"\" \n    checks if a string of brackets is correctly matched.\n    The function ensures that at no point the count of closing brackets \n    exceeds the count of opening brackets, and that the final count is zero.\n\n    >>> correct_bracketing(\"<\")\n    False\n    >>> correct_bracketing(\"<>\")\n    True\n    >>> correct_bracketing(\"<<><>>\")\n    True\n    >>> correct_bracketing(\"><<>\")\n    False\n    >>> correct_bracketing(\"\")\n    True\n    \"\"\"\n    balance = 0\n    \n    for bracket in brackets:\n        if bracket == '<':\n            # Opening bracket increases the required count of closers\n            balance += 1\n        elif bracket == '>':\n            # Closing bracket satisfies one of the required counts\n            balance -= 1\n        \n        # Constraint 1: The balance must never drop below zero.\n        # This catches cases like '><' (premature closing).\n        if balance < 0:\n            return False\n            \n    # Constraint 2: After checking all characters, the balance must be zero.\n    # This catches cases like '<<' (unmatched opening).\n    return balance == 0\n\nif __name__ == '__main__':\n    import doctest\n    doctest.testmod()\n    \n    # Example usage verification\n    print(f\"Test '<': {correct_bracketing('<')}\")\n    print(f\"Test '<>': {correct_bracketing('<>')}\")\n    print(f\"Test '<<><>>': {correct_bracketing('<<><>>')}\")\n    print(f\"Test '><<>': {correct_bracketing('><<>')}\")\n```",
+          "reasoning_content": "Here's a thinking process to arrive at the solution:\n\n1.  **Understand the Goal:** The function `correct_bracketing(brackets: str)` needs to determine if a sequence of opening (`<`) and closing (`>`) brackets is *correctly* matched. The prompt defines \"correctly\" as \"every opening bracket has a corresponding closing bracket.\" This is equivalent to checking if the sequence is a valid sequence of well-formed parentheses (where `<` is '(' and `>` is ')').\n\n2.  **Determine the Algorithm (Standard Bracket Matching):**\n    *   The standard way to check for well-formed parentheses is using a counter (or a stack).\n    *   Initialize a counter (`balance`) to 0.\n    *   Iterate through the string:\n        *   If an opening bracket (`<`) is encountered, increment the counter (we have an unmatched opener).\n        *   If a closing bracket (`>`) is encountered, decrement the counter (it matches a previously opened bracket).\n    *   **Crucial Constraint 1 (Prefix Condition):** At no point during the iteration should the balance drop below zero. If it does, we encountered a closing bracket without a corresponding open one (e.g., `><`).\n    *   **Crucial Constraint 2 (Final Condition):** After iterating through the entire string, the counter must be exactly zero. If it's positive, there are unmatched openers (e.g., `<<`). If it's negative, Constraint 1 would have already caught it.\n\n3.  **Apply the Algorithm (Step-by-Step Check):**\n\n    *   Input: `<<><>>`\n    *   Balance = 0\n    *   Char '<': Balance = 1\n    *   Char '<': Balance = 2\n    *   Char '>': Balance = 1\n    *   Char '<': Balance = 2\n    *   Char '>': Balance = 1\n    *   Char '>': Balance = 0\n    *   End of string. Balance is 0. $\\rightarrow$ True.\n\n    *   Input: `><<>`\n    *   Balance = 0\n    *   Char '>': Balance = -1. (Constraint 1 failure: Balance dropped below 0). $\\rightarrow$ False.\n\n    *   Input: `<`\n    *   Balance = 0\n    *   Char '<': Balance = 1\n    *   End of string. Balance is 1. (Constraint 2 failure: Balance != 0). $\\rightarrow$ False.\n\n    *   Input: `<>`\n    *   Balance = 0\n    *   Char '<': Balance = 1\n    *   Char '>': Balance = 0\n    *   End of string. Balance is 0. $\\rightarrow$ True.\n\n4.  **Write the Python Code:** Translate the logic into a Python function.\n\n    ```python\n    def correct_bracketing(brackets: str):\n        balance = 0\n        for char in brackets:\n            if char == '<':\n                balance += 1\n            elif char == '>':\n                balance -= 1\n\n            # Check for the prefix condition violation\n            if balance < 0:\n                return False\n\n        # Check for the final condition\n        return balance == 0\n    ```\n\n5.  **Final Review and Formatting:** The request requires a self-contained script, including the doctests for verification, placed within a markdown code block. (Self-correction: Ensure the provided tests pass with the implemented logic.)\n\n    *   `correct_bracketing(\"<\")` -> Balance ends at 1. False. (Correct)\n    *   `correct_bracketing(\"<>\")` -> Balance ends at 0. True. (Correct)\n    *   `correct_bracketing(\"<<><>>\")` -> Balance ends at 0. True. (Correct)\n    *   `correct_bracketing(\"><<>\")` -> Balance hits -1 immediately. False. (Correct)\n\nThe implementation is sound."
+        }
+      }
+    ],
+    "created": 1794958347,
+    "model": "gemma-e4b-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1252,
+      "prompt_tokens": 129,
+      "total_tokens": 1381,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-JWdE4yjHHyrh0zKpSucHhKFGztbP0alD",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 129,
+      "prompt_ms": 404.107,
+      "prompt_per_token_ms": 3.1326124031007754,
+      "prompt_per_second": 319.2223841705291,
+      "predicted_n": 1252,
+      "predicted_ms": 52553.872,
+      "predicted_per_token_ms": 42.009490007993605,
+      "predicted_per_second": 23.804145201708447
+    }
+  },
+  "seconds": 52.98499999998603
+}

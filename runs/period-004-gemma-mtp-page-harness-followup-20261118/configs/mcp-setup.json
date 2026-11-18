@@ -1,0 +1,1159 @@
+[
+  {
+    "type": "mcp_setup",
+    "server": {
+      "name": "SearXNG Search",
+      "version": "2026.10.30+ffa88e3ba.local.4244dcfa4e4b",
+      "websiteUrl": "https://searxng.moukaeritai.work/",
+      "icons": [
+        {
+          "src": "https://searxng.moukaeritai.work/icons/icon-512.png?v=aeaecb3378cf",
+          "mimeType": "image/png",
+          "sizes": [
+            "512x512"
+          ]
+        },
+        {
+          "src": "https://searxng.moukaeritai.work/favicon.svg?v=aeaecb3378cf",
+          "mimeType": "image/svg+xml",
+          "sizes": [
+            "any"
+          ]
+        }
+      ]
+    },
+    "tools": [
+      {
+        "name": "searxng_list_engines",
+        "description": "List supported search engines, including those off by default.\n\n    For DuckDuckGo web search use \"duckduckgo web\". The HTML engine\n    \"duckduckgo\" is unsupported and is omitted from this list.\n    Filter by an exact category or a case-insensitive part of the engine name.\n    enabled_by_default=False engines are available with searxng_search.engines.\n    Registration does not guarantee an upstream service is currently responding.\n    ",
+        "inputSchema": {
+          "properties": {
+            "category": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Category"
+            },
+            "name_contains": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Name Contains"
+            },
+            "enabled_only": {
+              "default": false,
+              "title": "Enabled Only",
+              "type": "boolean"
+            }
+          },
+          "title": "searxng_list_enginesArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "$defs": {
+            "SearchEngine": {
+              "properties": {
+                "name": {
+                  "title": "Name",
+                  "type": "string"
+                },
+                "categories": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Categories",
+                  "type": "array"
+                },
+                "enabled_by_default": {
+                  "title": "Enabled By Default",
+                  "type": "boolean"
+                },
+                "shortcut": {
+                  "title": "Shortcut",
+                  "type": "string"
+                },
+                "language_support": {
+                  "title": "Language Support",
+                  "type": "boolean"
+                },
+                "time_range_support": {
+                  "title": "Time Range Support",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "categories",
+                "enabled_by_default",
+                "shortcut",
+                "language_support",
+                "time_range_support"
+              ],
+              "title": "SearchEngine",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "result": {
+              "items": {
+                "$ref": "#/$defs/SearchEngine"
+              },
+              "title": "Result",
+              "type": "array"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "searxng_list_enginesOutput",
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "searxng_search",
+        "description": "Search SearXNG and return title, URL, snippet and source engine.\n\n    For DuckDuckGo web search pass engines=[\"duckduckgo web\"]. The HTML engine\n    \"duckduckgo\" and its !ddg shortcut are unsupported by this MCP server.\n    If a call returns ENGINE_UNSUPPORTED, use the suggested replacement engine.\n    DuckDuckGo Web upstream errors include guidance on when to retry or choose\n    another engine explicitly.\n    Set engines to search specific services, including default-off engines.\n    When engines is supplied, categories is ignored. Unknown names are errors.\n    Explicit selection has no category fallback. SearXNG query shortcuts can\n    take precedence over the engines argument.\n    Japanese general searches without engines prefer available enabled broad\n    web engines (bing, brave, duckduckgo web, yahoo).\n    Translation queries use 'en-ja hello' syntax. Dictionary, weather and\n    knowledge answers are included; answers without a source URL link to the\n    same search on the configured SearXNG instance. Use organic_only=True to\n    exclude direct answers and infoboxes.\n    Results expose retrieved_at and cache_status when supported by the instance.\n    Use force_refresh=True when fresh results are required.\n    All rows are returned in ONE JSON text block and structured result array.\n    max_results is an upper bound, not a guaranteed count. search_info reports\n    counts, engine selection/failures, cache provenance and shortfall warnings.\n    language_applied is the SearXNG search locale when reported by the backend.\n    Failures without results are MCP tool errors.\n    ",
+        "inputSchema": {
+          "properties": {
+            "query": {
+              "description": "Search keywords",
+              "minLength": 1,
+              "title": "Query",
+              "type": "string"
+            },
+            "categories": {
+              "default": [
+                "general"
+              ],
+              "description": "Categories used when engines is omitted",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Categories",
+              "type": "array"
+            },
+            "language": {
+              "default": "ja-JP",
+              "description": "SearXNG search language, e.g. ja-JP or all",
+              "minLength": 1,
+              "title": "Language",
+              "type": "string"
+            },
+            "time_range": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "day",
+                    "week",
+                    "month",
+                    "year"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Time Range"
+            },
+            "max_results": {
+              "default": 5,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Max Results",
+              "type": "integer"
+            },
+            "engines": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "For DuckDuckGo web search, use engines=[\"duckduckgo web\"]. The CAPTCHA-prone DuckDuckGo HTML route (\"duckduckgo\", !ddg) is unsupported by this MCP server. Use exact names from searxng_list_engines. Overrides categories.",
+              "title": "Engines"
+            },
+            "force_refresh": {
+              "default": false,
+              "title": "Force Refresh",
+              "type": "boolean"
+            },
+            "organic_only": {
+              "default": false,
+              "description": "Return only the main SearXNG results, excluding direct answers and infoboxes",
+              "title": "Organic Only",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "title": "searxng_searchArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "$defs": {
+            "SearchInfo": {
+              "properties": {
+                "requested_results": {
+                  "title": "Requested Results",
+                  "type": "integer"
+                },
+                "returned_results": {
+                  "title": "Returned Results",
+                  "type": "integer"
+                },
+                "backend_results": {
+                  "title": "Backend Results",
+                  "type": "integer"
+                },
+                "selection_mode": {
+                  "title": "Selection Mode",
+                  "type": "string"
+                },
+                "selected_engines": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Selected Engines",
+                  "type": "array"
+                },
+                "observed_engines": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Observed Engines",
+                  "type": "array"
+                },
+                "unresponsive_engines": {
+                  "items": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "title": "Unresponsive Engines",
+                  "type": "array"
+                },
+                "shortfall": {
+                  "title": "Shortfall",
+                  "type": "boolean"
+                },
+                "warnings": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Warnings",
+                  "type": "array"
+                },
+                "request_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Request Id"
+                },
+                "language_applied": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Language Applied"
+                },
+                "cache_status": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Cache Status"
+                },
+                "retrieved_at": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Retrieved At"
+                }
+              },
+              "required": [
+                "requested_results",
+                "returned_results",
+                "backend_results",
+                "selection_mode",
+                "selected_engines",
+                "observed_engines",
+                "unresponsive_engines",
+                "shortfall",
+                "warnings"
+              ],
+              "title": "SearchInfo",
+              "type": "object"
+            },
+            "SearchResult": {
+              "properties": {
+                "title": {
+                  "title": "Title",
+                  "type": "string"
+                },
+                "url": {
+                  "title": "Url",
+                  "type": "string"
+                },
+                "content": {
+                  "title": "Content",
+                  "type": "string"
+                },
+                "engine": {
+                  "title": "Engine",
+                  "type": "string"
+                },
+                "retrieved_at": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Retrieved At"
+                },
+                "cache_status": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Cache Status"
+                }
+              },
+              "required": [
+                "title",
+                "url",
+                "content",
+                "engine"
+              ],
+              "title": "SearchResult",
+              "type": "object"
+            }
+          },
+          "properties": {
+            "result": {
+              "items": {
+                "$ref": "#/$defs/SearchResult"
+              },
+              "title": "Result",
+              "type": "array"
+            },
+            "search_info": {
+              "$ref": "#/$defs/SearchInfo"
+            }
+          },
+          "required": [
+            "result",
+            "search_info"
+          ],
+          "title": "SearchResponse",
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": true
+        }
+      }
+    ]
+  },
+  {
+    "type": "mcp_setup",
+    "server": {
+      "name": "Crawl4AI HTTP Adapter",
+      "version": "0.9.5+local.4901cb2a4782",
+      "websiteUrl": "https://crawl4ai.moukaeritai.work/",
+      "icons": [
+        {
+          "src": "https://crawl4ai.moukaeritai.work/icons/icon-512.png?v=7eed7822a64e",
+          "mimeType": "image/png",
+          "sizes": [
+            "512x512"
+          ]
+        },
+        {
+          "src": "https://crawl4ai.moukaeritai.work/favicon.svg?v=7eed7822a64e",
+          "mimeType": "image/svg+xml",
+          "sizes": [
+            "any"
+          ]
+        }
+      ]
+    },
+    "tools": [
+      {
+        "name": "md",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Fetch Markdown with bounded output. Default returns at most 10000 Unicode characters plus document_id and next_offset. Use mode=outline for H1-H3, read_document for more, or section_id for a section. BM25 matches full paragraphs and includes configurable neighbors. cache_revision is a revision string, not a boolean bypass flag. Optional CSS wait_for_selector and delay_seconds support raw/fit/bm25 only; waiting forces fresh content and cache writes, regardless of cache_revision. wait_timeout_ms requires a selector; llm with waiting is rejected. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "$defs": {
+            "FilterType": {
+              "enum": [
+                "raw",
+                "fit",
+                "bm25",
+                "llm"
+              ],
+              "title": "FilterType",
+              "type": "string"
+            }
+          },
+          "description": "Request body for the /md endpoint.",
+          "properties": {
+            "url": {
+              "description": "Absolute http/https URL to fetch",
+              "title": "Url",
+              "type": "string"
+            },
+            "provider": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "LLM provider override (e.g., 'anthropic/claude-3-opus')",
+              "title": "Provider"
+            },
+            "temperature": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "LLM temperature override (0.0-2.0)",
+              "title": "Temperature"
+            },
+            "filter_type": {
+              "$ref": "#/$defs/FilterType",
+              "default": "fit",
+              "description": "Content‑filter strategy: fit, raw, bm25, or llm"
+            },
+            "query": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Query string used by BM25/LLM filters",
+              "title": "Q"
+            },
+            "cache_revision": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "0",
+              "description": "Cache‑bust / revision counter",
+              "title": "C"
+            },
+            "chunk_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20000,
+              "default": 10000,
+              "description": "Maximum Unicode characters per response; use read_document for the rest."
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "content",
+                "outline"
+              ],
+              "default": "content"
+            },
+            "section_id": {
+              "type": "string",
+              "description": "Section ID obtained from an outline."
+            },
+            "heading_offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "heading_limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            },
+            "wait_for_selector": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "description": "Wait for a visible element matching this CSS selector. JavaScript is not accepted. Forces a fresh fetch with cache writes retained."
+            },
+            "wait_timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30000,
+              "default": 10000,
+              "description": "CSS wait timeout in milliseconds; requires wait_for_selector."
+            },
+            "delay_seconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 0,
+              "description": "Additional delay in seconds before capturing rendered content; at most 10. For raw: HTML also supply wait_for_selector."
+            },
+            "strip_tracking_urls": {
+              "type": "boolean",
+              "default": false,
+              "description": "Opt-in: simplify known tracking parameters and ad redirect links while preserving content/product identifiers and recognized signed URLs. Original snapshot ID and cleanup counts are returned."
+            },
+            "score_ratio": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.3,
+              "description": "BM25: retain matches scoring at least this fraction of the best score."
+            },
+            "max_results": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "description": "BM25: maximum matching paragraphs before adding neighbors."
+            },
+            "context_paragraphs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5,
+              "default": 1
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "MarkdownRequest",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "html",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Fetch processed HTML with bounded output. Continue using document_id and read_document; use extract_by_selector or extract_json for structured extraction. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "properties": {
+            "url": {
+              "title": "Url",
+              "type": "string"
+            },
+            "chunk_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20000,
+              "default": 10000,
+              "description": "Maximum Unicode characters per response; use read_document for the rest."
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "HTMLRequest",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "screenshot",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Capture a PNG screenshot. Returns a protected download_url, artifact_id, MIME, size and SHA-256; PDF includes page_count. Binary data is not embedded unless include_base64=true. Treat the download URL as private.",
+        "inputSchema": {
+          "properties": {
+            "url": {
+              "title": "Url",
+              "type": "string"
+            },
+            "screenshot_wait_for": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": 2,
+              "title": "Screenshot Wait For"
+            },
+            "wait_for_images": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": false,
+              "title": "Wait For Images"
+            },
+            "include_base64": {
+              "type": "boolean",
+              "default": false,
+              "description": "Explicit opt-in only: include raw Base64 as well as artifact metadata."
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "ScreenshotRequest",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "pdf",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Generate a PDF. Returns a protected download_url, artifact_id, MIME, size and SHA-256; PDF includes page_count. Binary data is not embedded unless include_base64=true. Treat the download URL as private.",
+        "inputSchema": {
+          "properties": {
+            "url": {
+              "title": "Url",
+              "type": "string"
+            },
+            "include_base64": {
+              "type": "boolean",
+              "default": false,
+              "description": "Explicit opt-in only: include raw Base64 as well as artifact metadata."
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "PDFRequest",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "crawl",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Fetch rendered pages from one or more URLs and return structured crawl results. Browser and crawler configuration are subject to backend restrictions. This deployment rejects caller-supplied JavaScript and disables hook actions. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "$defs": {
+            "HookConfig": {
+              "description": "Configuration for declarative hooks.",
+              "example": {
+                "hooks": [
+                  {
+                    "action": "block_resources",
+                    "params": {
+                      "resource_types": [
+                        "image",
+                        "font"
+                      ]
+                    }
+                  },
+                  {
+                    "action": "scroll_to_bottom",
+                    "params": {
+                      "delay_ms": 500,
+                      "max_steps": 10
+                    }
+                  }
+                ],
+                "timeout": 30
+              },
+              "properties": {
+                "hooks": {
+                  "description": "Declarative hook specs (action + params), max 10",
+                  "items": {
+                    "$ref": "#/$defs/HookSpec"
+                  },
+                  "maxItems": 10,
+                  "title": "Hooks",
+                  "type": "array"
+                },
+                "timeout": {
+                  "default": 30,
+                  "description": "Timeout in seconds for each hook execution",
+                  "maximum": 120,
+                  "minimum": 1,
+                  "title": "Timeout",
+                  "type": "integer"
+                }
+              },
+              "title": "HookConfig",
+              "type": "object",
+              "additionalProperties": false
+            },
+            "HookSpec": {
+              "description": "A single declarative hook: a fixed action plus schema-validated params.\n\nArbitrary Python (the old `code` map) is no longer accepted - it was an\nexec()-based RCE surface. Available actions are enumerated by GET /hooks/info\nand validated server-side by hook_registry.py.",
+              "properties": {
+                "action": {
+                  "description": "One of the registered hook actions",
+                  "title": "Action",
+                  "type": "string"
+                },
+                "params": {
+                  "additionalProperties": true,
+                  "description": "Action parameters",
+                  "title": "Params",
+                  "type": "object"
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "title": "HookSpec",
+              "type": "object",
+              "additionalProperties": false
+            }
+          },
+          "description": "Extended crawl request with hooks support",
+          "properties": {
+            "urls": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "minItems": 1,
+              "title": "Urls",
+              "type": "array"
+            },
+            "browser_config": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Browser Config"
+            },
+            "crawler_config": {
+              "anyOf": [
+                {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Crawler Config"
+            },
+            "crawler_configs": {
+              "anyOf": [
+                {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "List of per-URL CrawlerRunConfig dicts for arun_many(). When provided, each config can include a 'url_matcher' pattern to match against specific URLs. Takes precedence over crawler_config.",
+              "title": "Crawler Configs"
+            },
+            "hooks": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/HookConfig"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Optional user-provided hook functions"
+            }
+          },
+          "required": [
+            "urls"
+          ],
+          "title": "CrawlRequestWithHooks",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "ask",
+        "description": "Read-only retrieval: does not modify bundled documentation or source code. May save an internal result snapshot. Search bundled Crawl4AI documentation or source context (not the web). Returns a bounded stored document. Use query to reduce output and read_document for continuation. No model credentials required. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "context_type": {
+              "type": "string",
+              "enum": [
+                "doc",
+                "code",
+                "all"
+              ],
+              "default": "doc"
+            },
+            "score_ratio": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "default": 0.5
+            },
+            "max_results": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 5
+            },
+            "chunk_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20000,
+              "default": 10000,
+              "description": "Maximum Unicode characters per response; use read_document for the rest."
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "read_document",
+        "description": "Read-only: reads a saved document without modifying its contents. Read a stored document without fetching its URL again. Content uses Unicode character offsets. mode=outline lists H1-H3 with section IDs; section_id reads one section. Follow next_offset until has_more=false. If document_not_found is returned, repeat the original retrieval request; the URL cannot be reconstructed from the ID alone. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "document_id": {
+              "type": "string"
+            },
+            "chunk_size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20000,
+              "default": 10000,
+              "description": "Maximum Unicode characters per response; use read_document for the rest."
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "content",
+                "outline"
+              ],
+              "default": "content"
+            },
+            "section_id": {
+              "type": "string",
+              "description": "Section ID obtained from an outline."
+            },
+            "heading_offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "heading_limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          "required": [
+            "document_id"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "extract_by_selector",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Fetch a rendered page and extract CSS-matched elements. Returns text by default or a named attribute. Use attributes=[\"text\",\"href\"] for title/absolute-URL pairs in one fetch. Optional CSS wait_for_selector and delay_seconds support dynamic content. Results are paginated; large results are stored for read_document. No model credentials required. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "css_selector": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attribute": {
+              "type": "string"
+            },
+            "include_html": {
+              "type": "boolean",
+              "default": false
+            },
+            "output_format": {
+              "type": "string",
+              "enum": [
+                "text",
+                "markdown"
+              ],
+              "default": "text",
+              "description": "markdown preserves headings, links and tables in each selected block. Cannot combine with attributes, attribute or include_html=true."
+            },
+            "strip_tracking_urls": {
+              "type": "boolean",
+              "default": false,
+              "description": "Opt-in URL cleanup for output_format=markdown. Retains readable labels and product URLs; unlinks recognized advertising redirects."
+            },
+            "attributes": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 10,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[A-Za-z_:][A-Za-z0-9_.:-]*$"
+              },
+              "description": "Return dictionaries, e.g. [text, href], from the same elements in one fetch. text means readable text; missing attributes are null. href/src are resolved using the final page URL and HTML base. Cannot combine with attribute or include_html=true."
+            },
+            "wait_for_selector": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "description": "Wait for a visible element matching this CSS selector. JavaScript is not accepted. Forces a fresh fetch with cache writes retained."
+            },
+            "wait_timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30000,
+              "default": 10000,
+              "description": "CSS wait timeout in milliseconds; requires wait_for_selector."
+            },
+            "delay_seconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 0,
+              "description": "Additional delay in seconds before capturing rendered content; at most 10. For raw: HTML also supply wait_for_selector."
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          "required": [
+            "url",
+            "css_selector"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      },
+      {
+        "name": "extract_json",
+        "description": "Read-only retrieval: does not modify source websites or user data. May save internal caches, document snapshots or generated artifacts. Extract structured data using JSON Schema with CSS annotations. Put x-selector on the array schema to select repeated rows, and field selectors inside items. Example: {\"type\":\"array\",\"x-selector\":\"table tr:has(td)\",\"items\":{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\",\"x-selector\":\"td:first-of-type\"},\"url\":{\"type\":\"string\",\"x-selector\":\"a\",\"x-attribute\":\"href\"}},\"required\":[\"title\"]}}. Header-only rows are excluded; missing optional fields are omitted. x-attribute selects an attribute. Output is validated against the schema. No LLM call is made. Saved document IDs have no automatic expiry or eviction and survive service restarts while storage is retained; expires_at is null.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "json_schema": {
+              "type": "object"
+            },
+            "wait_for_selector": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "description": "Wait for a visible element matching this CSS selector. JavaScript is not accepted. Forces a fresh fetch with cache writes retained."
+            },
+            "wait_timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30000,
+              "default": 10000,
+              "description": "CSS wait timeout in milliseconds; requires wait_for_selector."
+            },
+            "delay_seconds": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 0,
+              "description": "Additional delay in seconds before capturing rendered content; at most 10. For raw: HTML also supply wait_for_selector."
+            },
+            "base_selector": {
+              "type": "string",
+              "default": "body"
+            }
+          },
+          "required": [
+            "url",
+            "json_schema"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": true
+        }
+      }
+    ]
+  }
+]

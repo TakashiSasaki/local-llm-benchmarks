@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/157",
+  "request": {
+    "model": "gemma-e4b-chat-thinking-allgpu",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef right_angle_triangle(a, b, c):\n    '''\n    Given the lengths of the three sides of a triangle. Return True if the three\n    sides form a right-angled triangle, False otherwise.\n    A right-angled triangle is a triangle in which one angle is right angle or \n    90 degree.\n    Example:\n    right_angle_triangle(3, 4, 5) == True\n    right_angle_triangle(1, 2, 3) == False\n    '''\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport math\n\ndef right_angle_triangle(a, b, c):\n    \"\"\"\n    Given the lengths of the three sides of a triangle. Return True if the three\n    sides form a right-angled triangle, False otherwise.\n\n    Uses the Pythagorean theorem (a^2 + b^2 = c^2).\n    Since side lengths can be floating-point numbers, math.isclose is used \n    to account for potential floating-point precision errors.\n\n    Args:\n        a (float/int): Length of side a.\n        b (float/int): Length of side b.\n        c (float/int): Length of side c.\n\n    Returns:\n        bool: True if the sides form a right-angled triangle, False otherwise.\n    \"\"\"\n    \n    # 1. Sort the sides to easily identify the potential hypotenuse (c_sq)\n    # The hypotenuse must always be the longest side.\n    sides = sorted([a, b, c])\n    x, y, z = sides[0], sides[1], sides[2]\n    \n    # 2. Apply the Pythagorean theorem: x^2 + y^2 = z^2\n    # We use math.isclose() for robust floating-point comparison.\n    \n    sum_of_squares = x**2 + y**2\n    hypotenuse_square = z**2\n    \n    return math.isclose(sum_of_squares, hypotenuse_square)\n\n# --- Test Cases ---\n\n# 1. Perfect integer right triangle (3, 4, 5)\ntest1 = right_angle_triangle(3, 4, 5)\nprint(f\"right_angle_triangle(3, 4, 5) == {test1} (Expected: True)\")\n\n# 2. Non-right triangle (1, 2, 3)\ntest2 = right_angle_triangle(1, 2, 3)\nprint(f\"right_angle_triangle(1, 2, 3) == {test2} (Expected: False)\")\n\n# 3. Testing hypotenuse order (Pythagorean theorem is symmetric)\ntest3 = right_angle_triangle(5, 3, 4)\nprint(f\"right_angle_triangle(5, 3, 4) == {test3} (Expected: True)\")\n\n# 4. Floating point check (Using an approximation)\ntest4 = right_angle_triangle(1.0, 1.0, math.sqrt(2.0))\nprint(f\"right_angle_triangle(1.0, 1.0, sqrt(2.0)) == {test4} (Expected: True)\")\n\n# 5. Close but not equal (Demonstrates why isclose is needed)\n# 1^2 + 1^2 = 2. 1.414^2 = 1.999396. Not equal.\ntest5 = right_angle_triangle(1.0, 1.0, 1.414)\nprint(f\"right_angle_triangle(1.0, 1.0, 1.414) == {test5} (Expected: False)\")\n```",
+          "reasoning_content": "Thinking Process:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python script that implements the function `right_angle_triangle(a, b, c)`. This function must determine if three given side lengths form a right-angled triangle.\n\n2.  **Recall the Mathematical Principle:** The defining characteristic of a right-angled triangle is the Pythagorean theorem: $a^2 + b^2 = c^2$, where $c$ is the hypotenuse (the longest side).\n\n3.  **Handle Input Variability (The Sides):** The input sides (a, b, c) are not guaranteed to be ordered (i.e., 'c' might not be the hypotenuse). Therefore, I must check all possible combinations:\n    *   Case 1: $a^2 + b^2 = c^2$ (If $c$ is the hypotenuse)\n    *   Case 2: $a^2 + c^2 = b^2$ (If $b$ is the hypotenuse)\n    *   Case 3: $b^2 + c^2 = a^2$ (If $a$ is the hypotenuse)\n\n4.  **Handle Floating Point Precision (Crucial Step):** Since the inputs might be floating-point numbers, direct equality comparisons (`==`) can fail due to minute precision errors. It is best practice to check if the difference is very small (i.e., within an epsilon $\\epsilon$).\n\n5.  **Implementation Strategy (Refining the Check):**\n\n    *   A simpler approach is to square all three sides first: $S_1 = a^2$, $S_2 = b^2$, $S_3 = c^2$.\n    *   The largest squared value must equal the sum of the other two squared values.\n    *   Find the maximum squared value (Max) and the two smaller ones (Min1, Min2).\n    *   Check if $Min1 + Min2$ is approximately equal to $Max$.\n\n    *Self-Correction/Simplification:* Sorting the inputs first makes the logic much cleaner.\n    1. Sort the sides: $x \\le y \\le z$.\n    2. If it's a right triangle, the hypotenuse must be $z$.\n    3. Check if $x^2 + y^2 = z^2$.\n\n6.  **Drafting the Code (Using the Sorting Approach):**\n\n    *   Get the sides: `sides = sorted([a, b, c])`\n    *   $x = sides[0]$, $y = sides[1]$, $z = sides[2]$\n    *   Check: `x*x + y*y == z*z`\n\n7.  **Addressing Floating Point Robustness (Final Polish):** To make the script robust for non-integer inputs, I must use a tolerance (e.g., `math.isclose` or manual epsilon check).\n\n    *   $x^2 + y^2 \\approx z^2$.\n\n8.  **Final Script Structure:** Define the function, import `math` if needed (for `isclose`), and provide test cases to demonstrate functionality. (Since I am writing a self-contained script, I will use `math.isclose`.)\n\n**(Execution of the Plan -> Generating the Python code)**"
+        }
+      }
+    ],
+    "created": 1794986840,
+    "model": "gemma-e4b-chat-thinking-allgpu",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1460,
+      "prompt_tokens": 156,
+      "total_tokens": 1616,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-Bi69uI2TJbjkF5Ly18cP9uBxLvEs63zD",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 156,
+      "prompt_ms": 94.129,
+      "prompt_per_token_ms": 0.6033910256410256,
+      "prompt_per_second": 1657.3000881768635,
+      "predicted_n": 1460,
+      "predicted_ms": 23143.404,
+      "predicted_per_token_ms": 15.862511309115831,
+      "predicted_per_second": 63.041720224043104
+    }
+  },
+  "seconds": 23.25
+}

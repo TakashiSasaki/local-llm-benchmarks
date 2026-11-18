@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/124",
+  "request": {
+    "model": "gemma-e4b-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef valid_date(date):\n    \"\"\"You have to write a function which validates a given date string and\n    returns True if the date is valid otherwise False.\n    The date is valid if all of the following rules are satisfied:\n    1. The date string is not empty.\n    2. The number of days is not less than 1 or higher than 31 days for months 1,3,5,7,8,10,12. And the number of days is not less than 1 or higher than 30 days for months 4,6,9,11. And, the number of days is not less than 1 or higher than 29 for the month 2.\n    3. The months should not be less than 1 or higher than 12.\n    4. The date should be in the format: mm-dd-yyyy\n\n    for example: \n    valid_date('03-11-2000') => True\n\n    valid_date('15-01-2012') => False\n\n    valid_date('04-0-2040') => False\n\n    valid_date('06-04-2020') => True\n\n    valid_date('06/04/2020') => False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport re\n\ndef valid_date(date):\n    \"\"\"You have to write a function which validates a given date string and\n    returns True if the date is valid otherwise False.\n    \"\"\"\n    \n    # Rule 1: Check for empty string\n    if not date:\n        return False\n\n    # Rule 4: Check for strict format: mm-dd-yyyy\n    # Regex captures (month, day, year)\n    match = re.match(r'^(\\d{2})-(\\d{2})-(\\d{4})$', date)\n    if not match:\n        return False\n\n    try:\n        month = int(match.group(1))\n        day = int(match.group(2))\n        year = int(match.group(3))\n    except ValueError:\n        # Should not happen if regex passed, but good practice\n        return False\n\n    # Rule 3: Check month bounds (1-12)\n    if not (1 <= month <= 12):\n        return False\n    \n    # Check day bounds (must be >= 1)\n    if day < 1:\n        return False\n\n    # --- Determine maximum days in the given month/year ---\n    \n    max_days = 0\n    \n    # 1. Handle 30-day months (4, 6, 9, 11)\n    if month in [4, 6, 9, 11]:\n        max_days = 30\n    \n    # 2. Handle February (Month 2) - Requires Leap Year check\n    elif month == 2:\n        # Leap year rules: Divisible by 4, UNLESS divisible by 100, UNLESS divisible by 400.\n        is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)\n        \n        if is_leap:\n            max_days = 29\n        else:\n            max_days = 28\n            \n    # 3. Handle 31-day months (1, 3, 5, 7, 8, 10, 12)\n    else:\n        max_days = 31\n\n    # Rule 2 (Final check): Check if the day is within the calculated maximum days\n    if day > max_days:\n        return False\n    \n    # If all checks passed\n    return True\n\nif __name__ == '__main__':\n    # Test Cases provided in the description\n    print(f\"Test '03-11-2000': {valid_date('03-11-2000')} (Expected: True)\")\n    print(f\"Test '15-01-2012': {valid_date('15-01-2012')} (Expected: False)\")\n    print(f\"Test '04-0-2040': {valid_date('04-0-2040')} (Expected: False)\") # Fails format due to missing leading zero on day\n    print(f\"Test '06-04-2020': {valid_date('06-04-2020')} (Expected: True)\")\n\n    # Additional tests\n    print(\"\\n--- Additional Tests ---\")\n    \n    # Valid February (Leap Year)\n    print(f\"Test '02-29-2024': {valid_date('02-29-2024')} (Expected: True)\") \n    # Invalid February (Non-Leap Year)\n    print(f\"Test '02-29-2023': {valid_date('02-29-2023')} (Expected: False)\")\n    # Valid February (Non-Leap Year)\n    print(f\"Test '02-28-2023': {valid_date('02-28-2023')} (Expected: True)\")\n    \n    # Day overflow (31-day month)\n    print(f\"Test '01-32-2020': {valid_date('01-32-2020')} (Expected: False)\")\n    # Day overflow (30-day month)\n    print(f\"Test '04-31-2020': {valid_date('04-31-2020')} (Expected: False)\")\n    \n    # Invalid format (Rule 4)\n    print(f\"Test '06/04/2020': {valid_date('06/04/2020')} (Expected: False)\")\n    print(f\"Test '03-1-2000': {valid_date('03-1-2000')} (Expected: False)\") # Fails strict mm-dd format\n    \n    # Empty/Invalid string\n    print(f\"Test '': {valid_date('')} (Expected: False)\")\n    print(f\"Test 'abc': {valid_date('abc')} (Expected: False)\")\n```",
+          "reasoning_content": "Here's a thinking process to arrive at the solution:\n\n1.  **Understand the Goal:** The request is to implement a Python function `valid_date(date)` that takes a date string and returns `True` if it meets specific structural and logical validation rules, otherwise `False`. The output must be a self-contained Python script in a markdown code block.\n\n2.  **Analyze the Constraints (The Rules):**\n    *   Rule 1: The date string is not empty.\n    *   Rule 4 (Format Check): Must be in `mm-dd-yyyy`. This is the first structural check.\n    *   Rule 3 (Month Validity): Month (mm) must be between 1 and 12.\n    *   Rule 2 (Day Validity - Specific Rules):\n        *   Months (1, 3, 5, 7, 8, 10, 12): 1 to 31 days.\n        *   Months (4, 6, 9, 11): 1 to 30 days.\n        *   Month 2 (Feb): 1 to 29 days (Leap year complexity must be handled here).\n\n3.  **Determine the Implementation Strategy:**\n    *   *Parsing:* The input string needs to be split according to the `mm-dd-yyyy` format. Regular expressions or string splitting are appropriate.\n    *   *Type Conversion:* The parts (mm, dd, yyyy) must be converted to integers for comparison.\n    *   *Validation Sequence:* It's easiest to check the structure first, then the boundaries (M, D, Y), and finally the complex rules (Day limits, Leap years).\n\n4.  **Step-by-Step Implementation Drafting:**\n\n    *   **Initial Checks (Rule 1 & Format):**\n        *   Check for emptiness.\n        *   Use `str.split('-')` or regex (`re.match(r'^(\\d{2})-(\\d{2})-(\\d{4})$', date)`). Using regex is cleaner for strict format enforcement.\n\n    *   **Extracting Components:**\n        *   Assuming the regex succeeded, capture M, D, Y.\n\n    *   **Month/Day/Year Boundary Checks (Rules 3 & basic Rule 2):**\n        *   Convert components to `int`.\n        *   Check `1 <= month <= 12`.\n        *   Check `1 <= day`. (We'll refine the upper bound later).\n\n    *   **Handling Day Limits (The Complex Part - Rule 2):**\n        *   We need a helper function or logic block to determine the maximum allowed days for a given month and year.\n\n        *   *Leap Year Logic:* A year is a leap year if it is divisible by 4, *unless* it is divisible by 100 but *not* by 400.\n            `is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)`\n\n        *   *Days in Month Mapping:*\n            *   Month 2 (Feb): Max days = 29 if leap, 28 otherwise.\n            *   Months 4, 6, 9, 11 (30-day months): Max days = 30.\n            *   Other months (31-day months): Max days = 31.\n\n    *   **Putting it together (Refining the structure):**\n\n        1.  Use regex to enforce the `mm-dd-yyyy` format and capture groups.\n        2.  If regex fails, return `False`.\n        3.  Convert captured strings to integers (M, D, Y).\n        4.  Check Month bounds (1-12). If bad, return `False`.\n        5.  Calculate `max_days` based on M and Y (including leap year logic).\n        6.  Check Day bounds (`1 <= D <= max_days`). If bad, return `False`.\n        7.  If all checks pass, return `True`.\n\n5.  **Review against Examples:**\n    *   `valid_date('03-11-2000')`: March (31 days). 11 <= 31. True. (Correct)\n    *   `valid_date('15-01-2012')`: Invalid month (15). False. (Correct)\n    *   `valid_date('04-0-2040')`: Day must be 2 digits, or the parsing fails if we enforce strict length. If we allow 0 padding issues, D=0 fails the `D >= 1` check. False. (Correct)\n    *   `valid_date('06-04-2020')`: June (30 days). 4 <= 30. True. (Correct)\n    *   `valid_date('06/04/2020')`: Wrong format (slash instead of dash). Regex fails. False. (Correct)\n\n6.  **Final Code Cleanup:** Combine the logic into the requested function structure, ensuring imports (`re`) are handled. (Self-Correction: Python's `calendar` module or `datetime` module could simplify this, but since the prompt implies manual implementation based on rules, using `re` and manual logic is better adherence to the spirit of the problem, especially for the leap year rule which is central.) (I will stick to manual implementation to demonstrate understanding of the specific rules.)"
+        }
+      }
+    ],
+    "created": 1794963186,
+    "model": "gemma-e4b-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 2402,
+      "prompt_tokens": 336,
+      "total_tokens": 2738,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-bGU4KJRzQlhOrRUfBWxdDMp3TEMsGSPl",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 336,
+      "prompt_ms": 458.875,
+      "prompt_per_token_ms": 1.3656994047619047,
+      "prompt_per_second": 732.2255516208119,
+      "predicted_n": 2402,
+      "predicted_ms": 104047.458,
+      "predicted_per_token_ms": 43.33505122865473,
+      "predicted_per_second": 23.07600825769333
+    }
+  },
+  "seconds": 104.53100000007544
+}

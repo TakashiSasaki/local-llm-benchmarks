@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/124",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef valid_date(date):\n    \"\"\"You have to write a function which validates a given date string and\n    returns True if the date is valid otherwise False.\n    The date is valid if all of the following rules are satisfied:\n    1. The date string is not empty.\n    2. The number of days is not less than 1 or higher than 31 days for months 1,3,5,7,8,10,12. And the number of days is not less than 1 or higher than 30 days for months 4,6,9,11. And, the number of days is not less than 1 or higher than 29 for the month 2.\n    3. The months should not be less than 1 or higher than 12.\n    4. The date should be in the format: mm-dd-yyyy\n\n    for example: \n    valid_date('03-11-2000') => True\n\n    valid_date('15-01-2012') => False\n\n    valid_date('04-0-2040') => False\n\n    valid_date('06-04-2020') => True\n\n    valid_date('06/04/2020') => False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport re\nfrom datetime import datetime\n\ndef valid_date(date):\n    \"\"\"\n    Validates a given date string based on strict format (mm-dd-yyyy) and \n    standard calendar rules (including leap years and month lengths).\n    \n    The date is valid if all of the following rules are satisfied:\n    1. The date string is not empty.\n    2. Day constraints are met for the month.\n    3. Month constraints (1-12) are met.\n    4. The date must be in the format: mm-dd-yyyy\n    \"\"\"\n    \n    # Rule 1: The date string is not empty.\n    if not date:\n        return False\n\n    # Rule 4: The date must be in the format mm-dd-yyyy.\n    # We use strptime which performs strict format checking.\n    try:\n        # Attempt to parse the date using the required format\n        dt_object = datetime.strptime(date, '%m-%d-%Y')\n        \n        # If strptime succeeds, it means:\n        # 1. The format was correct (mm-dd-yyyy).\n        # 2. The month (m) is 1-12 (Rule 3).\n        # 3. The day (d) is valid for the given month and year (Rule 2 - handles standard month lengths and leap years).\n        \n        # We don't need to manually check month/day constraints (Rule 2) \n        # because datetime.strptime handles the calendar logic robustly.\n        \n        return True\n        \n    except ValueError:\n        # If strptime raises a ValueError, it means:\n        # - The format was incorrect (e.g., '06/04/2020').\n        # - The date components are impossible (e.g., '04-31-2023' or '02-30-2023').\n        return False\n\n# Example Usage and Tests:\nif __name__ == '__main__':\n    print(\"--- Test Cases ---\")\n    \n    # Standard Valid Cases\n    print(f\"03-11-2000: {valid_date('03-11-2000')} (Expected: True)\")\n    print(f\"06-04-2020: {valid_date('06-04-2020')} (Expected: True)\") # 30-day month\n    print(f\"12-31-2023: {valid_date('12-31-2023')} (Expected: True)\")\n    print(f\"02-29-2024: {valid_date('02-29-2024')} (Expected: True) # Leap year test\")\n    \n    print(\"\\n--- Invalid Calendar/Constraint Tests ---\")\n    # Invalid day for month (April has 30 days)\n    print(f\"04-31-2023: {valid_date('04-31-2023')} (Expected: False)\")\n    # Invalid day for month (February non-leap year)\n    print(f\"02-29-2023: {valid_date('02-29-2023')} (Expected: False)\") \n    # Invalid month number (R3)\n    print(f\"13-01-2023: {valid_date('13-01-2023')} (Expected: False)\")\n    # Day out of bounds (R2)\n    print(f\"01-00-2023: {valid_date('01-00-2023')} (Expected: False)\")\n\n    print(\"\\n--- Invalid Format Tests (R4) ---\")\n    # Wrong separator\n    print(f\"06/04/2020: {valid_date('06/04/2020')} (Expected: False)\")\n    # Wrong order\n    print(f\"04-06-2020: {valid_date('04-06-2020')} (Expected: False)\")\n    # Missing leading zeros (not strictly handled by strptime '%m-%d-%Y' if input format is wrong)\n    # Note: We must strictly adhere to the two-digit format implied by 'mm-dd-yyyy'\n    print(f\"4-6-2020: {valid_date('4-6-2020')} (Expected: False)\") \n    # Empty string (R1)\n    print(f\"Empty string: {valid_date('')} (Expected: False)\")\n```",
+          "reasoning_content": "Here's a thinking process to arrive at the solution:\n\n1.  **Understand the Goal:** The request is to implement a Python function `valid_date(date)` that takes a date string and returns `True` if it adheres to strict formatting and calendar rules, and `False` otherwise.\n\n2.  **Analyze the Constraints (The Rules):**\n    *   R1: Date string is not empty.\n    *   R2: Day constraints:\n        *   Months (1, 3, 5, 7, 8, 10, 12): 1 to 31 days.\n        *   Months (4, 6, 9, 11): 1 to 30 days.\n        *   Month 2 (February): 1 to 29 days (must handle leap years).\n    *   R3: Month constraints: 1 to 12.\n    *   R4: Format must be `mm-dd-yyyy`.\n\n3.  **Determine the Strategy:**\n    *   The most robust way to handle dates and calendar rules in Python is using the built-in `datetime` module. This module automatically handles leap years and standard month lengths.\n    *   However, the prompt specifies *very specific* custom rules (e.g., it limits Feb to 29, implying we should handle the leap year logic, but often using `datetime` is simpler).\n    *   Let's first focus on parsing and format validation (R4).\n    *   Then, we'll check the numeric constraints (R3, R1).\n    *   Finally, we'll check the calendar constraints (R2).\n\n4.  **Step-by-Step Implementation Plan:**\n\n    *   **Step 4a: Format Check (R4 & R1):**\n        *   The input string must match the pattern `MM-DD-YYYY`. A regex or string splitting (`.split('-')`) is needed. Splitting is usually simpler if we enforce the number of parts (3).\n        *   We must ensure the parts are valid integers.\n        *   We must ensure the string itself isn't empty.\n\n    *   **Step 4b: Conversion and Initial Validation (R3, R1):**\n        *   Split the string: `try: month_str, day_str, year_str = date.split('-')`\n        *   Convert them to integers: `M = int(month_str)`, `D = int(day_str)`, `Y = int(year_str)`\n        *   Check Month (R3): `1 <= M <= 12`.\n        *   Check Day (R1/R2 implied): We'll handle the specific day constraints later, but we need to ensure D is positive.\n\n    *   **Step 4c: Calendar Validation (R2):**\n        *   *The simplest approach:* Use `datetime.strptime()`. If the date components (M, D, Y) are provided, and they form a real calendar date (e.g., Feb 30 is invalid, or Feb 29 in a non-leap year is invalid), `strptime` will raise a `ValueError`.\n        *   *Refining the approach:* Since the rules are *exact* (specifically stating Feb is limited to 29, implying strict adherence to standard calendar rules, including leap years), using `datetime` is the most Pythonic and reliable solution.\n\n5.  **Drafting the Code (Using `datetime`):**\n\n    *   The format string for `datetime` corresponding to `mm-dd-yyyy` is `%m-%d-%Y`.\n    *   We need to wrap the parsing in a `try...except` block to catch formatting errors or impossible dates.\n\n    *   *Self-Correction/Refinement:* Does `datetime.strptime` inherently satisfy all rules?\n        *   R1 (Not empty): If the input is empty, `strptime` will fail on the `format` part.\n        *   R4 (Format): `strptime(date, \"%m-%d-%Y\")` handles this perfectly.\n        *   R3 (Month 1-12): `strptime` ensures this.\n        *   R2 (Day constraints/Leap Year): `strptime` ensures that days are valid for the given month and year (e.g., it won't accept '02-30-2023').\n\n    *   Therefore, the `datetime` approach is superior because it handles all specified calendar logic (leap years, month lengths) efficiently.\n\n6.  **Final Code Structure (Implementation):** (Writing the final script, ensuring it is self-contained and uses the specified function signature.) (See the final output.)"
+        }
+      }
+    ],
+    "created": 1794992289,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 2113,
+      "prompt_tokens": 336,
+      "total_tokens": 2449,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-tD0FvDTcemdaZ7YA6HY4mmhBBoGDtYIW",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 336,
+      "prompt_ms": 122.594,
+      "prompt_per_token_ms": 0.36486309523809524,
+      "prompt_per_second": 2740.754033639493,
+      "predicted_n": 2113,
+      "predicted_ms": 15266.755,
+      "predicted_per_token_ms": 7.228577178030303,
+      "predicted_per_second": 138.33981091594123,
+      "draft_n": 2250,
+      "draft_n_accepted": 1362
+    }
+  },
+  "seconds": 15.420999999972992
+}

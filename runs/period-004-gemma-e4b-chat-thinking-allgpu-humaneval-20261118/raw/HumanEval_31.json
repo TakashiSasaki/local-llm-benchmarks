@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/31",
+  "request": {
+    "model": "gemma-e4b-chat-thinking-allgpu",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef is_prime(n):\n    \"\"\"Return true if a given number is prime, and false otherwise.\n    >>> is_prime(6)\n    False\n    >>> is_prime(101)\n    True\n    >>> is_prime(11)\n    True\n    >>> is_prime(13441)\n    True\n    >>> is_prime(61)\n    True\n    >>> is_prime(4)\n    False\n    >>> is_prime(1)\n    False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nimport doctest\nimport math\n\ndef is_prime(n):\n    \"\"\"Return true if a given number is prime, and false otherwise.\n    This function uses trial division optimized by checking divisibility only up to the square root of n.\n\n    >>> is_prime(6)\n    False\n    >>> is_prime(101)\n    True\n    >>> is_prime(11)\n    True\n    >>> is_prime(13441)\n    True\n    >>> is_prime(61)\n    True\n    >>> is_prime(4)\n    False\n    >>> is_prime(1)\n    False\n    >>> is_prime(2)\n    True\n    >>> is_prime(0)\n    False\n    \"\"\"\n    if n <= 1:\n        return False\n    if n <= 3:\n        return True\n    \n    # If n is divisible by 2 or 3, it's not prime\n    if n % 2 == 0 or n % 3 == 0:\n        return False\n    \n    # Check divisibility from 5 upwards in steps of 6 (optimized)\n    # We only need to check up to sqrt(n)\n    i = 5\n    limit = int(math.sqrt(n)) + 1\n    while i < limit:\n        # Check i and i+2 (since all primes > 3 are of the form 6k ± 1)\n        if n % i == 0 or n % (i + 2) == 0:\n            return False\n        i += 6\n        \n    return True\n\nif __name__ == \"__main__\":\n    # Run the doctests embedded in the function docstring\n    print(\"Running doctests...\")\n    results = doctest.testmod()\n    \n    if results.failed == 0:\n        print(\"\\nAll doctests passed successfully!\")\n    else:\n        print(f\"\\nDoctests failed. {results.failed} tests failed.\")\n\n    # Example usage outside of doctests\n    print(\"\\n--- Examples ---\")\n    test_numbers = [1, 2, 7, 9, 97, 121, 1000]\n    for num in test_numbers:\n        result = \"Prime\" if is_prime(num) else \"Not Prime\"\n        print(f\"is_prime({num}): {result}\")\n```",
+          "reasoning_content": "Here's a thinking process that leads to the suggested script:\n\n1.  **Understand the Goal:** The request is to provide a self-contained Python script that implements the `is_prime(n)` function, which checks if a given integer `n` is prime. The script must include the provided doctests.\n\n2.  **Analyze the `is_prime(n)` logic:**\n    *   **Definition of Prime:** A prime number is a natural number greater than 1 that has no positive divisors other than 1 and itself.\n    *   **Edge Cases (Crucial):**\n        *   If $n \\le 1$, it's not prime (return `False`).\n        *   If $n = 2$ or $n = 3$, it is prime (return `True`).\n    *   **Optimization (The Loop):** We need to check divisibility from 2 up to $\\sqrt{n}$. If $n$ is divisible by any number $i$ in this range, it's not prime.\n\n3.  **Develop the Implementation (Draft 1 - Standard Approach):**\n    ```python\n    def is_prime(n):\n        if n <= 1:\n            return False\n        # Check divisibility up to the square root of n\n        i = 2\n        while i * i <= n:\n            if n % i == 0:\n                return False\n            i += 1\n        return True\n    ```\n\n4.  **Refinement and Testing (Self-Correction/Verification):**\n    *   *Input n=1:* `n <= 1` -> `False`. (Correct)\n    *   *Input n=2:* `n <= 1` is False. Loop starts at $i=2$. $2*2 \\le 2$ is False. Loop doesn't run. Returns `True`. (Correct)\n    *   *Input n=6:* $i=2$. $2*2 \\le 6$. $6 \\% 2 == 0$. Returns `False`. (Correct)\n    *   *Input n=101:* $\\sqrt{101} \\approx 10.05$. Loop runs for $i=2$ to $10$. No divisors found. Returns `True`. (Correct)\n\n5.  **Structuring the Final Script:**\n    *   The script must be self-contained.\n    *   It needs the function definition.\n    *   It needs the doctests (or a mechanism to run them). Using `doctest` is the standard Python way to fulfill the requirement.\n    *   It should include a main execution block (`if __name__ == \"__main__\":`) to run the doctests and potentially demonstrate usage.\n\n6.  **Final Code Assembly (The resulting script):** (This matches the provided solution.) (Self-check: Ensure the `import doctest` is present.)"
+        }
+      }
+    ],
+    "created": 1794983504,
+    "model": "gemma-e4b-chat-thinking-allgpu",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1192,
+      "prompt_tokens": 159,
+      "total_tokens": 1351,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-TYVv5O5Eh0JENtRmJ7rUCSwaihQEPACv",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 159,
+      "prompt_ms": 89.296,
+      "prompt_per_token_ms": 0.5616100628930818,
+      "prompt_per_second": 1780.5948754703459,
+      "predicted_n": 1192,
+      "predicted_ms": 18861.634,
+      "predicted_per_token_ms": 15.836804366078924,
+      "predicted_per_second": 63.14405210068227
+    }
+  },
+  "seconds": 18.95299999997951
+}

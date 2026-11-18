@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/95",
+  "request": {
+    "model": "gemma-e4b-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef check_dict_case(dict):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False is the given dictionary is empty.\n    Examples:\n    check_dict_case({\"a\":\"apple\", \"b\":\"banana\"}) should return True.\n    check_dict_case({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}) should return False.\n    check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}) should return False.\n    check_dict_case({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}) should return False.\n    check_dict_case({\"STATE\":\"NC\", \"ZIP\":\"12345\" }) should return True.\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef check_dict_case(dict):\n    \"\"\"\n    Given a dictionary, return True if all keys are strings in lower \n    case or all keys are strings in upper case, else return False.\n    The function should return False if the given dictionary is empty.\n    Examples:\n    check_dict_case({\"a\":\"apple\", \"b\":\"banana\"}) should return True.\n    check_dict_case({\"a\":\"apple\", \"A\":\"banana\", \"B\":\"banana\"}) should return False.\n    check_dict_case({\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}) should return False.\n    check_dict_case({\"Name\":\"John\", \"Age\":\"36\", \"City\":\"Houston\"}) should return False.\n    check_dict_case({\"STATE\":\"NC\", \"ZIP\":\"12345\" }) should return True.\n    \"\"\"\n    keys = list(dict.keys())\n\n    # 1. Handle empty dictionary case\n    if not keys:\n        return False\n\n    # 2. Check if all keys are strings and consistent in case\n    \n    # Determine the expected case based on the first key\n    first_key = keys[0]\n    \n    # The first key must be a string\n    if not isinstance(first_key, str):\n        return False\n        \n    is_upper = first_key.isupper()\n    is_lower = first_key.islower()\n    \n    # If the first key is neither purely upper nor purely lower (e.g., \"Mixed\"), \n    # it cannot satisfy the condition unless it's entirely uniform.\n    # However, since we are checking for \"all keys are strings in lower case or all keys are strings in upper case\", \n    # we determine the required case from the first key and check consistency.\n    \n    if not is_upper and not is_lower:\n        # Edge case: keys like \"MiXeD\" fail the initial test, which is correct\n        return False\n\n    for key in keys:\n        # All keys must be strings\n        if not isinstance(key, str):\n            return False\n\n        # Check consistency with the case determined by the first key\n        if is_upper:\n            if not key.isupper():\n                return False\n        elif is_lower:\n            if not key.islower():\n                return False\n        # Note: If the first key was uniform (lower or upper), the rest must follow that rule.\n            \n    return True\n\nif __name__ == '__main__':\n    # Examples provided in the problem description\n    print(f\"Example 1: {{'a':'apple', 'b':'banana'}} -> {check_dict_case({'a':'apple', 'b':'banana'})}\")\n    print(f\"Example 2: {{'a':'apple', 'A':'banana', 'B':'banana'}} -> {check_dict_case({'a':'apple', 'A':'banana', 'B':'banana'})}\")\n    # Note on third example: The original example definition {\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}\n    # is an invalid literal Python dictionary definition due to duplicate keys. \n    # Assuming the intent was to check mixed key types:\n    print(f\"Example 3 (Mixed Type): {{'a':'apple', 8:'banana'}} -> {check_dict_case({'a':'apple', 8:'banana'})}\")\n    print(f\"Example 4: {{'Name':'John', 'Age':'36', 'City':'Houston'}} -> {check_dict_case({'Name':'John', 'Age':'36', 'City':'Houston'})}\")\n    print(f\"Example 5: {{'STATE':'NC', 'ZIP':'12345'}} -> {check_dict_case({'STATE':'NC', 'ZIP':'12345'})}\")\n\n    # Additional tests\n    print(\"\\n--- Additional Tests ---\")\n    print(f\"Empty dict: {{}} -> {check_dict_case({})}\")\n    print(f\"All Lower: {{'key1':'val1', 'key2':'val2'}} -> {check_dict_case({'key1':'val1', 'key2':'val2'})}\")\n    print(f\"All Upper: {{'KEY1':'val1', 'KEY2':'val2'}} -> {check_dict_case({'KEY1':'val1', 'KEY2':'val2'})}\")\n    print(f\"Mixed Case Key: {{'Mixed':'val'}} -> {check_dict_case({'Mixed':'val'})}\")\n    print(f\"Non-string key (0): {{0:'val'}} -> {check_dict_case({0:'val'})}\")\n```",
+          "reasoning_content": "Plan:\n1.  Define the `check_dict_case` function signature.\n2.  Handle the base case: if the dictionary is empty, return `False`.\n3.  Iterate through the keys of the dictionary.\n4.  During iteration, ensure all keys are strings. If any key is not a string, return `False` (based on the example `{\"a\":\"apple\", 8:\"banana\", \"a\":\"apple\"}`).\n5.  Check the case consistency of the string keys.\n    *   Determine the case of the first key (e.g., lower or upper).\n    *   Iterate through the remaining keys and ensure they maintain that case.\n6.  If all keys are strings and they maintain the same case (all lower or all upper), return `True`.\n\nRefinement based on constraints:\n*   Must return `False` if empty.\n*   Keys must *all* be strings.\n*   If they are strings, they must *all* be lowercase OR *all* be uppercase.\n\nImplementation details:\n1. Get the keys.\n2. Check if `keys` is empty (return `False`).\n3. Check the type of the first key. If it's not a string, return `False`.\n4. Determine the required case (lower or upper) based on the first key.\n5. Loop through all keys:\n    a. Check if the key is a string. If not, return `False`.\n    b. Check if the key matches the required case. If not, return `False`.\n6. If the loop completes, return `True`. (Self-correction: It's simpler to just check if all keys are lower AND all keys are upper, but since they must be consistent, checking the case of the first key and verifying all others is efficient.)\n\nLet's stick to the first key approach, but ensure it handles the initial type check robustly."
+        }
+      }
+    ],
+    "created": 1794960987,
+    "model": "gemma-e4b-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1467,
+      "prompt_tokens": 232,
+      "total_tokens": 1699,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-jxiSmECNPV0i5jIrw0nrIvNwMqWZOozA",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 232,
+      "prompt_ms": 428.034,
+      "prompt_per_token_ms": 1.8449741379310345,
+      "prompt_per_second": 542.0130176574759,
+      "predicted_n": 1467,
+      "predicted_ms": 61793.384,
+      "predicted_per_token_ms": 42.15101227830832,
+      "predicted_per_second": 23.72422264493558
+    }
+  },
+  "seconds": 62.25
+}

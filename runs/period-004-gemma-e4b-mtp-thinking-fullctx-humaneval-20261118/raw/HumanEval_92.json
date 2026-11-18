@@ -1,0 +1,63 @@
+{
+  "task_id": "HumanEval/92",
+  "request": {
+    "model": "gemma-e4b-mtp-fullctx",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef any_int(x, y, z):\n    '''\n    Create a function that takes 3 numbers.\n    Returns true if one of the numbers is equal to the sum of the other two, and all numbers are integers.\n    Returns false in any other cases.\n    \n    Examples\n    any_int(5, 2, 7) ➞ True\n    \n    any_int(3, 2, 2) ➞ False\n\n    any_int(3, -2, 1) ➞ True\n    \n    any_int(3.6, -2.2, 2) ➞ False\n  \n\n    \n    '''\n```"
+      }
+    ],
+    "max_tokens": -1,
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 64,
+    "min_p": 0.0,
+    "seed": 42,
+    "repeat_penalty": 1.0,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef any_int(x, y, z):\n    '''\n    Create a function that takes 3 numbers.\n    Returns true if one of the numbers is equal to the sum of the other two, and all numbers are integers.\n    Returns false in any other cases.\n    \n    Examples\n    >>> any_int(5, 2, 7)\n    True\n    >>> any_int(3, 2, 2)\n    False\n    >>> any_int(3, -2, 1)\n    True\n    >>> any_int(3.6, -2.2, 2)\n    False\n    >>> any_int(4, 4, 5)\n    True\n    >>> any_int(1, 1, 1)\n    False\n    '''\n    \n    # Condition 1: Check if all inputs are integers\n    if not (isinstance(x, int) and isinstance(y, int) and isinstance(z, int)):\n        return False\n    \n    # Condition 2: Check if one number equals the sum of the other two\n    # We use 'or' to check all three possible pairings.\n    if (x == y + z or\n            y == x + z or\n            z == x + y):\n        return True\n    else:\n        return False\n\nif __name__ == '__main__':\n    # Test cases from the prompt\n    print(f\"any_int(5, 2, 7): {any_int(5, 2, 7)}\")      # Expected: True\n    print(f\"any_int(3, 2, 2): {any_int(3, 2, 2)}\")      # Expected: False\n    print(f\"any_int(3, -2, 1): {any_int(3, -2, 1)}\")    # Expected: True\n    print(f\"any_int(3.6, -2.2, 2): {any_int(3.6, -2.2, 2)}\") # Expected: False\n\n    # Additional tests\n    print(\"-\" * 30)\n    print(f\"any_int(10, 5, 15): {any_int(10, 5, 15)}\")  # Expected: True (10 + 5 = 15)\n    print(f\"any_int(1, 1, 1): {any_int(1, 1, 1)}\")      # Expected: False\n    print(f\"any_int(10.0, 5, 15): {any_int(10.0, 5, 15)}\") # Expected: False (10.0 is a float type)\n```",
+          "reasoning_content": "Here's a thinking process to arrive at the solution:\n\n1.  **Understand the Goal:** The request asks for a self-contained Python function `any_int(x, y, z)` that checks two conditions simultaneously:\n    a. All three inputs (x, y, z) must be integers.\n    b. One of the numbers must equal the sum of the other two.\n\n2.  **Analyze the Constraints (The Rules):**\n    *   *Integer Check:* How do I check if a number is an integer in Python? `isinstance(n, int)` is the most reliable way, especially since the examples show floating-point inputs (like `3.6`).\n    *   *Sum Check:* There are three possibilities for the sum relationship:\n        *   `x == y + z`\n        *   `y == x + z`\n        *   `z == x + y`\n\n3.  **Structure the Function (Initial Draft):**\n\n    ```python\n    def any_int(x, y, z):\n        # 1. Check if all are integers\n        if not (isinstance(x, int) and isinstance(y, int) and isinstance(z, int)):\n            return False\n\n        # 2. Check the sum relationship\n        if x == y + z:\n            return True\n        if y == x + z:\n            return True\n        if z == x + y:\n            return True\n\n        # 3. If the sum relationship wasn't met\n        return False\n    ```\n\n4.  **Refinement and Simplification (Making it concise):**\n\n    *   The structure is sound. I can combine the sum checks using `or` for efficiency.\n    *   The integer check must happen first, as it's the fundamental requirement for the function to proceed.\n\n    *Revised Draft:*\n\n    ```python\n    def any_int(x, y, z):\n        # First, enforce the integer constraint\n        if not (isinstance(x, int) and isinstance(y, int) and isinstance(z, int)):\n            return False\n\n        # If they are all integers, check the sum constraint\n        return (x == y + z or\n                y == x + z or\n                z == x + y)\n    ```\n\n5.  **Final Review against Examples:**\n    *   `any_int(5, 2, 7)`: Integers? Yes. Sum check? `5 == 2 + 7` (No). `2 == 5 + 7` (No). `7 == 5 + 2` (Yes). -> True. (Correct)\n    *   `any_int(3, 2, 2)`: Integers? Yes. Sum check? `3 == 2 + 2` (No). `2 == 3 + 2` (No). `2 == 3 + 2` (No). -> False. (Correct)\n    *   `any_int(3, -2, 1)`: Integers? Yes. Sum check? `3 == -2 + 1` (No). `-2 == 3 + 1` (No). `1 == 3 + (-2)` (Yes, `1 == 1`). -> True. (Correct)\n    *   `any_int(3.6, -2.2, 2)`: Integers? No (3.6 and -2.2 are floats). -> False. (Correct)\n\n6.  **Final Code Generation:** Wrap the refined code into the required markdown block, including docstrings and example calls for completeness (as requested for a self-contained script). (This leads to the final provided solution.)"
+        }
+      }
+    ],
+    "created": 1794991909,
+    "model": "gemma-e4b-mtp-fullctx",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1443,
+      "prompt_tokens": 188,
+      "total_tokens": 1631,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-sm1MWFL5ILFU97S7D1GMhYSEU4ane8Wh",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 188,
+      "prompt_ms": 93.918,
+      "prompt_per_token_ms": 0.49956382978723407,
+      "prompt_per_second": 2001.7462041355222,
+      "predicted_n": 1443,
+      "predicted_ms": 8764.35,
+      "predicted_per_token_ms": 6.077912621359223,
+      "predicted_per_second": 164.53017052034662,
+      "draft_n": 1296,
+      "draft_n_accepted": 1010
+    }
+  },
+  "seconds": 8.875
+}
