@@ -33,7 +33,18 @@ class PageStore:
         p=self.pages[pid]
         if type(offset) is not int or offset<0 or offset>=len(p['text']):raise ValueError('invalid offset')
         end=min(offset+CHUNK,len(p['text']))
-        return {'page_id':pid,'url':p['url'],'offset':offset,'end':end,'next_offset':end if end<len(p['text']) else None,'section':self.section(p,offset),'content':p['text'][offset:end]}
+        content=p['text'][offset:end];before=offset>0;after=end<len(p['text'])
+        # A pipe-delimited fragment may be only part of a table. Do not infer
+        # where the table ends or whether any particular value is its total.
+        table_rows=len(re.findall(r'(?m)^[ \t]{0,3}\|[^\n]*\|',content))
+        hint=('This is a page excerpt, not necessarily a complete table or section. '
+              'Earlier or later text may contain additional rows, totals, or context; '
+              'inspect surrounding text or search the saved page when needed.') if before or after else (
+              'This excerpt contains the complete saved page, but its claims and tables still require verification.')
+        return {'page_id':pid,'url':p['url'],'offset':offset,'end':end,
+                'next_offset':end if after else None,'section':self.section(p,offset),
+                'page_characters':len(p['text']),'has_earlier_text':before,'has_later_text':after,
+                'detected_pipe_table_rows':table_rows,'coverage_hint':hint,'content':content}
     def find(self,pid,query):
         p=self.pages[pid]
         if not isinstance(query,str) or not query.strip() or len(query)>200:raise ValueError('invalid query')
