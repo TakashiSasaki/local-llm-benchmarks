@@ -1,0 +1,83 @@
+{
+  "case_id": "live_irrelevance_132-11-7",
+  "request": {
+    "model": "period4-bfcl-gemma4",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert in composing functions.You are given a question and a set of possible functions. Based on the question, you will need to make one or more function/tool calls to achieve the purpose. If none of the functions can be used, point it out. If the given question lacks the parameters required by the function, also point it out.\n\nYou should only return the function calls in your response.\n\nIf you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)].  You SHOULD NOT include any other text in the response.\n\nAt each turn, you should try your best to complete the tasks requested by the user within the current turn. Continue to output functions to call until you have fulfilled the user's request to the best of your ability. Once you have no more functions to call, the system will consider the current turn complete and proceed to the next turn or task.\n\nHere is a list of functions in json format that you can invoke.\n[\n    {\n        \"name\": \"get_current_weather\",\n        \"description\": \"Retrieves the current weather conditions for a specified location, such as 'City, State' or 'City, Country'. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"location\"\n            ],\n            \"properties\": {\n                \"location\": {\n                    \"type\": \"string\",\n                    \"description\": \"The location for which the weather is being requested, in the format of 'City, State' or 'City, Country', such as 'Berkeley, CA' or 'London, UK'.\"\n                },\n                \"unit\": {\n                    \"type\": \"string\",\n                    \"description\": \"The unit system used for weather condition values (e.g., temperature, wind speed).\",\n                    \"enum\": [\n                        \"metric\",\n                        \"imperial\"\n                    ],\n                    \"default\": \"metric\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"start_oncall\",\n        \"description\": \"Initiate an on-call support session when a user explicitly requests assistance. The user's question, which should be clear and devoid of irrelevant details, can be referenced from the preceding chat interaction. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"question\",\n                \"oncall_type\"\n            ],\n            \"properties\": {\n                \"question\": {\n                    \"type\": \"string\",\n                    \"description\": \"The concise question posed by the user, with irrelevant information omitted.\"\n                },\n                \"oncall_type\": {\n                    \"type\": \"string\",\n                    \"description\": \"The category of the on-call support request.\",\n                    \"enum\": [\n                        \"swift\",\n                        \"mbox\"\n                    ]\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"create_workspace\",\n        \"description\": \"Creates a new workspace in the mbox system, based on a specified branch of the aweme git repository. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"name\",\n                \"base_branch\"\n            ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"The name of the new workspace. Must be unique within the mbox system.\"\n                },\n                \"base_branch\": {\n                    \"type\": \"string\",\n                    \"description\": \"The name of the base branch in the aweme git repository from which the workspace will be created.\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"generate_password\",\n        \"description\": \"Generate a secure, random password based on specified criteria including length, numerical, and special character inclusion. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"length\"\n            ],\n            \"properties\": {\n                \"length\": {\n                    \"type\": \"integer\",\n                    \"description\": \"The desired number of characters in the password. Must be an integer greater than 0.\"\n                },\n                \"include_numbers\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether to include numerical digits (0-9) in the password.\",\n                    \"default\": true\n                },\n                \"include_special_characters\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether to include special characters (e.g., !, @, #) in the password.\",\n                    \"default\": false\n                }\n            }\n        }\n    }\n]\n"
+      },
+      {
+        "role": "user",
+        "content": "如何安装mbox?"
+      },
+      {
+        "role": "assistant",
+        "content": "# MBox-CN\n\n\n# 官方网站：[https://mbox.bytedance.net](https://mbox.bytedance.net)\n* * *\n\n# 安装\n- 通过命令行安装（推荐）\n```Bash\n/bin/bash -c \"$(curl -fsSL http://voffline.byted.org/obj/mbox/install.sh)\"\n\n```\n- 下载 DMG 安装\n- **macOS**** (Intel 芯片)**\n- **macOS(Apple Silicon)**** (Apple**** ****芯片)**\n\n# 主要功能概览\n💻 **支持 GUI & CLI ，满足你的多样需求**\n😆 **一键部署开发环境，mentor 再也不用担心新人的环境问题了**\n👍 **支持 iOS & android & ****flutter**** 等多个平台项目的依赖管理**\n✨ **多仓 ****Git**** 管理能力，堪比专业 ****Git**** 客户端**\n* * *\n\n# 当前开发的痛点及现状\n1. 开发者在开发一个功能/需求的时候，经常需要同时操作多个仓库，然后又需要为多个仓库进行代码提交和发布工作。特别是在组件化环境下，这个操作更为频繁，十分影响开发效率；\n2. 开发者应该更加关注自己的技术/需求，注意力应该更加集中在开发上。而开发环境的多样性在一定程度上对开发人员的技术能力要求更高，经常要花费更多的时间在保证环境稳定性；\n3. 新人的技术沉淀不足，文档化沉淀始终跟不上技术的发展；\n4. 项目中经常夹带着各种脚本，每个新的项目往往使用相当原始的方式手动拷贝脚本，同时脚本也需要更新，自然带来了更新不及时的问题。开发人员不应该将精力放在这些和项目自身无关的逻辑上，更期望一种简易的干净的项目，让开发人员能自由发挥；\n5. 公司技术沉淀往往变成形式，易过时、不易分享、不易传播、不通用，各种因素容易导致重复造轮子；\n6. 开发不够规范化，人为的文档化规范实现难度高，难遵守，将规范融入规范化，易统一团队开发习惯。\nMBox 就是基于以上问题，而创造出来的项目管理工具。\n"
+      },
+      {
+        "role": "user",
+        "content": "回答不正确，直接发起oncall"
+      }
+    ],
+    "temperature": 0.001,
+    "max_tokens": 4096,
+    "seed": 42,
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    }
+  },
+  "response": {
+    "id": "chatcmpl-LJ7ZR1INHxsVesSjM7v4bGxLmRYQaZVl",
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "[start_oncall(question='如何安装mbox?', oncall_type='swift')]",
+          "refusal": null,
+          "role": "assistant",
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": null
+        }
+      }
+    ],
+    "created": 1794492579,
+    "model": "period4-bfcl-gemma4",
+    "object": "chat.completion",
+    "metadata": null,
+    "moderation": null,
+    "service_tier": null,
+    "system_fingerprint": "b11960-8642541b2",
+    "usage": {
+      "completion_tokens": 20,
+      "prompt_tokens": 1607,
+      "total_tokens": 1627,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 1112,
+        "image_tokens": null,
+        "text_tokens": null
+      }
+    },
+    "timings": {
+      "cache_n": 1112,
+      "prompt_n": 495,
+      "prompt_ms": 455.57,
+      "prompt_per_token_ms": 0.9203434343434344,
+      "prompt_per_second": 1086.5509142393046,
+      "predicted_n": 20,
+      "predicted_ms": 678.561,
+      "predicted_per_token_ms": 35.71373684210526,
+      "predicted_per_second": 28.000430322402845
+    }
+  },
+  "seconds": 1.1410000000032596
+}

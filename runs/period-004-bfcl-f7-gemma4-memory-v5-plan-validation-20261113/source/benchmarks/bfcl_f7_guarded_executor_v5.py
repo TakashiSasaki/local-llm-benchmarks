@@ -1,0 +1,68 @@
+"""Intercept malformed BFCL calls without evaluating syntactically invalid code.
+
+Valid calls are restricted to direct documented method names and literal
+arguments before the pinned upstream executor is invoked. This adapter is not
+an OS sandbox. A guard stop leaves the evaluation incomplete.
+"""
+import ast,builtins,importlib,inspect
+import bfcl_f7_call_guard_v5 as guard
+from bfcl_f7_call_guard_v5 import UnsupportedCall,enable_malformed_executor,validate_call_text
+
+def install_guarded_executor():
+    utils=importlib.import_module('bfcl_eval.eval_checker.multi_turn_eval.multi_turn_utils')
+    base=importlib.import_module('bfcl_eval.model_handler.base_handler')
+    checker=importlib.import_module('bfcl_eval.eval_checker.multi_turn_eval.multi_turn_checker')
+    original=utils.execute_multi_turn_func_call
+    if getattr(original,'_guarded_executor',False):raise RuntimeError('guarded executor already installed')
+
+    def guarded(func_call_list,initial_config,involved_classes,model_name,test_entry_id,
+                long_context=False,is_evaL_run=False):
+        args=(initial_config,involved_classes,model_name,test_entry_id)
+        opts={'long_context':long_context,'is_evaL_run':is_evaL_run}
+        _,instances=original([], *args, **opts)
+        method_names=set()
+        for obj in instances.values():
+            for name,_ in inspect.getmembers(obj,predicate=inspect.ismethod):
+                if not name.startswith('_'):method_names.add(name)
+        output=[]
+        for call in func_call_list:
+            try:compile(call,'<string>','eval')
+            except SyntaxError as exc:
+                # The exact observed upstream malformed form has no named
+                # callee. Reject quoted nested-call spellings because upstream's
+                # regex could rewrite inside strings before it compiles them.
+                mapping={name:'guard_marker' for name in method_names}
+                rewritten=utils._process_method_calls(call,mapping)
+                if not call.startswith('(') or rewritten != call:
+                    raise UnsupportedCall('malformed reconstructed call requires review')
+                output.append('Error during execution: '+str(exc))
+                continue
+            parsed=ast.parse(call,mode='eval').body
+            if not isinstance(parsed,ast.Call) or not isinstance(parsed.func,ast.Name):
+                raise UnsupportedCall('reconstructed call is not a direct function')
+            name=parsed.func.id
+            validate_call_text(call,{name},strict=True)
+            if guard.CASE_ALLOWED_NAMES is None:
+                raise UnsupportedCall('no case-specific function allowlist')
+            if name in method_names:
+                if name not in guard.CASE_ALLOWED_NAMES:
+                    raise UnsupportedCall('backend method was not in case allowlist')
+            else:
+                # Never invoke builtins, module globals or the upstream denylist.
+                # Only reproduce NameError when Python name resolution is certain
+                # to fail before evaluating any arguments.
+                forbidden={'kill','exit','quit','remove','unlink','popen','Popen','run'}
+                if name in forbidden or name in vars(utils) or name in vars(builtins):
+                    raise UnsupportedCall('unknown name is a builtin, global or denied')
+                output.append("Error during execution: name '"+name+"' is not defined")
+                continue
+            result,instances=original([call],*args,**opts)
+            output.extend(result)
+        return output,instances
+
+    guarded._guarded_executor=True
+    utils.execute_multi_turn_func_call=guarded
+    base.execute_multi_turn_func_call=guarded
+    checker.execute_multi_turn_func_call=guarded
+    enable_malformed_executor()
+

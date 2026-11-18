@@ -1,0 +1,75 @@
+{
+  "case_id": "live_parallel_multiple_10-9-0",
+  "request": {
+    "model": "period4-bfcl-gemma4",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert in composing functions.You are given a question and a set of possible functions. Based on the question, you will need to make one or more function/tool calls to achieve the purpose. If none of the functions can be used, point it out. If the given question lacks the parameters required by the function, also point it out.\n\nYou should only return the function calls in your response.\n\nIf you decide to invoke any of the function(s), you MUST put it in the format of [func_name1(params_name1=params_value1, params_name2=params_value2...), func_name2(params)].  You SHOULD NOT include any other text in the response.\n\nAt each turn, you should try your best to complete the tasks requested by the user within the current turn. Continue to output functions to call until you have fulfilled the user's request to the best of your ability. Once you have no more functions to call, the system will consider the current turn complete and proceed to the next turn or task.\n\nHere is a list of functions in json format that you can invoke.\n[\n    {\n        \"name\": \"send_message\",\n        \"description\": \"Sends a message to a human user, supporting a full range of Unicode characters, including emojis. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"properties\": {\n                \"message\": {\n                    \"type\": \"string\",\n                    \"description\": \"The content of the message to be sent. Supports Unicode characters such as text and emojis.\"\n                },\n                \"recipient\": {\n                    \"type\": \"string\",\n                    \"description\": \"The identifier of the recipient. This could be a username, phone number, or an email address, depending on the implementation.\",\n                    \"default\": \"default@example.com\"\n                },\n                \"urgent\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Flag to indicate if the message should be sent with high priority.\",\n                    \"default\": false\n                }\n            },\n            \"required\": [\n                \"message\"\n            ]\n        }\n    },\n    {\n        \"name\": \"pause_heartbeats\",\n        \"description\": \"Temporarily ignore timed heartbeats for a specified duration. During this period, manual heartbeats and other events may still generate messages. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"minutes\"\n            ],\n            \"properties\": {\n                \"minutes\": {\n                    \"type\": \"integer\",\n                    \"description\": \"The duration in minutes for which heartbeats should be ignored. Must be between 1 and 3600 minutes (up to 60 hours).\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"message_chatgpt\",\n        \"description\": \"Sends a message to ChatGPT, a basic AI model, for asking questions and getting responses. The interactions are stateless, meaning ChatGPT does not remember previous messages. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"message\"\n            ],\n            \"properties\": {\n                \"message\": {\n                    \"type\": \"string\",\n                    \"description\": \"The message to send to ChatGPT, formatted as a complete English sentence.\"\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Determines whether to request an immediate heartbeat post-execution, useful for managing follow-up actions.\",\n                    \"default\": false\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"core_memory_append\",\n        \"description\": \"Appends the given content to a specific section of the core memory. This operation supports all unicode characters, including emojis, and allows for an immediate heartbeat request post-execution for follow-up actions. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"name\",\n                \"content\"\n            ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"The name of the memory section to be edited, such as 'persona' or 'human'.\",\n                    \"enum\": [\n                        \"persona\",\n                        \"human\"\n                    ]\n                },\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\": \"The content to be appended to the memory. Supports all unicode characters, including emojis.\"\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"If set to 'true', requests an immediate heartbeat after function execution. Useful for sending a follow-up message or triggering another function.\",\n                    \"default\": false\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"core_memory_replace\",\n        \"description\": \"Replace the contents of core memory. To delete memories, provide an empty string for the 'new_content' parameter. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"name\",\n                \"old_content\",\n                \"new_content\",\n                \"request_heartbeat\"\n            ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"The section of the memory to be edited. Possible values are 'persona' for personality traits and 'human' for human-related memories.\"\n                },\n                \"old_content\": {\n                    \"type\": \"string\",\n                    \"description\": \"The string to be replaced. Must be an exact match of the existing content.\"\n                },\n                \"new_content\": {\n                    \"type\": \"string\",\n                    \"description\": \"The new content to write into the memory. Supports all Unicode characters, including emojis.\"\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether to request an immediate heartbeat after function execution. Set to true to ensure the system is immediately updated with the changes.\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"recall_memory_search\",\n        \"description\": \"Searches the prior conversation history for occurrences of a specified string and returns paginated results. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"query\"\n            ],\n            \"properties\": {\n                \"query\": {\n                    \"type\": \"string\",\n                    \"description\": \"The search string to locate within the conversation history.\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Specifies the page number of results to retrieve, where 0 represents the first page.\",\n                    \"default\": 0\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"When set to true, triggers an immediate heartbeat post function execution to facilitate follow-up actions.\",\n                    \"default\": false\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"archival_memory_insert\",\n        \"description\": \"Adds an entry to the archival memory system, ensuring that the content is formatted for easy future retrieval. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"content\",\n                \"request_heartbeat\"\n            ],\n            \"properties\": {\n                \"content\": {\n                    \"type\": \"string\",\n                    \"description\": \"Content to be archived. Supports all Unicode characters, including emojis.\"\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"If set to true, triggers an immediate heartbeat to confirm memory insertion and allows for follow-up actions.\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"archival_memory_search\",\n        \"description\": \"Performs a semantic search within archival memory data using an embedding-based approach to retrieve relevant results. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"query\",\n                \"request_heartbeat\"\n            ],\n            \"properties\": {\n                \"query\": {\n                    \"type\": \"string\",\n                    \"description\": \"The search term used to query the archival memory. This should be a clear and concise representation of the search intent.\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Specifies the page number of search results to retrieve, allowing for pagination through sets of results. The first page is 0.\",\n                    \"default\": 0\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Determines whether to request an immediate heartbeat post function execution, which is useful for initiating follow-up actions. Set to 'true' to enable this feature.\"\n                }\n            }\n        }\n    },\n    {\n        \"name\": \"http_request\",\n        \"description\": \"Generates an HTTP request using the specified method, URL, and payload, then returns the server's response. Note that the provided function is in Python 3 syntax.\",\n        \"parameters\": {\n            \"type\": \"dict\",\n            \"required\": [\n                \"method\",\n                \"url\",\n                \"request_heartbeat\"\n            ],\n            \"properties\": {\n                \"method\": {\n                    \"type\": \"string\",\n                    \"description\": \"The HTTP method to be used for the request, such as 'GET', 'POST', 'PUT', 'DELETE', etc.\",\n                    \"enum\": [\n                        \"GET\",\n                        \"POST\",\n                        \"PUT\",\n                        \"DELETE\",\n                        \"PATCH\",\n                        \"OPTIONS\",\n                        \"HEAD\"\n                    ]\n                },\n                \"url\": {\n                    \"type\": \"string\",\n                    \"description\": \"The fully qualified URL to which the request will be sent.\"\n                },\n                \"payload_json\": {\n                    \"type\": \"string\",\n                    \"description\": \"A JSON-formatted string that contains the payload data to be sent with the request. Must be a valid JSON string.\",\n                    \"default\": \"{}\"\n                },\n                \"request_heartbeat\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"When set to true, the function will request an immediate heartbeat after execution, which is useful for sending a follow-up message or initiating another function.\"\n                }\n            }\n        }\n    }\n]\n"
+      },
+      {
+        "role": "user",
+        "content": "Could you please find out when Shishir's birthday is from our previous conversations and then congratulate him by sending a 'Happy Birthday!' message regardless?"
+      }
+    ],
+    "temperature": 0.001,
+    "max_tokens": 4096,
+    "seed": 42,
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    }
+  },
+  "response": {
+    "id": "chatcmpl-yhZGGw6Ycgu4roARFAnlKQuxiGrPLvJD",
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "[recall_memory_search(query=\"Shishir's birthday\", request_heartbeat=True), send_message(message=\"Happy Birthday!\", recipient=\"Shishir\")]",
+          "refusal": null,
+          "role": "assistant",
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": null
+        }
+      }
+    ],
+    "created": 1794495520,
+    "model": "period4-bfcl-gemma4",
+    "object": "chat.completion",
+    "metadata": null,
+    "moderation": null,
+    "service_tier": null,
+    "system_fingerprint": "b11960-8642541b2",
+    "usage": {
+      "completion_tokens": 39,
+      "prompt_tokens": 2489,
+      "total_tokens": 2528,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 216,
+        "image_tokens": null,
+        "text_tokens": null
+      }
+    },
+    "timings": {
+      "cache_n": 216,
+      "prompt_n": 2273,
+      "prompt_ms": 1243.297,
+      "prompt_per_token_ms": 0.5469850417949846,
+      "prompt_per_second": 1828.2035587635132,
+      "predicted_n": 39,
+      "predicted_ms": 1399.874,
+      "predicted_per_token_ms": 36.83878947368421,
+      "predicted_per_second": 27.145300219876933
+    }
+  },
+  "seconds": 2.6559999999881256
+}
