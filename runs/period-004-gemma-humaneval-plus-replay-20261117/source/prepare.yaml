@@ -1,0 +1,27 @@
+#cloud-config
+ssh_pwauth: false
+disable_root: true
+write_files:
+  - path: /usr/local/sbin/prepare-hep
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      mkdir -p /mnt/eval-input /opt/evalplus-source
+      mount -o ro LABEL=CIDATA /mnt/eval-input
+      if [[ ! -x /opt/evalplus/bin/python ]]; then
+        find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) -exec sed -i -E 's#http://(deb|security)\.debian\.org#https://\1.debian.org#g' {} +
+        apt-get -o Acquire::Retries=1 update
+        apt-get -o Acquire::Retries=1 install -y python3-venv
+        python3 -m venv /opt/evalplus
+      fi
+      printf '%s\n' 'numpy==1.26.4' 'pyarrow==17.0.0' 'pandas==2.2.3' 'datasets==2.21.0' 'transformers==4.46.3' 'tree-sitter==0.23.2' 'tree-sitter-python==0.23.2' >/opt/evalplus-constraints.txt
+      /opt/evalplus/bin/python -m pip install --disable-pip-version-check -c /opt/evalplus-constraints.txt /mnt/eval-input/evalplus-0.3.1-py3-none-any.whl
+      tar -xzf /mnt/eval-input/evalplus-source.tar.gz -C /opt/evalplus-source --strip-components=1
+      PYTHONPATH=/opt/evalplus-source /opt/evalplus/bin/python -c 'import evalplus.evaluate; print(evalplus.evaluate.__file__)'
+      /opt/evalplus/bin/python -m pip freeze >/opt/evalplus-dependencies.txt
+      id benchmark >/dev/null 2>&1 || useradd --create-home --shell /usr/sbin/nologin benchmark
+      printf 'HEP_PREP_OK\n'
+runcmd:
+  - [bash, -c, "systemctl stop serial-getty@ttyS0.service; /usr/local/sbin/prepare-hep 2>&1 | tee /var/log/prepare-hep.log >/dev/ttyS0; status=${PIPESTATUS[0]}; echo HEP_PREP_EXIT=$status >/dev/ttyS0; systemctl --no-block poweroff"]

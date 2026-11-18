@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/56",
+  "request": {
+    "model": "period4-lfm3-q8-humaneval-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef correct_bracketing(brackets: str):\n    \"\"\" brackets is a string of \"<\" and \">\".\n    return True if every opening bracket has a corresponding closing bracket.\n\n    >>> correct_bracketing(\"<\")\n    False\n    >>> correct_bracketing(\"<>\")\n    True\n    >>> correct_bracketing(\"<<><>>\")\n    True\n    >>> correct_bracketing(\"><<>\")\n    False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 0.1,
+    "top_p": 1.0,
+    "top_k": 50,
+    "min_p": 0,
+    "seed": 42,
+    "repeat_penalty": 1.1,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef correct_bracketing(brackets: str) -> bool:\n    \"\"\"Return True if every opening bracket '<' has a corresponding closing bracket '>',\n    and they are properly nested (i.e., at any prefix the number of '>' does not exceed '<').\n\n    Parameters:\n    brackets: string consisting only of characters '<' and '>'.\n\n    Returns:\n        bool: True if the brackets are balanced, False otherwise.\n    \"\"\"\n    balance = 0\n    for ch in brackets:\n        if ch == '<':\n            balance += 1\n        elif ch == '>':\n            balance -= 1\n            if balance < 0:\n                return False\n        # Any other character is ignored (per problem statement only '<' and '>' appear)\n    return balance == 0\n\n\nif __name__ == \"__main__\":\n    test_cases = [\n        (\"<\", False),\n        (\"<>\", True),\n        (\"<<><>>\", True),\n        (\"><<>\", False)\n    ]\n    for s, expected in test_cases:\n        result = correct_bracketing(s)\n        print(f\"correct_bracketing({s!r}) = {result} (expected {expected})\")\n```",
+          "reasoning_content": "We need to write a self-contained Python script that solves the problem: given a string of \"<\" and \">\", return True if every opening bracket has a corresponding closing bracket. Essentially, we need to check if the brackets are balanced and properly nested? The examples:\n\n- correct_bracketing(\"<\") -> False (unmatched opening)\n- correct_bracketing(\"<>\") -> True\n- correct_bracketing(\"<<><>>\") -> True\n- correct_bracketing(\"><<>\") -> False\n\nLet's analyze: For \"<>\", it's balanced. For \"<<><>>\": Let's parse: string = '<', '<', '>', '<', '>', '>'? Actually \"<<><>>\" is characters: index0='<',1='<',2='>',3='<',4='>',5='>'. So sequence: first two '<' then a '>' matches one of them, leaving one '<' unmatched? But the result says True. Let's check: Balanced parentheses-like but with different brackets. Usually for balanced brackets we need proper nesting: e.g., \"<><>\" is balanced? Actually typical bracket matching: each opening must be closed by same type and order matters. Here only two types: \"<\" and \">\". But they are not the usual pair; it's like angle brackets. So we treat '<' as opening, '>' as closing. The string \"<<><>>\": Let's simulate using stack:\n\nInitialize empty stack.\nIterate:\n- char0 = '<': push onto stack -> stack=['<']\n- char1 = '<': push -> stack=['<','<']\n- char2 = '>': pop from stack -> pop '<' -> stack becomes ['<'] (since we matched one of the two opens)\n- char3 = '<': push -> stack=['<','<']\n- char4 = '>': pop -> stack=['<'] (matches one open)\n- char5 = '>': pop -> stack=[] (matches last open)\n\nAt end, stack empty => True. So it's balanced.\n\nFor \"><<>\": string: index0='>', index1='<', index2='<', index3='>'. Process:\n- char0='>': This is a closing bracket but stack empty -> unmatched closing => return False. Indeed expected False.\n\nSo the problem reduces to checking if the string of '<' and '>' forms a valid parentheses sequence where each '<' matches with a later '>', and they are properly nested (i.e., like usual parentheses). So we can implement using a counter or stack.\n\nSimplest: Use a variable balance = 0. For each char:\n- if char == '<': balance += 1\n- else if char == '>': balance -= 1; if balance < 0: return False (more closing than opening at any point)\nAt the end, check if balance == 0.\n\nBut careful: The string may contain only '<' and '>' characters. So we can just do that.\n\nLet's test with examples:\n- \"<\": char '<': balance=1 -> after loop, balance=1 !=0 => False.\n- \"<>\": first '<': bal=1; then '>': bal=0 -> end: 0 => True.\n- \"<<><>>\": process: \n   i0='<': bal=1\n   i1='<': bal=2\n   i2='>': bal=1\n   i3='<': bal=2\n   i4='>': bal=1\n   i5='>': bal=0 -> True.\n- \"><<>\": \n   i0='>': bal = -1? Actually we need to handle negative: if char == '>', then balance -= 1; after decrement, if balance < 0 => return False. So at first step, balance becomes -1 and we return False.\n\nThus algorithm works.\n\nImplementation details:\n\ndef correct_bracketing(brackets: str):\n    \"\"\" brackets is a string of \"<\" and \">\".\n    return True if every opening bracket has a corresponding closing bracket.\n    \"\"\"\n    balance = 0\n    for ch in brackets:\n        if ch == '<':\n            balance += 1\n        elif ch == '>':\n            balance -= 1\n            if balance < 0:\n                return False\n        else:\n            # maybe ignore other characters? but problem says only these.\n            pass\n    return balance == 0\n\nBut we need to ensure that after processing all, balance is zero. Also note: If there are extra closing brackets at the end (like \"><<>\"), we already returned false early.\n\nEdge cases: empty string? Not given but maybe should return True? Usually an empty string has balanced brackets. But not in examples. We can decide to return True for empty input because no unmatched opening or closing. Our algorithm would have balance=0 and loop none, returns True. That's fine.\n\nNow we need to provide a self-contained Python script that includes the function definition and maybe some test cases? The problem says: \"Please provide a self-contained Python script that solves the following problem in a markdown code block:\" So we should output a markdown code block with python code containing the function. Possibly also include if __name__ == '__main__': to run tests.\n\nLet's craft:\n\n```python\ndef correct_bracketing(brackets: str):\n    \"\"\"Return True if every opening bracket '<' has a corresponding closing bracket '>',\n    and they are properly nested (i.e., at any prefix the number of '>' does not exceed '<').\n\n    Parameters:\n    brackets: string consisting only of characters '<' and '>'.\n\n    Returns:\n        bool: True if the brackets are balanced, False otherwise.\n    \"\"\"\n    balance = 0\n    for ch in brackets:\n        if ch == '<':\n            balance += 1\n        elif ch == '>':\n            balance -= 1\n            if balance < 0:\n                return False\n        # If any other character appears, we could ignore or treat as error; but per problem only these.\n    return balance == 0\n\nif __name__ == \"__main__\":\n    test_cases = [\n        (\"<\", False),\n        (\"<>\", True),\n        (\"<<><>>\", True),\n        (\"><<>\", False)\n    ]\n    for s, expected in test_cases:\n        result = correct_bracketing(s)\n        print(f\"correct_bracketing({s!r}) = {result} (expected {expected})\")\n```\n\nBut note: The test case \"\"><<>\": Actually string is \"><<>\"? Let's check: In the problem they wrote `\"><<>` which is a string starting with '>', then '<', '<', '>'. That's exactly what we used. So expected False.\n\nOur function returns False for that input as described.\n\nLet's test manually:\n\n- For \"<\": loop: ch='<': balance=1; after loop, return balance==0? 1==0 => False. Good.\n- For \"<>\": ch='<': bal=1; next ch='>': bal=0; no early negative; after loop, return 0==0 => True.\n- For \"<<><>>\": as above returns True.\n- For \"><<>\": first char '>': balance = -1 -> then if balance < 0: return False. So correct.\n\nThus works.\n\nNow we need to output the script inside a markdown code block. The user said: \"Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef correct_bracketing(brackets: str):\n    ... \n```\"\n\nSo we should produce exactly that, but with full implementation.\n\nThus final answer: Provide a markdown code block containing the python script. We'll include docstring and test cases optionally.\n\nLet's write it nicely:\n\n```python\ndef correct_bracketing(brackets: str) -> bool:\n    \"\"\"Return True if every opening bracket '<' has a corresponding closing bracket '>',\n    and they are properly nested (i.e., at any prefix the number of '>' does not exceed '<').\n\n    Parameters:\n    brackets: string consisting only of characters '<' and '>'.\n\n    Returns:\n        bool: True if the brackets are balanced, False otherwise.\n    \"\"\"\n    balance = 0\n    for ch in brackets:\n        if ch == '<':\n            balance += 1\n        elif ch == '>':\n            balance -= 1\n            if balance < 0:\n                return False\n        # If any other character appears, we can ignore or raise an error.\n    return balance == 0\n\n\nif __name__ == \"__main__\":\n    test_cases = [\n        (\"<\", False),\n        (\"<>\", True),\n        (\"<<><>>\", True),\n        (\"><<>\", False)\n    ]\n    for s, expected in test_cases:\n        result = correct_bracketing(s)\n        print(f\"correct_bracketing({s!r}) = {result} (expected {expected})\")\n```\n\nThat should be fine.\n\nWe need to ensure that the function signature matches exactly: def correct_bracketing(brackets: str): and returns True/False. The type hint is optional but okay.\n\nNow produce final answer with markdown code block."
+        }
+      }
+    ],
+    "created": 1794916103,
+    "model": "period4-lfm3-q8-humaneval-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 2177,
+      "prompt_tokens": 123,
+      "total_tokens": 2300,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-i2STQppEtfhg264ZRvjJnd83eeySk9sE",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 123,
+      "prompt_ms": 43.511,
+      "prompt_per_token_ms": 0.3537479674796748,
+      "prompt_per_second": 2826.871365861506,
+      "predicted_n": 2177,
+      "predicted_ms": 20206.412,
+      "predicted_per_token_ms": 9.286034926470588,
+      "predicted_per_second": 107.68858914685102
+    }
+  },
+  "seconds": 20.281000000075437
+}

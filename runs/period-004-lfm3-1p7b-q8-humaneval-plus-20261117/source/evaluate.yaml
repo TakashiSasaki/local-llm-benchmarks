@@ -1,0 +1,43 @@
+#cloud-config
+ssh_pwauth: false
+disable_root: true
+write_files:
+  - path: /usr/local/sbin/evaluate-hep
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      test "$(ls -1 /sys/class/net)" = lo
+      printf 'HEP_ISOLATION_OK net=lo\n'
+      mkdir -p /mnt/eval-input
+      mount -o ro LABEL=CIDATA /mnt/eval-input
+      (cd /mnt/eval-input && sha256sum -c SHA256SUMS)
+      /opt/evalplus/bin/python -V
+      printf 'HEP_DEPENDENCIES_BEGIN\n'
+      cat /opt/evalplus-dependencies.txt
+      printf 'HEP_DEPENDENCIES_END\n'
+      install -d -o benchmark -g benchmark -m 0700 /home/benchmark/evalplus-run
+      run_dir=/home/benchmark/evalplus-run
+      install -m 0444 /mnt/eval-input/samples.jsonl "$run_dir/samples.jsonl"
+      cd "$run_dir"
+      benchmark_python() {
+        runuser -u benchmark -- env HOME=/home/benchmark PYTHONPATH=/opt/evalplus-source HUMANEVAL_OVERRIDE_PATH=/mnt/eval-input/dataset.jsonl.gz HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OPENBLAS_NUM_THREADS=1 /opt/evalplus/bin/python "$@"
+      }
+      benchmark_python - <<'PY'
+      from evalplus.eval import untrusted_check
+
+      for expression, expected_status in [("value + 1", "pass"), ("value", "fail")]:
+          status, _ = untrusted_check(
+              "humaneval", f"def control(value): return {expression}",
+              [[1]], "control", [2], 0, [0.001], fast_check=True,
+          )
+          assert status == expected_status, (status, expected_status)
+      print("HEP_CONTROLS_OK")
+      PY
+      benchmark_python -m evalplus.evaluate --dataset humaneval --samples "$run_dir/samples.jsonl" --parallel 2
+      test -s samples_eval_results.json
+      printf 'HEP_RESULT_BEGIN\n'
+      gzip -c samples_eval_results.json | base64 -w 76
+      printf 'HEP_RESULT_END\n'
+runcmd:
+  - [bash, -c, "systemctl stop serial-getty@ttyS0.service; /usr/local/sbin/evaluate-hep 2>&1 | tee /var/log/evaluate-hep.log >/dev/ttyS0; status=${PIPESTATUS[0]}; echo HEP_EVAL_EXIT=$status >/dev/ttyS0; systemctl --no-block poweroff"]

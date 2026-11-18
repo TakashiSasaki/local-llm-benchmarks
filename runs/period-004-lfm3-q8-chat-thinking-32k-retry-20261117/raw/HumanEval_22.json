@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/22",
+  "request": {
+    "model": "period4-lfm3-q8-humaneval-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\nfrom typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 32768,
+    "temperature": 0.1,
+    "top_p": 1.0,
+    "top_k": 50,
+    "min_p": 0,
+    "seed": 42,
+    "repeat_penalty": 1.1,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom typing import List, Any\n\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n\n    Parameters:\n    - values: A list containing elements of arbitrary types.\n\n    Returns:\n        A new list consisting of only those elements from *values* that are instances\n        of ``int`` (booleans are considered ints by ``isinstance``, so they will be included).\n\n    Examples:\n        >>> filter_integers(['a', 3.14, 5])\n        [5]\n        >>> filter_integers([1, 2, 3, 'abc', {}, []])\n        [1, 2, 3]\n    \"\"\"\n    return [item for item in values if isinstance(item, int)]\n\n\nif __name__ == \"__main__\":\n    # Simple sanity checks\n    print(filter_integers(['a', 3.14, 5]))          # → [5]\n    print(filter_integers([1, 2, 3, 'abc', {}, []]))  # → [1, 2, 3]\n```",
+          "reasoning_content": "We need to write a self-contained Python script that solves the problem: implement `filter_integers(values: List[Any]) -> List[int]`. The function should filter given list of any python values and return only those elements that are integers. But note from examples:\n\n- `filter_integers(['a', 3.14, 5])` returns `[5]`.\n  - Here 'a' is string, 3.14 is float, 5 is int -> output [5].\n- `filter_integers([1, 2, 3, 'abc', {}, []])` returns `[1, 2, 3]`.\n  - So it includes only elements that are integers (type int). Note: booleans? In Python, bool is subclass of int. But we need to consider if they want to treat bool as integer? Usually `isinstance(True, int)` returns True because bool inherits from int. However typical tasks might not include bools. The examples don't have bools. We'll just use `isinstance(value, int) and not isinstance(value, bool)`? But the problem statement says \"only for integers\". In Python, booleans are technically ints but often we want to exclude them. Let's see typical expectations: Usually they'd expect to filter elements that are of type int (excluding floats, strings). I think simplest is `if isinstance(value, int)`. That will include bools as well. But maybe it's fine.\n\nWe need to provide a self-contained Python script in a markdown code block. The function signature and docstring given. We'll implement accordingly.\n\nThus:\n\n```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers\n    >>> filter_integers(['a', 3.14, 5])\n    [5]\n    >>> filter_integers([1, 2, 3, 'abc', {}, []])\n    [1, 2, 3]\n    \"\"\"\n    return [item for item in values if isinstance(item, int)]\n```\n\nBut note: In the second example, they have `[1, 2, 3, 'abc', {}, []]`. The list contains `{}` and `[]`, which are dict and list. They are not integers. So we just filter those that are instances of int.\n\nPotential nuance: For booleans, `isinstance(True, int)` is True. If they want to exclude bools, we could add `and not isinstance(item, bool)`. But I think it's okay.\n\nWe also need to import typing? Already imported in the given snippet. We'll keep that.\n\nThus final answer: Provide a markdown code block with the script.\n\nLet's write:\n\n```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Return a new list containing only the elements of *values* that are integers.\n    \n    Parameters:\n    - values: A list that may contain elements of any type.\n    \n    Returns:\n        A list of all items in *values* for which ``isinstance(item, int)`` is True.\n        \n    Examples:\n        >>> filter_integers(['a', 3.14, 5])\n        [5]\n        >>> filter_integers([1, 2, 3, 'abc', {}, []])\n        [1, 2, 3]\n    \"\"\"\n    return [item for item in values if isinstance(item, int)]\n```\n\nThat's it.\n\nBut we need to ensure that the script is self-contained: includes imports and function definition. Possibly also include a `if __name__ == \"__main__\":` block with test examples? The problem says \"Please provide a self-contained Python script that solves the following problem in a markdown code block\". So just the function is enough, but we can add some simple tests.\n\nLet's do:\n\n```python\nfrom typing import List, Any\n\ndef filter_integers(values: List[Any]) -> List[int]:\n    \"\"\" Filter given list of any python values only for integers ... \"\"\"\n    return [item for item in values if isinstance(item, int)]\n\nif __name__ == \"__main__\":\n    # Example usage\n    print(filter_integers(['a', 3.14, 5]))  # [5]\n    print(filter_integers([1, 2, 3, 'abc', {}, []]))  # [1, 2, 3]\n```\n\nThat would be self-contained.\n\nThus final answer: a markdown code block with the script.\n\nWe'll output exactly that."
+        }
+      }
+    ],
+    "created": 1794921310,
+    "model": "period4-lfm3-q8-humaneval-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1223,
+      "prompt_tokens": 122,
+      "total_tokens": 1345,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-whnidqfH3no3oyYafe9IzQKunqfAgJG9",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 122,
+      "prompt_ms": 52.773,
+      "prompt_per_token_ms": 0.4325655737704918,
+      "prompt_per_second": 2311.7882250393195,
+      "predicted_n": 1223,
+      "predicted_ms": 11313.738,
+      "predicted_per_token_ms": 9.25837806873977,
+      "predicted_per_second": 108.01027918447467
+    }
+  },
+  "seconds": 11.391000000061467
+}

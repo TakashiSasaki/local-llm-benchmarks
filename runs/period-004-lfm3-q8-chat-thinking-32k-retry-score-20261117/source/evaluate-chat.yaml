@@ -1,0 +1,61 @@
+#cloud-config
+ssh_pwauth: false
+disable_root: true
+write_files:
+  - path: /usr/local/sbin/evaluate-hep
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      test "$(ls -1 /sys/class/net)" = lo
+      printf 'HEP_ISOLATION_OK net=lo\n'
+      mkdir -p /mnt/eval-input
+      mount -o ro LABEL=CIDATA /mnt/eval-input
+      (cd /mnt/eval-input && sha256sum -c SHA256SUMS)
+      /opt/evalplus/bin/python -V
+      printf 'HEP_DEPENDENCIES_BEGIN\n'
+      cat /opt/evalplus-dependencies.txt
+      printf 'HEP_DEPENDENCIES_END\n'
+      install -d -o benchmark -g benchmark -m 0700 /home/benchmark/evalplus-run
+      run_dir=/home/benchmark/evalplus-run
+      cd "$run_dir"
+      benchmark_python() {
+        runuser -u benchmark -- env HOME=/home/benchmark PYTHONPATH=/opt/evalplus-source HUMANEVAL_OVERRIDE_PATH=/mnt/eval-input/dataset.jsonl.gz HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 OPENBLAS_NUM_THREADS=1 /opt/evalplus/bin/python "$@"
+      }
+      benchmark_python - <<'PY'
+      import json
+
+      from evalplus.data import get_human_eval_plus
+      from evalplus.eval import untrusted_check
+      from evalplus.sanitize import sanitize
+
+      for expression, expected_status in [("value + 1", "pass"), ("value", "fail")]:
+          status, _ = untrusted_check(
+              "humaneval", f"def control(value): return {expression}",
+              [[1]], "control", [2], 0, [0.001], fast_check=True,
+          )
+          assert status == expected_status, (status, expected_status)
+      example = "def f():\n    return 1"
+      assert sanitize("```python\n" + example + "\n```", entrypoint="f") == example
+      assert sanitize("", entrypoint="f") == ""
+      print("HEP_CONTROLS_OK")
+      problems = get_human_eval_plus()
+      with open("/mnt/eval-input/samples.jsonl", encoding="utf-8") as stream:
+          rows = list(map(json.loads, stream))
+      assert {row["task_id"] for row in rows} == set(problems) and len(rows) == len(problems) == 164
+      with open("samples.jsonl", "x", encoding="utf-8") as stream:
+          for row in rows:
+              task = row["task_id"]
+              solution = sanitize(row["solution"], entrypoint=problems[task]["entry_point"])
+              stream.write(json.dumps({"task_id": task, "solution": solution}, ensure_ascii=False) + "\n")
+      PY
+      chown root:root samples.jsonl
+      chmod 0444 samples.jsonl
+      printf 'HEP_SANITIZED_SHA256 %s\n' "$(sha256sum samples.jsonl | cut -d' ' -f1)"
+      benchmark_python -m evalplus.evaluate --dataset humaneval --samples "$run_dir/samples.jsonl" --parallel 2
+      test -s samples_eval_results.json
+      printf 'HEP_RESULT_BEGIN\n'
+      gzip -c samples_eval_results.json | base64 -w 76
+      printf 'HEP_RESULT_END\n'
+runcmd:
+  - [bash, -c, "systemctl stop serial-getty@ttyS0.service; /usr/local/sbin/evaluate-hep 2>&1 | tee /var/log/evaluate-hep.log >/dev/ttyS0; status=${PIPESTATUS[0]}; echo HEP_EVAL_EXIT=$status >/dev/ttyS0; systemctl --no-block poweroff"]

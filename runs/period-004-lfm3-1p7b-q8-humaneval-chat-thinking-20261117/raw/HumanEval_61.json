@@ -1,0 +1,61 @@
+{
+  "task_id": "HumanEval/61",
+  "request": {
+    "model": "period4-lfm3-q8-humaneval-chat-thinking",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Please provide a self-contained Python script that solves the following problem in a markdown code block:\n```python\ndef correct_bracketing(brackets: str):\n    \"\"\" brackets is a string of \"(\" and \")\".\n    return True if every opening bracket has a corresponding closing bracket.\n\n    >>> correct_bracketing(\"(\")\n    False\n    >>> correct_bracketing(\"()\")\n    True\n    >>> correct_bracketing(\"(()())\")\n    True\n    >>> correct_bracketing(\")(()\")\n    False\n    \"\"\"\n```"
+      }
+    ],
+    "max_tokens": 16384,
+    "temperature": 0.1,
+    "top_p": 1.0,
+    "top_k": 50,
+    "min_p": 0,
+    "seed": 42,
+    "repeat_penalty": 1.1,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef correct_bracketing(brackets: str) -> bool:\n    \"\"\"Return True if every opening bracket '(' has a corresponding closing bracket ')'\n    and they are properly nested.\n\n    Parameters:\n    - brackets: a string consisting only of the characters '(' and ')'\n\n    Returns:\n        bool: True when all parentheses are balanced, False otherwise.\n    \"\"\"\n    stack = []\n    for ch in brackets:\n        if ch == '(':\n            stack.append(ch)\n        elif ch == ')':\n            if not stack:          # no matching opening bracket\n                return False\n            stack.pop()           # match the most recent '('\n        # Any other characters are ignored (per the problem statement only '(' and ')' appear)\n\n    return len(stack) == 0   # all opened brackets must be closed\n\n\n# Optional: simple test when the module is run directly\nif __name__ == \"__main__\":\n    test_cases = [\n        (\"(\", False),\n        (\"()\", True),\n        (\"(()())\", True),\n        (\")(()\", False),\n        (\"\", True),  # empty string has no unmatched brackets\n    ]\n    for s, expected in test_cases:\n        result = correct_bracketing(s)\n        print(f\"correct_bracketing({s!r}) = {result} (expected {expected})\")\n```",
+          "reasoning_content": "We need to write a self-contained Python script that solves the problem: given a string of parentheses \"(\" and \")\", return True if every opening bracket has a corresponding closing bracket. Essentially, check if the parentheses are balanced and properly nested? The examples:\n\n- correct_bracketing(\"(\") -> False (unmatched open)\n- correct_bracketing(\"()\") -> True\n- correct_bracketing(\"(()())\") -> True\n- correct_bracketing(\")(()\") -> False\n\nSo we need to implement the function. Typically, this is a classic stack problem: iterate through characters; for each '(', push onto stack; for each ')', if stack empty then return False (unmatched close); else pop. At end, check if stack is empty (all opens matched). Return True if balanced.\n\nBut note that input may have other characters? The docstring says brackets is a string of \"(\" and \")\". So only those two chars.\n\nWe need to output the script in a markdown code block. Also we might include some test cases or just the function definition. The problem statement: \"Please provide a self-contained Python script that solves the following problem in a markdown code block:\" Then they show the function signature and docstring with examples. So we should write the complete script, maybe including if __name__ == \"__main__\": to run some tests? But it's not required; just need to define the function correctly.\n\nLet's implement:\n\ndef correct_bracketing(brackets: str):\n    stack = []\n    for ch in brackets:\n        if ch == '(':\n            stack.append(ch)\n        elif ch == ')':\n            if not stack:\n                return False\n            stack.pop()\n        else:\n            # maybe ignore? but per spec only parentheses.\n            pass\n    return len(stack) == 0\n\nThat's it.\n\nBut careful: The examples: \")(()\" -> Let's test: string = \") ( ( )\"? Actually \")(()\". Characters: index0=')', then '(' , '(' , ')'. Our algorithm: start stack empty. ch=')' -> if not stack: return False. So returns False, matches expected.\n\nNow for \"(()())\": iterate: '(' push; '(' push; ')' pop (stack now has one '('); '(' push? Wait let's simulate: string = \"(()())\". Actually characters: index0='(',1='(',2=')',3='(',4=')',5=')'. Process:\n- ch='(': stack=['(']\n- ch='(': stack=['(', '(']\n- ch=')': stack not empty -> pop -> stack=['(']\n- ch='(': push -> stack=['(', '(']\n- ch=')': pop -> stack=['(']\n- ch=')': pop -> stack=[]\nAt end, stack empty => True.\n\nWorks.\n\nEdge cases: empty string? Should return False? The problem says brackets is a string of \"(\" and \")\". If empty, there are no opening brackets, but also no closing. Typically balanced? Usually an empty string is considered balanced (every opening has matching closing). But not specified. We can decide to return True for empty? Let's think: In typical bracket balancing problems, empty string returns True. However the examples don't cover it. Our algorithm would return len(stack)==0 which is 0 -> True. That might be okay. But we could also handle if brackets == \"\" then return True or False? I'd go with True as there are no unmatched opens and closes. But let's see: The function name \"correct_bracketing\" suggests correct if every opening bracket has a corresponding closing bracket. In empty string, there is no opening bracket, so condition vacuously true. So return True.\n\nBut the example \"(\" returns False because there is an unmatched open. Our algorithm would push '(' and then after loop stack not empty -> len(stack)!=0 => False. Good.\n\nThus implementation works.\n\nNow we need to output as a self-contained Python script in markdown code block. Possibly include docstring, type hints, etc.\n\nLet's write:\n\n```python\ndef correct_bracketing(brackets: str) -> bool:\n    \"\"\"Return True if every opening bracket '(' has a corresponding closing bracket ')'\n    and they are properly nested.\n    \n    Parameters:\n    - brackets: string consisting only of characters '(' and ')'\n    \n    Returns:\n        bool: True if the parentheses are balanced, False otherwise.\n    \"\"\"\n    stack = []\n    for ch in brackets:\n        if ch == '(':\n            stack.append(ch)\n        elif ch == ')':\n            if not stack:\n                return False\n            stack.pop()\n        # ignore any other characters (if present) or treat as invalid? We'll just pass.\n    return len(stack) == 0\n```\n\nAdd a simple test block:\n\n```python\nif __name__ == \"__main__\":\n    test_cases = [\n        (\"(\", False),\n        (\"()\", True),\n        (\"(()())\", True),\n        (\")(()\", False),\n        (\"\", True), # optional\n    ]\n    for s, expected in test_cases:\n        result = correct_bracketing(s)\n        print(f\"correct_bracketing({s!r}) = {result} (expected {expected})\")\n```\n\nBut we need to be careful: The docstring examples show `>>> correct_bracketing(\"(\")` etc. That's just doctest style; but we can include them as comments or not necessary.\n\nBetter to keep it simple: just define function and maybe a small test.\n\nThe problem says \"self-contained Python script\". So including the if __name__ block is fine.\n\nThus final answer: Provide code inside triple backticks with python.\n\nLet's craft final output."
+        }
+      }
+    ],
+    "created": 1794916224,
+    "model": "period4-lfm3-q8-humaneval-chat-thinking",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1471,
+      "prompt_tokens": 121,
+      "total_tokens": 1592,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-mkYhB4VsgexVSpaoKdNiREJAV84cHDHi",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 121,
+      "prompt_ms": 42.756,
+      "prompt_per_token_ms": 0.35335537190082644,
+      "prompt_per_second": 2830.0121620357377,
+      "predicted_n": 1471,
+      "predicted_ms": 13588.562,
+      "predicted_per_token_ms": 9.243919727891157,
+      "predicted_per_second": 108.17921719752246
+    }
+  },
+  "seconds": 13.65700000000652
+}
