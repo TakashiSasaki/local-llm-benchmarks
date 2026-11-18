@@ -1,0 +1,156 @@
+{
+  "id": "multiple_8",
+  "request": {
+    "model": "mtp-study-gemma-4-e4b-it-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find a 3 bedroom villa for sale within $300,000 to $400,000 budget in San Diego."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "property_valuation_get",
+          "description": "Get estimated value of a property based on location, specifications and age",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City and state where the property is located, e.g. San Diego, CA."
+              },
+              "propertyType": {
+                "type": "string",
+                "description": "Type of property such as villa, condo, apartment, etc."
+              },
+              "bedrooms": {
+                "type": "integer",
+                "description": "Number of bedrooms required in the property."
+              },
+              "age": {
+                "type": "integer",
+                "description": "Age of the property in years."
+              }
+            },
+            "required": [
+              "location",
+              "propertyType",
+              "bedrooms",
+              "age"
+            ]
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "realestate_find_properties",
+          "description": "Find properties based on location, budget, and specifications",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "City and state where the property is located, e.g. San Diego, CA."
+              },
+              "propertyType": {
+                "type": "string",
+                "description": "Type of property such as villa, condo, apartment, etc."
+              },
+              "bedrooms": {
+                "type": "integer",
+                "description": "Number of bedrooms required in the property."
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "description": "Minimum budget limit. This is a float type value.",
+                    "format": "float"
+                  },
+                  "max": {
+                    "type": "number",
+                    "description": "Maximum budget limit. This is a float type value.",
+                    "format": "float"
+                  }
+                },
+                "description": "Budget range for the property."
+              }
+            },
+            "required": [
+              "location",
+              "propertyType",
+              "bedrooms",
+              "budget"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 4096,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "1. **Analyze the user's request:** The user wants to find a property with specific criteria:\n    *   Bedrooms: 3\n    *   Property Type: Villa\n    *   Budget: $300,000 to $400,000\n    *   Location: San Diego\n\n2. **Examine available tools:** I have two tools:\n    *   `property_valuation_get`: Gets the estimated value of a property. Requires `location`, `propertyType`, `bedrooms`, and `age`.\n    *   `realestate_find_properties`: Finds properties based on location, budget, and specifications. Requires `location`, `propertyType`, `bedrooms`, and `budget`.\n\n3. **Determine the appropriate tool:** The user is asking to \"Find a ... for sale within [budget]\". This matches the functionality of `realestate_find_properties`.\n\n4. **Map the user's input to the tool parameters:**\n    *   `location`: \"San Diego\"\n    *   `propertyType`: \"villa\"\n    *   `bedrooms`: 3\n    *   `budget`:\n        *   `min`: 300000\n        *   `max`: 400000\n\n5. **Construct the tool call:**\n    ```json\n    {\n      \"toolSpec\": {\n        \"name\": \"realestate_find_properties\",\n        \"args\": {\n          \"location\": \"San Diego\",\n          \"propertyType\": \"villa\",\n          \"bedrooms\": 3,\n          \"budget\": {\n            \"min\": 300000,\n            \"max\": 400000\n          }\n        }\n      }\n    }\n    ```\n\n6. **Final Output Generation:** Present the constructed tool call in the required format.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "realestate_find_properties",
+                "arguments": "{\"budget\":{\"max\":400000,\"min\":300000},\"bedrooms\":3,\"location\":\"San Diego\",\"propertyType\":\"villa\"}"
+              },
+              "id": "ZGxnIMWuDECAdfyc9ozpzEyLeSY1Cv1F"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1794459328,
+    "model": "mtp-study-gemma-4-e4b-it-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 459,
+      "prompt_tokens": 406,
+      "total_tokens": 865,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-hk0oPt391bPFiPdW7VF9JiA0DUSfZFy5",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 406,
+      "prompt_ms": 561.767,
+      "prompt_per_token_ms": 1.3836625615763547,
+      "prompt_per_second": 722.7195616688057,
+      "predicted_n": 459,
+      "predicted_ms": 18558.396,
+      "predicted_per_token_ms": 40.5205152838428,
+      "predicted_per_second": 24.678856944317815
+    }
+  },
+  "seconds": 19.142315300006885,
+  "estimated_prompt_tokens": 405
+}

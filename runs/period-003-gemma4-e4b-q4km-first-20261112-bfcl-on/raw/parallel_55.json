@@ -1,0 +1,116 @@
+{
+  "id": "parallel_55",
+  "request": {
+    "model": "mtp-study-gemma-4-e4b-it-q4-k-m-off",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find a supermarket in New York City that opens 24 hours and another one in San Diego that offers home delivery."
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "grocery_store_find_by_criteria",
+          "description": "Find grocery stores based on specific criteria such as location, hours of operation, or availability of services.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The city where you want to find a grocery store."
+              },
+              "criteria": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "24 hours",
+                    "Home Delivery",
+                    "In-store Pickup"
+                  ]
+                },
+                "description": "Specific features or services you're looking for in a grocery store."
+              }
+            },
+            "required": [
+              "location",
+              "criteria"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "parallel_tool_calls": true,
+    "temperature": 0,
+    "seed": 42,
+    "top_p": 1,
+    "top_k": 0,
+    "min_p": 0,
+    "repeat_penalty": 1,
+    "max_tokens": 4096,
+    "cache_prompt": false,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    }
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "1. **Analyze the Request:** The user wants to find two specific types of supermarkets:\n    *   One in \"New York City\" that is \"24 hours\".\n    *   One in \"San Diego\" that offers \"Home Delivery\".\n\n2. **Examine Available Tools:** The only available tool is `grocery_store_find_by_criteria`.\n\n3. **Analyze Tool Signature:**\n    *   `grocery_store_find_by_criteria(location: STRING, criteria: ARRAY<STRING>)`\n    *   `location` is required.\n    *   `criteria` is required and accepts specific strings: `[\"24 hours\", \"Home Delivery\", \"In-store Pickup\"]`.\n\n4. **Determine Necessary Calls:** The request requires two separate searches, each with different parameters.\n\n    *   **Call 1 (NYC):**\n        *   `location`: \"New York City\"\n        *   `criteria`: [\"24 hours\"]\n        *   *Tool Call:* `grocery_store_find_by_criteria(location=\"New York City\", criteria=[\"24 hours\"])`\n\n    *   **Call 2 (San Diego):**\n        *   `location`: \"San Diego\"\n        *   `criteria`: [\"Home Delivery\"]\n        *   *Tool Call:* `grocery_store_find_by_criteria(location=\"San Diego\", criteria=[\"Home Delivery\"])`\n\n5. **Construct the Output:** Since both calls are independent and necessary to fulfill the user's request, they should be presented as a list of tool calls.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "grocery_store_find_by_criteria",
+                "arguments": "{\"criteria\":[\"24 hours\"],\"location\":\"New York City\"}"
+              },
+              "id": "uVvEJZ8YIZzzg47RBZQtexyPwfIYpZoN"
+            },
+            {
+              "type": "function",
+              "function": {
+                "name": "grocery_store_find_by_criteria",
+                "arguments": "{\"criteria\":[\"Home Delivery\"],\"location\":\"San Diego\"}"
+              },
+              "id": "R7ZmRYOSomZqZQjUDdIZdyloPaCfCMWi"
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1794459735,
+    "model": "mtp-study-gemma-4-e4b-it-q4-k-m-off",
+    "system_fingerprint": "b11960-8642541b2",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 402,
+      "prompt_tokens": 178,
+      "total_tokens": 580,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-DHJF4Bl5qckAEw4St2h1TTHOkSsmW5zW",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 178,
+      "prompt_ms": 482.727,
+      "prompt_per_token_ms": 2.711949438202247,
+      "prompt_per_second": 368.7384380819801,
+      "predicted_n": 402,
+      "predicted_ms": 16093.322,
+      "predicted_per_token_ms": 40.13297256857855,
+      "predicted_per_second": 24.91716750587604
+    }
+  },
+  "seconds": 16.595142599995597,
+  "estimated_prompt_tokens": 177
+}
