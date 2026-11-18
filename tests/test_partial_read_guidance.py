@@ -1,5 +1,4 @@
-"""Read-only regression for a saved season table and Unicode page slices."""
-import json
+"""Regression for a synthetic season table and Unicode page slices."""
 import pathlib
 import sys
 import tempfile
@@ -11,18 +10,17 @@ from page_harness import PageStore
 
 
 class PartialReadGuidance(unittest.TestCase):
-    def test_saved_season_table_warns_without_guessing_final_record(self):
-        path = ROOT / 'runs/period-004-gemma-harness-cycle-web100-b1-20261118/raw/web_search_1/pages/page_3.json'
-        saved = json.loads(path.read_text(encoding='utf-8'))
+    def test_partial_season_table_warns_without_guessing_final_record(self):
+        text = 'x' * 20 + '\n| Week | Cumulative record |\n| 5 | 3–2 |\n' + 'x' * 2400 + '\n| Final | 7–10 |'
         with tempfile.TemporaryDirectory() as directory:
             store = PageStore(directory)
-            page = store.add(saved['url'], saved['text'])
-            part = store.read(page['page_id'], 49975)
-            self.assertEqual(part['content'], saved['text'][49975:52375])
+            page = store.add('https://example.org/season', text)
+            part = store.read(page['page_id'], 20)
+            self.assertEqual(part['content'], text[20:2420])
             self.assertTrue(part['has_earlier_text'])
             self.assertTrue(part['has_later_text'])
             self.assertGreater(part['detected_pipe_table_rows'], 0)
-            self.assertEqual(part['next_offset'], 52375)
+            self.assertEqual(part['next_offset'], 2420)
             self.assertIn('not necessarily a complete table', part['coverage_hint'])
             self.assertNotIn('7–10', part['content'])
             self.assertNotIn('7–10', part['coverage_hint'])
