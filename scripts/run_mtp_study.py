@@ -115,6 +115,7 @@ def run(a):
                 child=create_run(title+' '+suite+' thinking '+thinking,suite,config={'parent_run':parent.name,'model':metadata,'profile':profile},run_id=parent.name+'-'+suite+'-'+thinking); children.append(child.name)
                 command=[str(a.benchmark_python),'-B','-X','utf8',str(ROOT/'benchmarks'/(suite+'.py')),'--run',child.name,'--model',alias,'--thinking',thinking]
                 command+=profile.get('benchmark_extra_args',[])
+                command+=profile.get('benchmark_suite_args',{}).get(suite,[])
                 if suite=='humaneval' and profile.get('humaneval_grader_policy'):command+=['--grader-policy',profile['humaneval_grader_policy']]
                 if continuation:command+=['--subset-plan',str(parent/'configs/continuation-plan.json')]
                 if bfcl_continuation and suite=='bfcl':command+=['--subset-plan',str(parent/'configs/bfcl-continuation-plan.json')]

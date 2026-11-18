@@ -8,7 +8,8 @@ def digest(p):
     return h.hexdigest()
 
 if __name__=='__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('--manifest',type=pathlib.Path,required=True);ap.add_argument('--model-dir',type=pathlib.Path,required=True);ap.add_argument('--connections',type=int,default=1);ap.add_argument('--download-query',choices=['download=true'],default=None);a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--manifest',type=pathlib.Path,required=True);ap.add_argument('--model-dir',type=pathlib.Path,required=True);ap.add_argument('--connections',type=int,default=1);ap.add_argument('--download-query',choices=['download=true'],default=None);ap.add_argument('--retries',type=int,default=5);a=ap.parse_args()
+    if a.retries<0:ap.error('--retries must be non-negative')
     repo=pathlib.Path(__file__).resolve().parents[1];dest=a.model_dir.resolve()
     assert not dest.is_relative_to(repo),'Weights must stay outside the repository'
     m=json.loads(a.manifest.read_text(encoding='utf-8'));dest.mkdir(parents=True,exist_ok=True);target=dest/m['filename']
@@ -23,7 +24,7 @@ if __name__=='__main__':
         part=target.with_suffix(target.suffix+'.part')
         if a.connections==1:
             url=m['url']+('?' + a.download_query if a.download_query else '')
-            subprocess.run(['curl.exe','--fail','--location','--silent','--show-error','--connect-timeout','30','--speed-time','60','--speed-limit','1024','--retry','5','--continue-at','-','--output',str(part),url],check=True)
+            subprocess.run(['curl.exe','--fail','--location','--silent','--show-error','--connect-timeout','30','--speed-time','60','--speed-limit','1024','--retry',str(a.retries),'--continue-at','-','--output',str(part),url],check=True)
         else:
             start=part.stat().st_size if part.exists() else 0;block=64*1024*1024
             ranges=[(s,min(s+block,m['bytes'])-1) for s in range(start,m['bytes'],block)]
@@ -32,7 +33,7 @@ if __name__=='__main__':
                 if p.exists() and p.stat().st_size==hi-lo+1 and header.exists():
                     if re.search(fr'(?im)^content-range: bytes {lo}-{hi}/{m["bytes"]}\s*$',header.read_text()):return p
                 url=m['url']+f'?range_start={lo}'
-                subprocess.run(['curl.exe','--fail','--location','--silent','--show-error','--retry','5','--range',f'{lo}-{hi}','--dump-header',str(header),'--output',str(p),url],check=True)
+                subprocess.run(['curl.exe','--fail','--location','--silent','--show-error','--connect-timeout','30','--max-time','240','--retry',str(a.retries),'--range',f'{lo}-{hi}','--dump-header',str(header),'--output',str(p),url],check=True)
                 assert p.stat().st_size==hi-lo+1 and re.search(fr'(?im)^content-range: bytes {lo}-{hi}/{m["bytes"]}\s*$',header.read_text()),'Incorrect range response'
                 return p
             with concurrent.futures.ThreadPoolExecutor(max_workers=a.connections) as pool:

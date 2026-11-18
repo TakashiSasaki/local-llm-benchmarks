@@ -21,7 +21,9 @@ def run(a):
     path=resolve_run(a.run);assert_run_writable(path);manifest=load(path/'manifest.json')
     if manifest['status']=='complete':raise ValueError('Completed run is immutable')
     timeout=positive_timeout(getattr(a,'api_timeout_seconds',7200))
-    params={'api_timeout_seconds':timeout,'endpoint':a.endpoint.rstrip('/'),'model':a.model,'thinking':a.thinking,'context':65536,'max_output':64000,'temperature':0.6,'seed':42}
+    context=getattr(a,'context',65536);max_output=getattr(a,'max_output',64000)
+    if context<=32 or max_output<=0:raise ValueError('Invalid context or output budget')
+    params={'api_timeout_seconds':timeout,'endpoint':a.endpoint.rstrip('/'),'model':a.model,'thinking':a.thinking,'context':context,'max_output':max_output,'temperature':0.6,'seed':42}
     subset=getattr(a,'subset_plan',None)
     if subset:params['subset_plan_sha256']=hashlib.sha256(pathlib.Path(subset).read_bytes()).hexdigest()
     policy=getattr(a,'grader_policy','legacy')
@@ -36,7 +38,7 @@ def run(a):
         req=urllib.request.Request(params['endpoint']+route,data=json.dumps(payload).encode() if payload is not None else None,headers={'Content-Type':'application/json'})
         with urllib.request.urlopen(req,timeout=timeout) as f:return json.load(f)
     require(path,'HumanEval collection admission','condition')
-    props=api('/props');assert props['model_alias']==a.model and props['default_generation_settings']['n_ctx']==65536 and props['total_slots']==1
+    props=api('/props');assert props['model_alias']==a.model and props['default_generation_settings']['n_ctx']==context and props['total_slots']==1
     legacy_grade,unwrap=grader();grade=legacy_grade
     if policy=='standard-windows-v1':
         from local_llm_benchmarks.humaneval_standard_windows import grade,provenance
@@ -59,13 +61,14 @@ def run(a):
     try:
         for p in problems:
             cid=p['task_id'].replace('/','_');rawfile=path/'raw'/(cid+'.json')
-            payload={'model':a.model,'messages':[{'role':'system','content':'Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests.'},{'role':'user','content':p['prompt']}],'temperature':0.6,'top_p':0.95,'top_k':20,'min_p':0,'presence_penalty':0,'repeat_penalty':1,'seed':42,'max_tokens':64000,'chat_template_kwargs':{'enable_thinking':a.thinking=='on'},'cache_prompt':False}
+            payload={'model':a.model,'messages':[{'role':'system','content':'Implement the requested Python function. Return only a complete Python module with the specified signature and required imports. Do not include explanations, markdown, or tests.'},{'role':'user','content':p['prompt']}],'temperature':0.6,'top_p':0.95,'top_k':20,'min_p':0,'presence_penalty':0,'repeat_penalty':1,'seed':42,'max_tokens':max_output,'chat_template_kwargs':{'enable_thinking':a.thinking=='on'},'cache_prompt':False}
             if rawfile.exists():
                 raw=load(rawfile);assert raw['request']==dict(payload,max_tokens=raw['request']['max_tokens'])
             else:
                 require(path,'HumanEval '+p['task_id'],'question')
                 templ=api('/apply-template',{k:v for k,v in payload.items() if k in ['messages','chat_template_kwargs']})
-                n=len(api('/tokenize',{'content':templ['prompt'],'add_special':False})['tokens']);payload['max_tokens']=min(64000,65536-n-32)
+                n=len(api('/tokenize',{'content':templ['prompt'],'add_special':False})['tokens']);payload['max_tokens']=min(max_output,context-n-32)
+                if payload['max_tokens']<=0:raise ValueError('No output space remaining')
                 start=time.monotonic();http_status=None
                 try:response=api('/v1/chat/completions',payload)
                 except urllib.error.HTTPError as error:
@@ -98,4 +101,4 @@ def run(a):
         manifest.update(status='failed',error=repr(e));save(path/'manifest.json',manifest);raise
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--continue-on-output-parser-error',action='store_true');p.add_argument('--grader-policy',choices=['legacy','standard-windows-v1'],default='legacy');p.add_argument('--subset-plan',type=pathlib.Path);p.add_argument('--api-timeout-seconds',type=positive_timeout,default=7200);run(p.parse_args())
+    p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--model',required=True);p.add_argument('--thinking',choices=['off','on'],required=True);p.add_argument('--endpoint',default='http://127.0.0.1:8089');p.add_argument('--continue-on-output-parser-error',action='store_true');p.add_argument('--grader-policy',choices=['legacy','standard-windows-v1'],default='legacy');p.add_argument('--subset-plan',type=pathlib.Path);p.add_argument('--api-timeout-seconds',type=positive_timeout,default=7200);p.add_argument('--context',type=int,default=65536);p.add_argument('--max-output',type=int,default=64000);run(p.parse_args())
