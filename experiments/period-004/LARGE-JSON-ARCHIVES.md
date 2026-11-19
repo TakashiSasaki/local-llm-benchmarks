@@ -1,6 +1,6 @@
 # Large historical JSON archives
 
-Five historical BFCL result JSON files are stored as adjacent `.json.xz` files to fit GitHub file limits. The original JSON files remain locally unchanged and are ignored by Git. Decompress each archive beside itself before tools that expect the JSON path are run. The SHA-256 below is for the decompressed original. Never overwrite an existing JSON; verify it matches first.
+Five historical BFCL result JSON files are stored as adjacent `.json.xz` files to fit GitHub file limits. After verifying each archive against the original SHA-256, the local uncompressed copies were removed; restored JSON files are ignored by Git. Decompress each archive beside itself before tools that expect the JSON path are run. The SHA-256 below is for the decompressed original. Never overwrite an existing JSON; verify it matches first.
 
 - `runs/period-004-bfcl-f7-gemma4-multi-turn-aggregate-v7-score-20261113/workspace/combined-results/local-gemma4-f7-prompt/multi_turn/BFCL_v4_multi_turn_long_context_result.json`: `4e380fc7d08e47c7670fe42cb627d7908f29df988a9a721e6a0a7d8f7f569c92`
 - `runs/period-004-bfcl-f7-gemma4-multi-turn-aggregate-v7-score-20261113/workspace/combined-results/local-gemma4-f7-prompt/multi_turn/BFCL_v4_multi_turn_miss_func_result.json`: `b5d104bc29b9df7cba736bd44b316955e869a9b54857cae47ade55d5e8eb4051`
